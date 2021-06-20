@@ -1,0 +1,19 @@
+[package]
+name = "dc_message_parser"
+version = "0.1.0"
+edition = "2018"
+license = "MPL-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+nom = "6"
+serde = "1.0.126"
+serde_derive = "1.0.126"
+iref = "1.4.3"
+email-address-parser = "1.0.1"
+
+[workspace]
+members = [
+  "message_parser_wasm"
+]
