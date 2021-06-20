@@ -27,7 +27,7 @@ jobs:
           mkdir public
           mv example.js public/example.js
           mv example.html public/example.html
-          mv -r pkg public/pkg
+          mv pkg public/pkg
 
       - name: deploy
         uses: JamesIves/github-pages-deploy-action@4.1.4
