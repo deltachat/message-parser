@@ -28,14 +28,10 @@ jobs:
           mv example.js public/example.js
           mv example.html public/index.html
           mv pkg public/pkg
-          echo "ls public/pkg"
-          ls public/pkg
+          rm public/pkg/.gitignore
 
-      - name: Deploy to GitHub Pages
-        if: success()
-        uses: crazy-max/ghaction-github-pages@v2
+      - name: deploy
+        uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
-          target_branch: gh-pages
-          build_dir: message_parser_wasm
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          branch: gh-pages # The branch the action should deploy to.
+          folder: message_parser_wasm/public # The folder the action should deploy.
