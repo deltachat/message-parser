@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title></title>
+  </head>
+  <body>
+    <style>
+      .code-block {
+        background-color: rgb(182, 182, 182);
+        border-radius: 2px;
+        padding: 14px 7px;
+        margin-top: 4px;
+        margin-bottom: 4px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .code-block > span {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        font-size: 0.9em;
+        z-index: 5;
+        color: gray;
+        background-color: honeydew;
+        border: 1px solid grey;
+        border-bottom-left-radius: 4px;
+        padding: 0px 2px;
+      }
+
+      code {
+        background-color: rgb(182, 182, 182);
+        border-radius: 2px;
+        padding: 2px;
+      }
+    </style>
+    <h3>Input</h3>
+    <textarea
+      name="content"
+      id="input"
+      style="width: calc(100% - 10px)"
+      rows="10"
+    ></textarea>
+    <h3>Output</h3>
+    <div
+      id="result"
+      style="
+        min-width: 100px;
+        min-height: 50px;
+        padding: 8px;
+        background-color: rgb(255, 238, 220);
+        border: 1px solid lightgray;
+      "
+    ></div>
+    <script type="module" src="example.js"></script>
+  </body>
+</html>
