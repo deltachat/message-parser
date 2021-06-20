@@ -28,12 +28,14 @@ jobs:
           mv example.js public/example.js
           mv example.html public/index.html
           mv pkg public/pkg
+          echo "ls public/pkg"
+          ls public/pkg
 
       - name: Deploy to GitHub Pages
         if: success()
         uses: crazy-max/ghaction-github-pages@v2
         with:
           target_branch: gh-pages
-          build_dir: message_parser_wasm/public
+          build_dir: message_parser_wasm
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
