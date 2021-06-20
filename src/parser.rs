@@ -72,14 +72,6 @@ pub enum Element<'a> {
     // BlockTex(&str),
 }
 
-// todo naming of this function
-fn not_blank_space(c: char) -> bool {
-    match c {
-        ' ' | '\n' | '\r' | '\t' => false, //TODO tests for \n, \n\r and \t
-        _ => true,
-    }
-}
-
 /// consumes all text until parse_element works again, internal use text instead
 ///
 /// its output is useable on its own, always combinate this with [nom::combinator::recognize]
