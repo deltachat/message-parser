@@ -18,7 +18,6 @@ pub enum CustomError<I> {
     InvalidWhiteSpaceFound,
     NoElement,
     Nom(I, ErrorKind),
-    OtherNom(I),
     InvalidEmail,
     InvalidLink,
     UnexpectedContent,
@@ -61,7 +60,7 @@ pub enum Element<'a> {
         language: Option<&'a str>,
         content: &'a str,
     },
-    BotCommandSuggestion(&'a str),
+    // BotCommandSuggestion(&'a str),
     EmailAddress(&'a str),
     // Later:
     // CollonEmoji(&'a str),
