@@ -1,0 +1,13 @@
+{
+  "name": "message_parser_wasm",
+  "version": "0.1.0",
+  "license": "MPL-2.0",
+  "files": [
+    "message_parser_wasm_bg.wasm",
+    "message_parser_wasm.js",
+    "message_parser_wasm.d.ts"
+  ],
+  "module": "message_parser_wasm.js",
+  "types": "message_parser_wasm.d.ts",
+  "sideEffects": false
+}
