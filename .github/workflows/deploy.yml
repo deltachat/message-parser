@@ -26,7 +26,7 @@ jobs:
           wasm-pack build --target web
           mkdir public
           mv example.js public/example.js
-          mv example.html public/example.html
+          mv example.html public/index.html
           mv pkg public/pkg
 
       - name: deploy
