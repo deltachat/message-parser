@@ -28,7 +28,7 @@ jobs:
           mv example.js public/example.js
           mv example.html public/index.html
           mv pkg public/pkg
-          ls public
+          ls public/pkg
 
       - name: deploy
         uses: JamesIves/github-pages-deploy-action@4.1.4
