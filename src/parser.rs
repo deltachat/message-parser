@@ -699,6 +699,7 @@ mod tests {
             "parser@127.0.0.0",
             "message+parser+67543@delta.chat",
             "243432mmdfsa3234@example.com",
+            "617b5772c6d10feda41fc6e0e43b976c4cc9383d3729310d3dc9e1332f0d9acd@yggmail"
             // TODO add email test
         ];
 
