@@ -296,11 +296,11 @@ fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomErro
         Ok((i, elm))
     } else if let Ok((i, b)) = inline_code(input) {
         Ok((i, Element::InlineCode { content: b }))
-    } else if let Ok((i, elm)) = hashtag(input) {
+    } else if let Ok((i, elm)) = labeled_link(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = delimited_link(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = labeled_link(input) {
+    } else if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
