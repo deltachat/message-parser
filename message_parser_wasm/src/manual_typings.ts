@@ -1,4 +1,4 @@
-// needs to be put into TS_APPEND_CONTENT manually, didn#t find an esy way to include this file directly
+// needs to be put into TS_APPEND_CONTENT manually, didn't find an easy way to include this file directly
 
 export type ParsedElement =
   | { t: "Text"; c: string }

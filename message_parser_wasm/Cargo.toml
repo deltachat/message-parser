@@ -3,6 +3,8 @@ name = "message_parser_wasm"
 version = "0.1.0"
 edition = "2018"
 license = "MPL-2.0"
+description = "Parsing of Links, Email adresses, simple text formatting (markdown subset), user mentions, hashtags and more in DeltaChat messages."
+repository = "https://github.com/deltachat/message-parser"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -28,6 +30,8 @@ wee_alloc = { version = "0.4.5", optional = true }
 dc_message_parser = { path = "../" }
 
 [dev-dependencies]
+serde = "1.0.130"
+serde_json = "1.0.68"
 wasm-bindgen-test = "0.3.13"
 
 [profile.release]

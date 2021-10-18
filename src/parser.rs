@@ -1,4 +1,3 @@
-use email_address_parser::EmailAddress;
 use iref::Iri;
 use nom::{
     bytes::{
@@ -239,7 +238,7 @@ fn email_intern<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>
 fn email_address<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (input, content) = recognize(email_intern)(input)?;
     // check if result is valid email
-    if EmailAddress::is_valid(content, None) {
+    if true {
         Ok((input, Element::EmailAddress(content)))
     } else {
         Err(nom::Err::Error(CustomError::InvalidEmail))
