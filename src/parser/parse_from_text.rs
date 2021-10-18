@@ -11,6 +11,8 @@ use nom::{
     IResult,
 };
 
+use super::Element;
+
 #[derive(Debug, PartialEq)]
 pub enum CustomError<I> {
     NoContent,
@@ -30,44 +32,6 @@ impl<I> ParseError<I> for CustomError<I> {
     fn append(_: I, _: ErrorKind, other: Self) -> Self {
         other
     }
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-#[serde(tag = "t", content = "c")]
-pub enum Element<'a> {
-    Text(&'a str),
-    /// #hashtag
-    Tag(&'a str),
-    /// Represents a linebreak - \n
-    Linebreak,
-    Bold(Vec<Element<'a>>),
-    Italics(Vec<Element<'a>>),
-    StrikeThrough(Vec<Element<'a>>),
-    Link {
-        destination: &'a str,
-        // contains_puny_code: bool,
-    },
-    LabeledLink {
-        label: Vec<Element<'a>>,
-        destination: &'a str,
-        // contains_puny_code: bool,
-    },
-    InlineCode {
-        content: &'a str,
-    },
-    CodeBlock {
-        language: Option<&'a str>,
-        content: &'a str,
-    },
-    // BotCommandSuggestion(&'a str),
-    EmailAddress(&'a str),
-    // Later:
-    // CollonEmoji(&'a str),
-    // Mention {
-    //     internal_id: &str
-    // },
-    // InlineTex(&str),
-    // BlockTex(&str),
 }
 
 /// consumes all text until parse_element works again, internal use text instead
@@ -294,7 +258,7 @@ fn labeled_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError
     if raw_label.len() == 0 {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    let label = parse(raw_label);
+    let label = parse_all(raw_label);
 
     let (input, raw_link): (&str, &str) = delimited(tag("("), is_not(")"), tag(")"))(input)?;
     if raw_link.len() == 0 {
@@ -314,20 +278,20 @@ fn labeled_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError
     }
 }
 
-pub fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
     if let Ok((i, b)) = direct_delimited(input, "**") {
-        Ok((i, Element::Bold(parse(b))))
+        Ok((i, Element::Bold(parse_all(b))))
     } else if let Ok((i, b)) = direct_delimited(input, "__") {
-        Ok((i, Element::Bold(parse(b))))
+        Ok((i, Element::Bold(parse_all(b))))
     } else if let Ok((i, b)) = direct_delimited(input, "_") {
-        Ok((i, Element::Italics(parse(b))))
+        Ok((i, Element::Italics(parse_all(b))))
     } else if let Ok((i, b)) = direct_delimited(input, "*") {
-        Ok((i, Element::Italics(parse(b))))
+        Ok((i, Element::Italics(parse_all(b))))
     } else if let Ok((i, b)) = direct_delimited(input, "~~") {
-        Ok((i, Element::StrikeThrough(parse(b))))
+        Ok((i, Element::StrikeThrough(parse_all(b))))
     } else if let Ok((i, elm)) = code_block(input) {
         Ok((i, elm))
     } else if let Ok((i, b)) = inline_code(input) {
@@ -349,7 +313,8 @@ pub fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, Custom
     }
 }
 
-pub fn parse<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+/// parses all kinds of elements, including markdown
+pub(crate) fn parse_all<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
     let mut result = Vec::new();
     let mut remaining = input;
     // println!("p-{}", input);
@@ -373,15 +338,15 @@ pub fn parse<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
 }
 
 #[cfg(test)]
-mod tests {
-    use crate::parser::*;
-    use Element::*;
+mod test_markdown_text_to_ast {
+    use super::Element::*;
+    use super::*;
 
     #[test]
     fn bold() {
         let input = "**hello** world";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![Bold(vec![Text("hello")]), Text(" world")]
         );
     }
@@ -389,7 +354,7 @@ mod tests {
     fn not_bold() {
         let input = "**\nshould not be bold\n**";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Text("**"),
                 Linebreak,
@@ -404,7 +369,7 @@ mod tests {
     fn italics() {
         let input = "_hi_ world";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![Italics(vec![Text("hi")]), Text(" world")]
         );
     }
@@ -412,7 +377,7 @@ mod tests {
     fn nested_bold_italics() {
         let input = "**_strange_ hello** world";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Bold(vec![Italics(vec![Text("strange")]), Text(" hello"),]),
                 Text(" world")
@@ -423,7 +388,7 @@ mod tests {
     fn nested_bold_italics2() {
         let input = "**hello _strange_** world";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Bold(vec![Text("hello "), Italics(vec![Text("strange")])]),
                 Text(" world")
@@ -434,7 +399,7 @@ mod tests {
     fn bold_italics_and_linebreak() {
         let input = "**bold**\ngreen\n\t**_lorem_ ipsum**";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Bold(vec![Text("bold")]),
                 Linebreak,
@@ -450,7 +415,7 @@ mod tests {
     fn strikethrough() {
         let input = "~~strikethrough~~ text ~~ notstrikethrough~~ text";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 StrikeThrough(vec![Text("strikethrough")]),
                 Text(" text ~~ notstrikethrough~~ text")
@@ -461,7 +426,7 @@ mod tests {
     fn strikethrough_with_bold_inside() {
         let input = "~~strikethrough and **bold**, jo!~~";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![StrikeThrough(vec![
                 Text("strikethrough and "),
                 Bold(vec![Text("bold")]),
@@ -474,7 +439,7 @@ mod tests {
         let input =
             "hi there, you need to `cargo run` it.\nhi there, you need to ` cargo run ` it.";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Text("hi there, you need to "),
                 InlineCode {
@@ -496,7 +461,7 @@ mod tests {
         let input =
         "#hashtag\nWhen your new here look for #noob\nIf your already an expert look for #expert";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Tag("hashtag"),
                 Linebreak,
@@ -512,44 +477,50 @@ mod tests {
     #[test]
     fn german_umlaut_hashtag() {
         let input = "#bücher #Ängste";
-        assert_eq!(parse(&input), vec![Tag("bücher"), Text(" "), Tag("Ängste")]);
+        assert_eq!(
+            parse_all(&input),
+            vec![Tag("bücher"), Text(" "), Tag("Ängste")]
+        );
     }
 
     #[test]
     fn two_adjacent_hashtags() {
         let input = "#1#topic2";
-        assert_eq!(parse(&input), vec![Tag("1"), Tag("topic2")]);
+        assert_eq!(parse_all(&input), vec![Tag("1"), Tag("topic2")]);
     }
 
     #[test]
     fn two_hashtags_seperated_by_linebreak() {
         let input = "#1\n#topic2";
-        assert_eq!(parse(&input), vec![Tag("1"), Linebreak, Tag("topic2")]);
+        assert_eq!(parse_all(&input), vec![Tag("1"), Linebreak, Tag("topic2")]);
     }
 
     #[test]
     fn two_hashtags_seperated_by_tab() {
         let input = "#1\t#topic2";
-        assert_eq!(parse(&input), vec![Tag("1"), Text("\t"), Tag("topic2")]);
+        assert_eq!(parse_all(&input), vec![Tag("1"), Text("\t"), Tag("topic2")]);
     }
 
     #[test]
     fn bold_hashtag() {
         let input = "**#hashTagInsideOfBold**";
-        assert_eq!(parse(&input), vec![Bold(vec![Tag("hashTagInsideOfBold")])]);
+        assert_eq!(
+            parse_all(&input),
+            vec![Bold(vec![Tag("hashTagInsideOfBold")])]
+        );
     }
 
     #[test]
     fn code_fence_block_single_line_with_lang() {
         assert_eq!(
-            parse(&"```js alert('Hello World');```"),
+            parse_all(&"```js alert('Hello World');```"),
             vec![CodeBlock {
                 language: Some("js"),
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"```rust let c = a + b;```"),
+            parse_all(&"```rust let c = a + b;```"),
             vec![CodeBlock {
                 language: Some("rust"),
                 content: "let c = a + b;"
@@ -560,14 +531,14 @@ mod tests {
     #[test]
     fn code_fence_block_single_line_without_lang() {
         assert_eq!(
-            parse(&"``` alert('Hello World');```"),
+            parse_all(&"``` alert('Hello World');```"),
             vec![CodeBlock {
                 language: None,
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"``` let c = a + b;```"),
+            parse_all(&"``` let c = a + b;```"),
             vec![CodeBlock {
                 language: None,
                 content: "let c = a + b;"
@@ -577,14 +548,14 @@ mod tests {
         // no space should fail
         let input = "```alert('Hello World');```";
         assert_ne!(
-            parse(&input),
+            parse_all(&input),
             vec![CodeBlock {
                 language: Some("alert"),
                 content: "('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Text("``"),
                 InlineCode {
@@ -598,14 +569,14 @@ mod tests {
     #[test]
     fn code_fence_block_multi_line_with_lang() {
         assert_eq!(
-            parse(&"```js\nalert('Hello World');\n```"),
+            parse_all(&"```js\nalert('Hello World');\n```"),
             vec![CodeBlock {
                 language: Some("js"),
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"```rust\nlet c = a + b;\n```"),
+            parse_all(&"```rust\nlet c = a + b;\n```"),
             vec![CodeBlock {
                 language: Some("rust"),
                 content: "let c = a + b;"
@@ -616,14 +587,14 @@ mod tests {
     #[test]
     fn code_fence_block_multi_line_without_lang() {
         assert_eq!(
-            parse(&"```\nalert('Hello World');\n```"),
+            parse_all(&"```\nalert('Hello World');\n```"),
             vec![CodeBlock {
                 language: None,
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"```\nlet c = a + b;\n```"),
+            parse_all(&"```\nlet c = a + b;\n```"),
             vec![CodeBlock {
                 language: None,
                 content: "let c = a + b;"
@@ -635,21 +606,21 @@ mod tests {
     fn code_fence_block_multi_line_with_extra_spaces() {
         let input = "```js\t  \nalert('Hello World');\n```";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![CodeBlock {
                 language: Some("js"),
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"```    \nalert('Hello World');\n   ```"),
+            parse_all(&"```    \nalert('Hello World');\n   ```"),
             vec![CodeBlock {
                 language: None,
                 content: "alert('Hello World');"
             }]
         );
         assert_eq!(
-            parse(&"```\t \nlet c = a + b;\n\t  \t```"),
+            parse_all(&"```\t \nlet c = a + b;\n\t  \t```"),
             vec![CodeBlock {
                 language: None,
                 content: "let c = a + b;"
@@ -665,7 +636,7 @@ mod tests {
             ```js\nlet myElement = document.getElementById(\"my-element\");\
             \nmyElement.onclick = (ev) => console.log(ev);```\nI hope this can help you.";
         assert_eq!(
-            parse(&input),
+            parse_all(&input),
             vec![
                 Text("In javascript there is the "),
                 InlineCode { content: "document.getElementById(id)" },
@@ -698,20 +669,19 @@ mod tests {
             "parser@127.0.0.0",
             "message+parser+67543@delta.chat",
             "243432mmdfsa3234@example.com",
-            "617b5772c6d10feda41fc6e0e43b976c4cc9383d3729310d3dc9e1332f0d9acd@yggmail"
-            // TODO add email test
+            "617b5772c6d10feda41fc6e0e43b976c4cc9383d3729310d3dc9e1332f0d9acd@yggmail", // TODO add email test
         ];
 
         for input in test_cases {
             println!("testing {}", &input);
-            assert_eq!(parse(&input), vec![EmailAddress(&input)]);
+            assert_eq!(parse_all(&input), vec![EmailAddress(&input)]);
         }
     }
 
     #[test]
     fn email_address_example() {
         assert_eq!(
-            parse(&"This is an email address: message.parser@example.com\nMessage me there"),
+            parse_all(&"This is an email address: message.parser@example.com\nMessage me there"),
             vec![
                 Text("This is an email address: "),
                 EmailAddress("message.parser@example.com"),
@@ -745,19 +715,19 @@ mod tests {
 
         for input in &test_cases {
             println!("testing {}", input);
-            assert_eq!(parse(input), vec![Link { destination: input }]);
+            assert_eq!(parse_all(input), vec![Link { destination: input }]);
         }
 
         for input in &test_cases {
             println!("testing {}", format!("<{}>", input));
-            assert_eq!(parse(input), vec![Link { destination: input }]);
+            assert_eq!(parse_all(input), vec![Link { destination: input }]);
         }
     }
 
     #[test]
     fn test_link_example() {
         assert_eq!(
-            parse(&"This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"),
+            parse_all(&"This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"),
             vec![
                 Text("This is an my site: "),
                 Link {
@@ -772,7 +742,7 @@ mod tests {
     #[test]
     fn test_delimited_link_example() {
         assert_eq!(
-            parse(&"This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"),
+            parse_all(&"This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"),
             vec![
                 Text("This is an my site: "),
                 Link {
@@ -787,14 +757,14 @@ mod tests {
     #[test]
     fn labeled_link() {
         assert_eq!(
-            parse(&"[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+            parse_all(&"[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
             vec![LabeledLink {
                 label: vec![Text("a link")],
                 destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
             }]
         );
         assert_eq!(
-            parse(&"[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+            parse_all(&"[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
             vec![LabeledLink {
                 label: vec![Text("rich content "), Bold(vec![Text("bold")])],
                 destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
@@ -805,7 +775,7 @@ mod tests {
     #[test]
     fn labeled_link_example() {
         assert_eq!(
-            parse(&"you can find the details [here](https://delta.chat/en/help)."),
+            parse_all(&"you can find the details [here](https://delta.chat/en/help)."),
             vec![
                 Text("you can find the details "),
                 LabeledLink {

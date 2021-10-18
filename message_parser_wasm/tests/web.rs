@@ -22,7 +22,7 @@ use wasm_bindgen::JsValue;
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_namespace = JSON)]
-    fn stringify(s: &JsValue)-> JsValue;
+    fn stringify(s: &JsValue) -> JsValue;
 }
 
 #[wasm_bindgen_test]
@@ -36,7 +36,7 @@ fn test_parse() {
     );
 
     assert_eq!(
-        stringify(&parse("**`Block`**")),   
+        stringify(&parse("**`Block`**")),
         JsValue::from_str(r#"{"t":"Bold","c":[{"t":"InlineCode","c":{"content":"Block"}}]}"#)
     ); // this test needs somekind of deep equal because the order of the properties is not fixed
 }

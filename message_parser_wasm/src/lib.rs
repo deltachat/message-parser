@@ -16,7 +16,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 /// parses to json AST
 #[wasm_bindgen]
 pub fn parse(s: &str) -> JsValue {
-    let ast = dc_message_parser::parser::parse(s);
+    let ast = dc_message_parser::parser::parse_markdown_text(s);
     JsValue::from_serde(&ast).expect("json serializes to string")
 }
 
