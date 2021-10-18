@@ -13,10 +13,13 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 //     fn alert(s: &str);
 // }
 
-/// parses to json AST
+/// parses text to json AST
 #[wasm_bindgen]
-pub fn parse(s: &str) -> JsValue {
-    let ast = dc_message_parser::parser::parse_markdown_text(s);
+pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
+    let ast = match enable_markdown {
+        true => dc_message_parser::parser::parse_markdown_text(s),
+        false => dc_message_parser::parser::parse_only_text(s),
+    };
     JsValue::from_serde(&ast).expect("json serializes to string")
 }
 
