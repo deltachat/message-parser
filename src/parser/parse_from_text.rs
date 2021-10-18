@@ -278,6 +278,51 @@ fn labeled_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError
     }
 }
 
+fn parse_text_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+    // the order is important
+    // generaly more specific parsers that fail/return fast should be in the front
+    // But keep in mind that the order can also change how and if the parser works as intended
+    //
+    // Also as this is the text element parser,
+    // text elements parsers MUST NOT call the parser for markdown elements internally
+
+    if let Ok((i, elm)) = hashtag(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = email_address(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = link(input) {
+        Ok((i, elm))
+    } else if let Ok((i, _)) = linebreak(input) {
+        Ok((i, Element::Linebreak))
+    } else {
+        Err(nom::Err::Error(CustomError::NoElement))
+    }
+}
+
+/// parses text elements such as links and email addresses, excluding markdown
+pub(crate) fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+    let mut result = Vec::new();
+    let mut remaining = input;
+    // println!("p-{}", input);
+    while remaining.len() > 0 {
+        // println!("r-{}", remaining);
+        if let Ok((rest, element)) = parse_text_element(remaining) {
+            // println!("e-{:?} - {}", element, remaining);
+            remaining = rest;
+            result.push(element);
+        } else if let Ok((rest, element)) = text(remaining) {
+            // println!("e-{:?} - {}", element, remaining);
+            result.push(element);
+            remaining = rest;
+        } else {
+            // println!("e-textDefault-{}", remaining);
+            result.push(Element::Text(remaining));
+            break;
+        }
+    }
+    result
+}
+
 fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
@@ -300,16 +345,8 @@ fn parse_element<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomErro
         Ok((i, elm))
     } else if let Ok((i, elm)) = delimited_link(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = hashtag(input) {
-        Ok((i, elm))
-    } else if let Ok((i, elm)) = email_address(input) {
-        Ok((i, elm))
-    } else if let Ok((i, elm)) = link(input) {
-        Ok((i, elm))
-    } else if let Ok((i, _)) = linebreak(input) {
-        Ok((i, Element::Linebreak))
     } else {
-        Err(nom::Err::Error(CustomError::NoElement))
+        parse_text_element(input)
     }
 }
 

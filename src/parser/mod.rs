@@ -56,7 +56,7 @@ pub fn parse_markdown_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
     parse_from_text::parse_all(input)
 }
 
-// /// parses text elements such as links and email addresses, excluding markdown
-// pub fn parse_only_text <'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
-
-// }
+/// parses text elements such as links and email addresses, excluding markdown
+pub fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+    parse_from_text::parse_only_text(input)
+}
