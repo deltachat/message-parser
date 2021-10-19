@@ -278,7 +278,7 @@ fn idnalabel<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a
     Ok((input, label))
 }
 
-fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<&'a str>> {
+fn host<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
     if let Ok((input, host)) = recognize::<_, _, LinkParseError<&'a str>, _>(delimited(
         char('['),
         take_while1(is_ipv6_char),
@@ -287,7 +287,7 @@ fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<
     {
         // ipv6 hostnumber
         // sure the parsing here could be more specific and correct -> TODO
-        Ok((input, (host, false)))
+        Ok((input, host))
     } else if let Ok((input, host)) = recognize::<_, _, LinkParseError<&'a str>, _>(tuple((
         digit1,
         char('.'),
@@ -300,13 +300,13 @@ fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<
     {
         // ipv4 hostnumber
         // sure the parsing here could be more specific and correct -> TODO
-        Ok((input, (host, false)))
+        Ok((input, host))
     } else {
         // idna hostname (valid chars until ':' or '/')
         // sure the parsing here could be more specific and correct -> TODO
         let (input, host) =
             recognize(tuple((many0(tuple((idnalabel, char('.')))), idnalabel)))(input)?;
-        Ok((input, (host, true)))
+        Ok((input, host))
     }
 }
 
@@ -343,7 +343,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
         // parse login
         let (input, _) = opt(login)(input)?;
         // parse host
-        let (input, (host, is_puny)) = host(input)?;
+        let (input, host) = host(input)?;
         // parse port
         let (input, _) = opt(tuple((char(':'), digit1)))(input)?;
         // parse urlpath
@@ -351,6 +351,14 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
             alt((char('/'), char('?'), char('#'))),
             x_char_sequence,
         )))(input)?;
+
+        let mut is_puny = false;
+        for char in host.chars() {
+            if !(is_alphanum_or_hyphen_minus(char) || char == '.') {
+                is_puny = true;
+                break;
+            }
+        }
 
         Ok((
             input,
@@ -448,6 +456,18 @@ mod test {
                     hostname: "münchen.de",
                     has_puny_code_in_host_name: true,
                     ascii_hostname: "xn--mnchen-3ya.de".to_owned()
+                }
+            )
+        );
+
+        assert_eq!(
+            parse_url("http://muenchen.de").unwrap().1,
+            (
+                "http://muenchen.de",
+                UrlInfo::CommonInternetSchemeURL {
+                    hostname: "muenchen.de",
+                    has_puny_code_in_host_name: false,
+                    ascii_hostname: "muenchen.de".to_owned()
                 }
             )
         );
