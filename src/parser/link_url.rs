@@ -2,7 +2,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_till1, take_while, take_while1},
     character::complete::char,
-    character::complete::{anychar, digit1},
+    character::complete::digit1,
     combinator::{consumed, opt, recognize},
     error::{ErrorKind, ParseError},
     multi::many0,
@@ -158,8 +158,6 @@ enum UrlInfo<'a> {
 pub enum LinkParseError<I> {
     Nom(I, ErrorKind),
     ThisIsNotPercentEncoding,
-    InvalidDomain,
-    NotIdnaLabel,
 }
 
 impl<I> ParseError<I> for LinkParseError<I> {
@@ -269,39 +267,6 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
         _ => char.is_alphanum(),
     }
 }
-
-fn toplabel<'a>(input: &'a str) -> IResult<&'a str, (), LinkParseError<&'a str>> {
-    let (input, first_char) = take(1usize)(input)?;
-    if !first_char.chars().next().unwrap_or('0').is_alpha() {
-        return Err(nom::Err::Error(LinkParseError::InvalidDomain));
-    }
-    let (input, rest_of_label) = opt(take_while(is_alphanum_or_hyphen_minus))(input)?;
-    if let Some(rest) = rest_of_label {
-        if rest.ends_with("-") {
-            return Err(nom::Err::Error(LinkParseError::InvalidDomain));
-        }
-    }
-    Ok((input, ()))
-}
-
-fn domainlabel<'a>(input: &'a str) -> IResult<&'a str, (), LinkParseError<&'a str>> {
-    let (input, first_char) = take(1usize)(input)?;
-    if !first_char.chars().next().unwrap_or('0').is_alphanum() {
-        return Err(nom::Err::Error(LinkParseError::InvalidDomain));
-    }
-    let (input, rest_of_label) = opt(take_while(is_alphanum_or_hyphen_minus))(input)?;
-    if let Some(rest) = rest_of_label {
-        if rest.ends_with("-") {
-            return Err(nom::Err::Error(LinkParseError::InvalidDomain));
-        }
-    }
-    Ok((input, ()))
-}
-
-fn hostname<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
-    recognize(tuple((many0(tuple((domainlabel, char('.')))), toplabel)))(input)
-}
-
 fn is_forbidden_in_idnalabel(char: char) -> bool {
     is_reserved(char) || is_extra(char) || char == '>'
 }
@@ -310,17 +275,6 @@ fn is_forbidden_in_idnalabel(char: char) -> bool {
 /// takes everything until reserved, extra or '>'
 fn idnalabel<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
     let (input, label) = take_till1(is_forbidden_in_idnalabel)(input)?;
-    // make sure there is atleast one non ascii char in it, fail otherwise
-    let mut has_non_ascii_char = false;
-    for char in label.chars() {
-        if !is_alphanum_or_hyphen_minus(char) {
-            has_non_ascii_char = true;
-            break;
-        }
-    }
-    if !has_non_ascii_char {
-        return Err(nom::Err::Error(LinkParseError::NotIdnaLabel));
-    }
     Ok((input, label))
 }
 
@@ -347,9 +301,6 @@ fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<
         // ipv4 hostnumber
         // sure the parsing here could be more specific and correct -> TODO
         Ok((input, (host, false)))
-    } else if let Ok((input, host)) = hostname(input) {
-        // normal hostname
-        Ok((input, (host, false)))
     } else {
         // idna hostname (valid chars until ':' or '/')
         // sure the parsing here could be more specific and correct -> TODO
@@ -357,6 +308,30 @@ fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<
             recognize(tuple((many0(tuple((idnalabel, char('.')))), idnalabel)))(input)?;
         Ok((input, (host, true)))
     }
+}
+
+fn punycode_encode(host: &str) -> String {
+    host.split('.')
+        .map(|sub| {
+            let mut has_non_ascii_char = false;
+            for char in sub.chars() {
+                if !is_alphanum_or_hyphen_minus(char) {
+                    has_non_ascii_char = true;
+                    break;
+                }
+            }
+            if has_non_ascii_char {
+                format!(
+                    "xn--{}",
+                    unic_idna_punycode::encode_str(sub)
+                        .unwrap_or("[punycode encode failed]".to_owned())
+                )
+            } else {
+                sub.to_owned()
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(".")
 }
 
 fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseError<&'a str>> {
@@ -383,13 +358,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
                 hostname: host,
                 has_puny_code_in_host_name: is_puny,
                 ascii_hostname: if is_puny {
-                    host.split('.')
-                        .map(|sub| {
-                            unic_idna_punycode::encode_str(sub)
-                                .unwrap_or("[punycode encode failed]".to_owned())
-                        })
-                        .collect::<Vec<String>>()
-                        .join(".")
+                    punycode_encode(host)
                 } else {
                     host.to_string()
                 },
@@ -417,7 +386,7 @@ fn parse_url<'a>(
 
 #[cfg(test)]
 mod test {
-    use crate::parser::link_url::parse_url;
+    use crate::parser::link_url::{parse_url, punycode_encode, UrlInfo};
 
     #[test]
     fn basic_parsing() {
@@ -442,10 +411,11 @@ mod test {
             "mailto:foö@ü.chat",
             "https://ü.app#help",
             "ftp://test-test",
+            "http://münchen.de",
         ];
 
         for input in &test_cases {
-            println!("testing {}", input);
+            // println!("testing {}", input);
 
             let (rest, (url, _)) = parse_url(input.clone()).unwrap();
 
@@ -456,11 +426,30 @@ mod test {
 
     #[test]
     fn invalid_domains() {
-        let test_cases = vec!["https://-test-/hi", ";?:/hi"];
+        let test_cases = vec![";?:/hi", "##://thing"];
 
         for input in &test_cases {
-            println!("testing {}", input);
+            // println!("testing {}", input);
             assert!(parse_url(input.clone()).is_err());
         }
+    }
+    #[test]
+    fn punycode_encode_fn() {
+        assert_eq!(punycode_encode("münchen.de"), "xn--mnchen-3ya.de")
+    }
+
+    #[test]
+    fn punycode_detection() {
+        assert_eq!(
+            parse_url("http://münchen.de").unwrap().1,
+            (
+                "http://münchen.de",
+                UrlInfo::CommonInternetSchemeURL {
+                    hostname: "münchen.de",
+                    has_puny_code_in_host_name: true,
+                    ascii_hostname: "xn--mnchen-3ya.de".to_owned()
+                }
+            )
+        );
     }
 }
