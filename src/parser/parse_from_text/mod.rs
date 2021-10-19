@@ -1,6 +1,6 @@
 use super::Element;
 
-mod base_parsers;
+pub(crate) mod base_parsers;
 mod markdown_elements;
 mod text_elements;
 
@@ -54,6 +54,8 @@ pub(crate) fn parse_all<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
 
 #[cfg(test)]
 mod test_markdown_text_to_ast {
+    use crate::parser::link_url::LinkDestination;
+
     use super::Element::*;
     use super::*;
 
@@ -430,12 +432,22 @@ mod test_markdown_text_to_ast {
 
         for input in &test_cases {
             println!("testing {}", input);
-            assert_eq!(parse_all(input), vec![Link { destination: input }]);
+            assert_eq!(
+                parse_all(input),
+                vec![Link {
+                    destination: LinkDestination::parse(input).unwrap().1
+                }]
+            );
         }
 
         for input in &test_cases {
             println!("testing {}", format!("<{}>", input));
-            assert_eq!(parse_all(input), vec![Link { destination: input }]);
+            assert_eq!(
+                parse_all(input),
+                vec![Link {
+                    destination: LinkDestination::parse(input).unwrap().1
+                }]
+            );
         }
     }
 
@@ -446,7 +458,7 @@ mod test_markdown_text_to_ast {
             vec![
                 Text("This is an my site: "),
                 Link {
-                    destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                    destination: LinkDestination::for_testing("https://delta.chat/en/help?hi=5&e=4#section2.0")
                 },
                 Linebreak,
                 Text("Visit me there")
@@ -461,7 +473,7 @@ mod test_markdown_text_to_ast {
             vec![
                 Text("This is an my site: "),
                 Link {
-                    destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                    destination: LinkDestination::for_testing("https://delta.chat/en/help?hi=5&e=4#section2.0")
                 },
                 Linebreak,
                 Text("Visit me there")
@@ -475,14 +487,18 @@ mod test_markdown_text_to_ast {
             parse_all(&"[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
             vec![LabeledLink {
                 label: vec![Text("a link")],
-                destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                destination: LinkDestination::for_testing(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                )
             }]
         );
         assert_eq!(
             parse_all(&"[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
             vec![LabeledLink {
                 label: vec![Text("rich content "), Bold(vec![Text("bold")])],
-                destination: "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                destination: LinkDestination::for_testing(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                )
             }]
         );
     }
@@ -495,7 +511,7 @@ mod test_markdown_text_to_ast {
                 Text("you can find the details "),
                 LabeledLink {
                     label: vec![Text("here")],
-                    destination: "https://delta.chat/en/help"
+                    destination: LinkDestination::for_testing("https://delta.chat/en/help")
                 },
                 Text(".")
             ]

@@ -1,14 +1,12 @@
+use crate::parser::link_url::LinkDestination;
+
 use super::text_elements::{link, parse_text_element};
 use super::Element;
 use super::{base_parsers::*, parse_all};
 ///! nom parsers for markdown elements
-use iref::Iri;
-
 use nom::{
-    bytes::{
-        complete::{is_not, tag, take, take_while},
-    },
-    character::{ complete::alphanumeric1},
+    bytes::complete::{is_not, tag, take, take_while},
+    character::complete::alphanumeric1,
     combinator::{opt, peek, recognize},
     sequence::delimited,
     IResult,
@@ -108,14 +106,10 @@ fn labeled_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError
         return Err(nom::Err::Error(CustomError::NoContent));
     }
     // check if result is valid link
-    if Iri::new(raw_link).is_ok() {
-        Ok((
-            input,
-            Element::LabeledLink {
-                label,
-                destination: raw_link,
-            },
-        ))
+    let (remainder, destination) = LinkDestination::parse(raw_link)?;
+
+    if remainder.len() == 0 {
+        Ok((input, Element::LabeledLink { label, destination }))
     } else {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
@@ -150,7 +144,6 @@ pub(crate) fn parse_element<'a>(
     }
 }
 
-
 /// consumes all text until [parse_element] works again, internal use text instead
 ///
 /// its output is useable on its own, always combinate this with [nom::combinator::recognize]
@@ -173,7 +166,9 @@ fn eat_markdown_text<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a
 ///
 /// used as last parser, if the others do not consume the input it consumes the input until another parser works again
 /// (uses whitespace seperation to make the parsing faster)
-pub(crate)fn markdown_text<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn markdown_text<'a>(
+    input: &'a str,
+) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (rest, content) = recognize(eat_markdown_text)(input)?;
     Ok((rest, Element::Text(content)))
 }

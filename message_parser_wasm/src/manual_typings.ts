@@ -1,5 +1,13 @@
 // needs to be put into TS_APPEND_CONTENT manually, didn't find an easy way to include this file directly
 
+export type PunycodeWarning = {
+  original_hostname: string,
+  ascii_hostname: string,
+}
+export type LinkDestination = {
+  target: string,
+  punycode: null | PunycodeWarning,
+}
 export type ParsedElement =
   | { t: "Text"; c: string }
   | { t: "Tag"; c: string }
@@ -10,5 +18,5 @@ export type ParsedElement =
   | { t: "InlineCode"; c: { content: string } }
   | { t: "CodeBlock"; c: { language: null | string; content: string } }
   | { t: "EmailAddress"; c: string }
-  | { t: "Link"; c: { destination: string } }
-  | { t: "LabeledLink"; c: { label: ParsedElement[]; destination: string } };
+  | { t: "Link"; c: { destination: LinkDestination } }
+  | { t: "LabeledLink"; c: { label: ParsedElement[]; destination: LinkDestination } };

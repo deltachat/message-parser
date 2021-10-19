@@ -1,6 +1,10 @@
 // mod email;
 mod parse_from_text;
 
+mod link_url;
+
+use link_url::LinkDestination;
+
 /// The representation of Elements for the Abstract Syntax Tree
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "t", content = "c")]
@@ -15,8 +19,7 @@ pub enum Element<'a> {
     /// Represents a linebreak - \n
     Linebreak,
     Link {
-        destination: &'a str,
-        // contains_puny_code: bool,
+        destination: LinkDestination<'a>,
     },
     EmailAddress(&'a str),
     // Later:
@@ -35,8 +38,7 @@ pub enum Element<'a> {
 
     LabeledLink {
         label: Vec<Element<'a>>,
-        destination: &'a str,
-        // contains_puny_code: bool,
+        destination: LinkDestination<'a>,
     },
     InlineCode {
         content: &'a str,

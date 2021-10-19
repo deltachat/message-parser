@@ -10,7 +10,7 @@ license = "MPL-2.0"
 nom = "6"
 serde = "1.0.126"
 serde_derive = "1.0.126"
-iref = "1.4.3"
+unic-idna-punycode = "0.9.0"
 
 [workspace]
 members = [

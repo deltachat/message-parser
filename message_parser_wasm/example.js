@@ -1,6 +1,6 @@
 //@ts-check
 
-import init, { parse } from "./pkg/message_parser_wasm.js";
+import init, { parse_text } from "./pkg/message_parser_wasm.js";
 
 /** @typedef {import("./pkg/message_parser_wasm.js").ParsedElement} ParsedElement */
 
@@ -69,14 +69,14 @@ function renderElement(elm) {
 
     case "Link":
       let link = document.createElement("a");
-      link.innerText = elm.c.destination;
-      link.href = elm.c.destination;
+      link.innerText = elm.c.destination.target;
+      link.href = elm.c.destination.target;
       return link;
 
     case "LabeledLink":
       let labeled_link = document.createElement("a");
       renderElements(labeled_link, elm.c.label);
-      labeled_link.href = elm.c.destination;
+      labeled_link.href = elm.c.destination.target;
       return labeled_link;
 
     case "EmailAddress":
@@ -100,10 +100,13 @@ function renderElement(elm) {
 }
 
 init().then(() => {
-  console.log(parse);
+  console.log(parse_text);
   /** @type {HTMLTextAreaElement} */
   const input = document.getElementById("input");
   const output = document.getElementById("result");
+  const output_ast = document.getElementById("ast");
+  /** @type {HTMLInputElement} */
+  const enable_markdown_checkbox = document.getElementById("enable_markdown");
 
   let running = false;
   let should_run_again = false;
@@ -116,10 +119,14 @@ init().then(() => {
     running = true;
 
     /** @type {ParsedElement[]} */
-    let parsed = parse(input.value);
+    let parsed = parse_text(
+      input.value,
+      Boolean(enable_markdown_checkbox.checked)
+    );
     // console.log(parsed);
 
     output.innerText = "";
+    output_ast.innerText = JSON.stringify(parsed, null, 4);
 
     renderElements(output, parsed);
     running = false;
@@ -131,4 +138,5 @@ init().then(() => {
   action();
 
   input.onkeyup = action;
+  enable_markdown_checkbox.onchange = action;
 });

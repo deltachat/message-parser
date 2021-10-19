@@ -20,11 +20,19 @@ pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
         true => dc_message_parser::parser::parse_markdown_text(s),
         false => dc_message_parser::parser::parse_only_text(s),
     };
-    JsValue::from_serde(&ast).expect("json serializes to string")
+    JsValue::from_serde(&ast).expect("Element converts to JsValue")
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
+export type PunycodeWarning = {
+  original_hostname: string,
+  ascii_hostname: string,
+}
+export type LinkDestination = {
+  target: string,
+  punycode: null | PunycodeWarning,
+}
 export type ParsedElement =
   | { t: "Text"; c: string }
   | { t: "Tag"; c: string }
@@ -35,6 +43,6 @@ export type ParsedElement =
   | { t: "InlineCode"; c: { content: string } }
   | { t: "CodeBlock"; c: { language: null | string; content: string } }
   | { t: "EmailAddress"; c: string }
-  | { t: "Link"; c: { destination: string } }
-  | { t: "LabeledLink"; c: { label: ParsedElement[]; destination: string } };
+  | { t: "Link"; c: { destination: LinkDestination } }
+  | { t: "LabeledLink"; c: { label: ParsedElement[]; destination: LinkDestination } };
 "#;

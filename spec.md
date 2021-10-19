@@ -28,15 +28,24 @@ No whitespace as first nor as end char: see italics examples.
 
 No whitespace as first nor as end char: see italics examples.
 
-### `https://delta.chat` - Urls
+### `https://delta.chat` and `mailto:example@example.com` - Links
 
 Make URLs clickable.
 
-- detect all valid urls that have the `://` (protocol://host).
+- detect all valid hyperlink urls that have the `://` (protocol://host).
 
 - other links like `mailto:` (note there is just a single `:`, no `://`) will get seperate parsing that includes a whitelisted protocoll name, otherwise there will likely be unexpected behaviour if user types `hello:world` - will be recognized as link.
 
-### `<http://example.org>` - Urls
+#### Allowed schemes:
+- all Common Internet Scheme links (constaining after scheme `//`)
+- mailto
+- news
+
+### `<http://example.org>` - Delimited Link
+
+same format as normal Links enclosed in `<>`.
+
+url parsing allows all valid urls, no restrictions on schemes, no whitelist is needed, because the format already specifies that it is a link.
 
 ### `` `inline-code` ``
 
@@ -68,6 +77,8 @@ see https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code-and-sy
 When implementing this make sure to show the user the hidden url in a confirmation dialog to make scamming harder.
 Also show the url as encode punycode to make punycode attacks useless.
 Optionaly a client can implement a system to trust an domain (an "don't ask a again for links on this domain" checkbox in the confirmation dialog)
+
+url parsing allows all valid urls, no restrictions on schemes, no whitelist is needed, because the format already specifies that it is a link.
 
 ### Bot `/commands`
 

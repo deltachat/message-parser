@@ -1,7 +1,8 @@
+use crate::parser::link_url::LinkDestination;
+
 use super::base_parsers::*;
 use super::Element;
 ///! nom parsers for text elements
-use iref::Iri;
 use nom::{
     bytes::{
         complete::{tag, take, take_while1},
@@ -27,7 +28,7 @@ fn hashtag<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a 
 
 fn not_email_address_part_char(c: char) -> bool {
     match c {
-        '@' | '\n' | '\r' | '\t' | ' ' => true,
+        '@' | '\n' | '\r' | '\t' | ' ' | ':' => true,
         _ => false,
     }
 }
@@ -71,14 +72,12 @@ fn link_intern<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>>
 
 pub(crate) fn link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (input, content) = recognize(link_intern)(input)?;
+
     // check if result is valid link
-    if Iri::new(content).is_ok() {
-        Ok((
-            input,
-            Element::Link {
-                destination: content,
-            },
-        ))
+    let (remainder, destination) = LinkDestination::parse_standalone_with_whitelist(content)?;
+
+    if remainder.len() == 0 {
+        Ok((input, Element::Link { destination }))
     } else {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
