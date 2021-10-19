@@ -27,9 +27,10 @@ use super::parse_from_text::base_parsers::{is_not_white_space, CustomError};
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct LinkDestination<'a> {
     target: &'a str,
+    /// hostname if it was found
+    hostname: Option<&'a str>,
     /// contains data for the punycode warning if punycode was detected
     /// (the host part contains non ascii unicode characters)
-    /// Is only shown
     punycode: Option<PunycodeWarning>,
 }
 
@@ -37,6 +38,7 @@ pub struct LinkDestination<'a> {
 pub struct PunycodeWarning {
     original_hostname: String,
     ascii_hostname: String,
+    punycode_encoded_url: String,
 }
 
 /// determines which schemes get linkifyed
@@ -54,26 +56,30 @@ impl LinkDestination<'_> {
         input: &'a str,
     ) -> IResult<&'a str, LinkDestination<'a>, CustomError<&'a str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let punycode = match info {
+            let (hostname, punycode) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
                 } => {
                     if has_puny_code_in_host_name {
-                        Some(PunycodeWarning {
-                            original_hostname: hostname.to_owned(),
-                            ascii_hostname,
-                        })
+                        (
+                            Some(hostname),
+                            Some(PunycodeWarning {
+                                original_hostname: hostname.to_owned(),
+                                punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
+                                ascii_hostname,
+                            }),
+                        )
                     } else {
-                        None
+                        (Some(hostname), None)
                     }
                 }
                 UrlInfo::GenericUrl { scheme } => {
                     if !is_allowed_scheme(scheme) {
                         return Err(nom::Err::Error(CustomError::InvalidLink));
                     }
-                    None
+                    (None, None)
                 }
             };
 
@@ -81,6 +87,7 @@ impl LinkDestination<'_> {
                 rest,
                 LinkDestination {
                     target: link,
+                    hostname,
                     punycode,
                 },
             ))
@@ -91,38 +98,40 @@ impl LinkDestination<'_> {
 
     #[cfg(test)]
     pub(crate) fn for_testing<'a>(trusted_real_url: &'a str) -> LinkDestination {
-        LinkDestination {
-            target: trusted_real_url,
-            punycode: None,
-        }
+        LinkDestination::parse(trusted_real_url).unwrap().1
     }
 
     pub(crate) fn parse<'a>(
         input: &'a str,
     ) -> IResult<&'a str, LinkDestination<'a>, CustomError<&'a str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let punycode = match info {
+            let (hostname, punycode) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
                 } => {
                     if has_puny_code_in_host_name {
-                        Some(PunycodeWarning {
-                            original_hostname: hostname.to_owned(),
-                            ascii_hostname,
-                        })
+                        (
+                            Some(hostname),
+                            Some(PunycodeWarning {
+                                original_hostname: hostname.to_owned(),
+                                punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
+                                ascii_hostname,
+                            }),
+                        )
                     } else {
-                        None
+                        (Some(hostname), None)
                     }
                 }
-                UrlInfo::GenericUrl { .. } => None,
+                UrlInfo::GenericUrl { .. } => (None, None),
             };
 
             Ok((
                 rest,
                 LinkDestination {
                     target: link,
+                    hostname,
                     punycode,
                 },
             ))

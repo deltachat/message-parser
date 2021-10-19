@@ -26,13 +26,15 @@ pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type PunycodeWarning = {
-  original_hostname: string,
-  ascii_hostname: string,
-}
+  original_hostname: string;
+  ascii_hostname: string;
+  punycode_encoded_url: string;
+};
 export type LinkDestination = {
-  target: string,
-  punycode: null | PunycodeWarning,
-}
+  target: string;
+  hostname: null | string;
+  punycode: null | PunycodeWarning;
+};
 export type ParsedElement =
   | { t: "Text"; c: string }
   | { t: "Tag"; c: string }
@@ -44,5 +46,8 @@ export type ParsedElement =
   | { t: "CodeBlock"; c: { language: null | string; content: string } }
   | { t: "EmailAddress"; c: string }
   | { t: "Link"; c: { destination: LinkDestination } }
-  | { t: "LabeledLink"; c: { label: ParsedElement[]; destination: LinkDestination } };
+  | {
+      t: "LabeledLink";
+      c: { label: ParsedElement[]; destination: LinkDestination };
+    };
 "#;
