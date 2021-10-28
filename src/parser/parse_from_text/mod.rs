@@ -1,6 +1,7 @@
 use super::Element;
 
 pub(crate) mod base_parsers;
+mod desktop_subset;
 mod markdown_elements;
 mod text_elements;
 
@@ -36,6 +37,30 @@ pub(crate) fn parse_all<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
     while remaining.len() > 0 {
         // println!("r-{}", remaining);
         if let Ok((rest, element)) = markdown_elements::parse_element(remaining) {
+            // println!("e-{:?} - {}", element, remaining);
+            remaining = rest;
+            result.push(element);
+        } else if let Ok((rest, element)) = markdown_elements::markdown_text(remaining) {
+            // println!("e-{:?} - {}", element, remaining);
+            result.push(element);
+            remaining = rest;
+        } else {
+            // println!("e-textDefault-{}", remaining);
+            result.push(Element::Text(remaining));
+            break;
+        }
+    }
+    result
+}
+
+/// parses delimited and labled links additional to the text elements
+pub(crate) fn parse_desktop_set<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+    let mut result = Vec::new();
+    let mut remaining = input;
+    // println!("p-{}", input);
+    while remaining.len() > 0 {
+        // println!("r-{}", remaining);
+        if let Ok((rest, element)) = desktop_subset::parse_element(remaining) {
             // println!("e-{:?} - {}", element, remaining);
             remaining = rest;
             result.push(element);

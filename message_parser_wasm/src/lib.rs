@@ -23,6 +23,13 @@ pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
     JsValue::from_serde(&ast).expect("Element converts to JsValue")
 }
 
+/// parses text to json AST (text elements and labled links, to replicate current desktop implementation)
+#[wasm_bindgen]
+pub fn parse_desktop_set(s: &str) -> JsValue {
+    JsValue::from_serde(&dc_message_parser::parser::parse_desktop_set(s))
+        .expect("Element converts to JsValue")
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type PunycodeWarning = {

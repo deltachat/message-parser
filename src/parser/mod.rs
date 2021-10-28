@@ -62,3 +62,9 @@ pub fn parse_markdown_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
 pub fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
     parse_from_text::parse_only_text(input)
 }
+
+
+/// parses text and delimited/labled link elements to replicate current desktop elements
+pub fn parse_desktop_set<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+    parse_from_text::parse_desktop_set(input)
+}
