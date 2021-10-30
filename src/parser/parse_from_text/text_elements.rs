@@ -2,6 +2,7 @@ use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
 use super::Element;
+use nom::AsChar;
 ///! nom parsers for text elements
 use nom::{
     bytes::{
@@ -16,7 +17,9 @@ use nom::{
 named!(linebreak<&str, char>, char!('\n'));
 
 fn hashtag_content_char(c: char) -> bool {
-    !(is_white_space(c) || c == '#')
+    // !(is_white_space(c) || c == '#')
+    // simpler parsing for now, see https://github.com/deltachat/message-parser/issues/8
+    c.is_alphanum()
 }
 
 fn hashtag<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
