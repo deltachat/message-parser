@@ -68,7 +68,7 @@ On click, the command gets prefilled as the draft, so it can be easily send.
 
 ### `#tag`
 
-`/#[\wäöü]+/i`
+`/#[\w]+/i`
 
 > later we want something like `/#[^ \n\r\t#]+/` (`#` then everything (besides `#`) until space/line break/tab) to also allow for chars from other locales and emojis, see https://github.com/deltachat/message-parser/issues/8 for more info
 

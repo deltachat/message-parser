@@ -20,10 +20,6 @@ fn hashtag_content_char(c: char) -> bool {
     // !(is_white_space(c) || c == '#')
     // simpler parsing for now, see https://github.com/deltachat/message-parser/issues/8
     c.is_alphanum()
-        || match c {
-            'ä' | 'ö' | 'ü' | 'Ä' | 'Ö' | 'Ü' => true,
-            _ => false,
-        }
 }
 
 fn hashtag<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
