@@ -85,6 +85,75 @@ mod test_markdown_text_to_ast {
     use super::*;
 
     #[test]
+    fn bold_capitalized_command_suggestion() {
+        let input = "**/TELL** world";
+        assert_eq!(
+            parse_all(&input),
+            vec![Bold(vec![BotCommandSuggestion("/TELL")]), Text(" world")]
+        );
+    }
+
+    #[test]
+    fn bold_command_suggestion() {
+        let input = "**/yes** - write yes to the bot";
+        assert_eq!(
+            parse_all(&input),
+            vec![
+                Bold(vec![BotCommandSuggestion("/yes")]),
+                Text(" - write yes to the bot")
+            ]
+        );
+    }
+
+    #[test]
+    fn command_suggestions() {
+        let input = "/yes\n/move_a5_a6 \n/answer2_gameid or /answer__no";
+        assert_eq!(
+            parse_all(&input),
+            vec![
+                BotCommandSuggestion("/yes"),
+                Linebreak,
+                BotCommandSuggestion("/move_a5_a6"),
+                Text(" "),
+                Linebreak,
+                BotCommandSuggestion("/answer2_gameid"),
+                Text(" or "),
+                BotCommandSuggestion("/answer__no")
+            ]
+        );
+    }
+
+    #[test]
+    fn invalid_command_suggestions() {
+        let input = "/1\n /hello world";
+        assert_eq!(
+            parse_all(&input),
+            vec![
+                Text("/1"),
+                Linebreak,
+                Text(" "),
+                BotCommandSuggestion("/hello"),
+                Text(" world")
+            ]
+        );
+    }
+
+    #[test]
+    fn invalid_command_suggestions_too_long() {
+        let input = "/dfshadfshlhjkldfskhjlsdafhkjdkhflkdfalsklhdsfdfadfsadsfuresdffdssdfsdsd\
+fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
+ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjadsfjhdasfjkldjkhfsabcnxbkzjadsfhhd";
+        assert_eq!(
+            parse_all(&input),
+            vec![
+                Text("/dfshadfshlhjkldfskhjlsdafhkjdkhflkdfalsklhdsfdfadfsadsfuresdffdssdfsdsd\
+fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
+ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjadsfjhdasfjkldjkhfsabcnxbkzjadsfhhd")
+            ]
+        );
+    }
+
+    #[test]
     fn bold() {
         let input = "**hello** world";
         assert_eq!(

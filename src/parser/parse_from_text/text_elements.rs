@@ -1,17 +1,18 @@
+///! nom parsers for text elements
 use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
 use super::Element;
-use nom::AsChar;
-///! nom parsers for text elements
+use nom::bytes::complete::take_while;
 use nom::{
     bytes::{
         complete::{tag, take, take_while1},
         streaming::take_till1,
     },
-    character::{self},
-    combinator::{peek, recognize},
-    IResult,
+    character::{self, streaming::char},
+    combinator::{peek, recognize, verify},
+    sequence::tuple,
+    AsChar, IResult,
 };
 
 named!(linebreak<&str, char>, char!('\n'));
@@ -86,6 +87,32 @@ pub(crate) fn link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomEr
     }
 }
 
+fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
+    match char {
+        '@' | '\\' | '_' | '/' | '.' | '-' => true,
+        _ => char.is_alphanum(),
+    }
+}
+
+/// Bot command suggestion
+fn bot_command_suggestion<'a>(
+    input: &'a str,
+) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+    // dc-android's: regex /(?<=^|\\s)/[a-zA-Z][a-zA-Z@\\d_/.-]{0,254}/
+
+    let (input, content) = recognize(tuple((
+        char('/'),
+        verify(take(1usize), |s: &str| {
+            s.chars().next().unwrap_or('.').is_alphabetic()
+        }),
+        verify(take_while(is_allowed_bot_cmd_suggestion_char), |s: &str| {
+            s.len() < 256
+        }),
+    )))(input)?;
+
+    Ok((input, Element::BotCommandSuggestion(content)))
+}
+
 pub(crate) fn parse_text_element<'a>(
     input: &'a str,
 ) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
@@ -101,6 +128,8 @@ pub(crate) fn parse_text_element<'a>(
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = link(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = bot_command_suggestion(input) {
         Ok((i, elm))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))
