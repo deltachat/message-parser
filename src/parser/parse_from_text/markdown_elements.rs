@@ -81,7 +81,9 @@ fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&
 }
 
 // <https://link>
-pub(crate) fn delimited_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn delimited_link<'a>(
+    input: &'a str,
+) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
     if content.len() == 0 {
         return Err(nom::Err::Error(CustomError::NoContent));
@@ -94,7 +96,9 @@ pub(crate) fn delimited_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>
 }
 
 // [labeled](https://link)
-pub(crate) fn labeled_link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn labeled_link<'a>(
+    input: &'a str,
+) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (input, raw_label): (&str, &str) = delimited(tag("["), is_not("]"), tag("]"))(input)?;
     if raw_label.len() == 0 {
         return Err(nom::Err::Error(CustomError::NoContent));

@@ -1,13 +1,11 @@
 //! desktop subset of markdown, becase this way we can already use the punycode detection of this crate
 //! and also we can keep delimited and labled links in desktop
 
+use super::base_parsers::*;
 use super::markdown_elements::{delimited_link, labeled_link};
-use super::text_elements::{parse_text_element};
+use super::text_elements::parse_text_element;
 use super::Element;
-use super::{base_parsers::*};
-use nom::{
-    IResult,
-};
+use nom::IResult;
 
 pub(crate) fn parse_element<'a>(
     input: &'a str,
