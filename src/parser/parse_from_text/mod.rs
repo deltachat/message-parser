@@ -154,6 +154,12 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
     }
 
     #[test]
+    fn invalid_command_suggestions_should_be_text() {
+        let input = "read/write";
+        assert_eq!(parse_all(&input), vec![Text("read/write")]);
+    }
+
+    #[test]
     fn bold() {
         let input = "**hello** world";
         assert_eq!(
