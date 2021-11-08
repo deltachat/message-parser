@@ -23,7 +23,7 @@ fn hashtag_content_char(c: char) -> bool {
     c.is_alphanum()
 }
 
-fn hashtag<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, _) = character::complete::char('#')(input)?;
     let (input, content) = take_while1(hashtag_content_char)(input)?;
 
@@ -31,10 +31,7 @@ fn hashtag<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a 
 }
 
 fn not_email_address_part_char(c: char) -> bool {
-    match c {
-        '@' | '\n' | '\r' | '\t' | ' ' | ':' => true,
-        _ => false,
-    }
+    matches!(c, '@' | '\n' | '\r' | '\t' | ' ' | ':')
 }
 
 fn email_address_part_char(c: char) -> bool {
@@ -42,14 +39,14 @@ fn email_address_part_char(c: char) -> bool {
 }
 
 /// rough recognition of an email, results gets checked by a real email address parser
-fn email_intern<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>> {
+fn email_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_till1(not_email_address_part_char)(input)?;
     let (input, _) = tag("@")(input)?;
     let (input, _) = take_while1(email_address_part_char)(input)?;
     Ok((input, ()))
 }
 
-fn email_address<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn email_address(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(email_intern)(input)?;
     // check if result is valid email
     if true {
@@ -60,27 +57,24 @@ fn email_address<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomErro
 }
 
 fn not_link_part_char(c: char) -> bool {
-    match c {
-        ':' | '\n' | '\r' | '\t' | ' ' => false,
-        _ => true,
-    }
+    !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
 }
 
 /// rough recognition of an link, results gets checked by a real link parser
-fn link_intern<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>> {
+fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(not_link_part_char)(input)?;
     let (input, _) = tag(":")(input)?;
     let (input, _) = take_while1(is_not_white_space)(input)?;
     Ok((input, ()))
 }
 
-pub(crate) fn link<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(link_intern)(input)?;
 
     // check if result is valid link
     let (remainder, destination) = LinkDestination::parse_standalone_with_whitelist(content)?;
 
-    if remainder.len() == 0 {
+    if remainder.is_empty() {
         Ok((input, Element::Link { destination }))
     } else {
         Err(nom::Err::Error(CustomError::InvalidLink))
@@ -95,9 +89,7 @@ fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
 }
 
 /// Bot command suggestion
-fn bot_command_suggestion<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // dc-android's: regex /(?<=^|\\s)/[a-zA-Z][a-zA-Z@\\d_/.-]{0,254}/
 
     let (input, content) = recognize(tuple((
@@ -113,9 +105,7 @@ fn bot_command_suggestion<'a>(
     Ok((input, Element::BotCommandSuggestion(content)))
 }
 
-pub(crate) fn parse_text_element<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn parse_text_element(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
@@ -141,9 +131,9 @@ pub(crate) fn parse_text_element<'a>(
 /// consumes all text until [parse_text_element] works again, internal use text instead
 ///
 /// its output is useable on its own, always combinate this with [nom::combinator::recognize]
-fn eat_text<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>> {
+fn eat_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
-    while remaining.len() > 0 {
+    while !remaining.is_empty() {
         // take 1, because other parsers didn't work (text is always the last used parser)
         remaining = take(1usize)(remaining)?.0;
         // peek if there is an element
@@ -160,7 +150,7 @@ fn eat_text<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>> {
 ///
 /// used as last parser, if the others do not consume the input it consumes the input until another parser works again
 /// (uses whitespace seperation to make the parsing faster)
-pub(crate) fn text<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn text(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (rest, content) = recognize(eat_text)(input)?;
     Ok((rest, Element::Text(content)))
 }

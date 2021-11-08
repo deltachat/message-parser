@@ -7,9 +7,7 @@ use super::text_elements::parse_text_element;
 use super::Element;
 use nom::IResult;
 
-pub(crate) fn parse_element<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn parse_element(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended

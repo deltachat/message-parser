@@ -43,18 +43,15 @@ pub struct PunycodeWarning {
 
 /// determines which schemes get linkifyed
 fn is_allowed_scheme(scheme: &str) -> bool {
-    match scheme.to_ascii_lowercase().as_ref() {
-        "mailto" | "news" => true,
-        _ => false,
-    }
+    matches!(scheme.to_ascii_lowercase().as_ref(), "mailto" | "news")
 }
 
 impl LinkDestination<'_> {
     /// parse a link that is not in a delimited link or a labled link, just a part of normal text
     /// it has a whitelist of schemes, because otherwise
-    pub(crate) fn parse_standalone_with_whitelist<'a>(
-        input: &'a str,
-    ) -> IResult<&'a str, LinkDestination<'a>, CustomError<&'a str>> {
+    pub(crate) fn parse_standalone_with_whitelist(
+        input: &str,
+    ) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
             let (hostname, punycode) = match info {
                 UrlInfo::CommonInternetSchemeURL {
@@ -97,13 +94,11 @@ impl LinkDestination<'_> {
     }
 
     #[cfg(test)]
-    pub(crate) fn for_testing<'a>(trusted_real_url: &'a str) -> LinkDestination {
+    pub(crate) fn for_testing(trusted_real_url: &str) -> LinkDestination {
         LinkDestination::parse(trusted_real_url).unwrap().1
     }
 
-    pub(crate) fn parse<'a>(
-        input: &'a str,
-    ) -> IResult<&'a str, LinkDestination<'a>, CustomError<&'a str>> {
+    pub(crate) fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
             let (hostname, punycode) = match info {
                 UrlInfo::CommonInternetSchemeURL {
@@ -136,7 +131,7 @@ impl LinkDestination<'_> {
                 },
             ))
         } else {
-            return Err(nom::Err::Error(CustomError::InvalidLink));
+            Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
 }
@@ -171,17 +166,14 @@ impl<I> ParseError<I> for LinkParseError<I> {
 }
 
 fn is_reserved(char: char) -> bool {
-    match char {
-        ';' | '/' | '?' | ':' | '@' | '&' | '=' => true,
-        _ => false,
-    }
+    matches!(char, ';' | '/' | '?' | ':' | '@' | '&' | '=')
 }
 
 fn is_hex_digit(c: char) -> bool {
     c.is_digit(16)
 }
 
-fn escaped_char<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
+fn escaped_char(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
     let (input, content) = take(3usize)(input)?;
     let mut content_chars = content.chars();
 
@@ -196,24 +188,18 @@ fn escaped_char<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<
 }
 
 fn is_safe(char: char) -> bool {
-    match char {
-        '$' | '-' | '_' | '.' | '+' => true,
-        _ => false,
-    }
+    matches!(char, '$' | '-' | '_' | '.' | '+')
 }
 
 fn is_extra(char: char) -> bool {
-    match char {
-        '!' | '*' | '\'' | '(' | ')' | ',' => true,
-        _ => false,
-    }
+    matches!(char, '!' | '*' | '\'' | '(' | ')' | ',')
 }
 
 fn is_unreserved(char: char) -> bool {
     char.is_alphanum() || is_safe(char) || is_extra(char)
 }
 
-fn x_char_sequence<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
+fn x_char_sequence(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
     //xchar          = unreserved | reserved | escape
     recognize(many0(alt((
         take_while1(is_unreserved),
@@ -239,14 +225,14 @@ fn is_user_or_password_char(char: char) -> bool {
     }
 }
 
-fn user_or_password<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
+fn user_or_password(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
     recognize(many0(alt((
         take_while(is_user_or_password_char),
         escaped_char,
     ))))(input)
 }
 
-fn login<'a>(input: &'a str) -> IResult<&'a str, (), LinkParseError<&'a str>> {
+fn login(input: &str) -> IResult<&str, (), LinkParseError<&str>> {
     // login          = user [ ":" password ] "@"
     let (input, _) = user_or_password(input)?;
     let (input, _) = opt(tuple((char(':'), user_or_password)))(input)?;
@@ -273,7 +259,7 @@ fn is_forbidden_in_idnalabel(char: char) -> bool {
 
 /// creates possibility for punycodedecoded/unicode/internationalized domains
 /// takes everything until reserved, extra or '>'
-fn idnalabel<'a>(input: &'a str) -> IResult<&'a str, &'a str, LinkParseError<&'a str>> {
+fn idnalabel(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
     let (input, label) = take_till1(is_forbidden_in_idnalabel)(input)?;
     Ok((input, label))
 }
@@ -324,7 +310,7 @@ fn punycode_encode(host: &str) -> String {
                 format!(
                     "xn--{}",
                     unic_idna_punycode::encode_str(sub)
-                        .unwrap_or("[punycode encode failed]".to_owned())
+                        .unwrap_or_else(|| "[punycode encode failed]".to_owned())
                 )
             } else {
                 sub.to_owned()
@@ -380,9 +366,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
     }
 }
 
-fn parse_url<'a>(
-    input: &'a str,
-) -> IResult<&'a str, (&'a str, UrlInfo<'a>), LinkParseError<&'a str>> {
+fn parse_url(input: &str) -> IResult<&str, (&str, UrlInfo), LinkParseError<&str>> {
     consumed(url_intern)(input)
 }
 
@@ -425,7 +409,7 @@ mod test {
         for input in &test_cases {
             // println!("testing {}", input);
 
-            let (rest, (url, _)) = parse_url(input.clone()).unwrap();
+            let (rest, (url, _)) = parse_url(input).unwrap();
 
             assert_eq!(input, &url);
             assert_eq!(rest.len(), 0);
@@ -438,7 +422,7 @@ mod test {
 
         for input in &test_cases {
             // println!("testing {}", input);
-            assert!(parse_url(input.clone()).is_err());
+            assert!(parse_url(input).is_err());
         }
     }
     #[test]

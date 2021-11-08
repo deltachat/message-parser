@@ -14,14 +14,14 @@ use nom::{
 
 named!(inline_code<&str, &str>, delimited!(tag!("`"), is_not!("`"), tag!("`")));
 
-fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content): (&str, &str) =
         delimited(tag("```"), nom::bytes::complete::is_not("```"), tag("```"))(input)?;
 
     let (content, lang) = if is_white_space(
         content
             .chars()
-            .nth(0)
+            .next()
             .ok_or(nom::Err::Error(CustomError::NoContent))?,
     ) {
         // no language defined
@@ -35,7 +35,7 @@ fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&
     // expect whitespace or new line after language or beginning (if no language is defined)
     let char_in_question = content
         .chars()
-        .nth(0)
+        .next()
         .ok_or(nom::Err::Error(CustomError::NoContent))?;
 
     let content = if is_white_space_but_not_linebreak(char_in_question) {
@@ -58,7 +58,7 @@ fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&
             .next()
             .ok_or(nom::Err::Error(CustomError::NoContent))?,
     ) {
-        offset = offset + 1
+        offset += 1
     }
 
     if content
@@ -68,7 +68,7 @@ fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&
         .ok_or(nom::Err::Error(CustomError::NoContent))?
         == '\n'
     {
-        offset = offset + 1
+        offset += 1
     }
 
     Ok((
@@ -81,47 +81,41 @@ fn code_block<'a>(input: &'a str) -> IResult<&'a str, Element<'a>, CustomError<&
 }
 
 // <https://link>
-pub(crate) fn delimited_link<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
-    if content.len() == 0 {
+    if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
     let (rest, link) = link(content)?;
-    if rest.len() != 0 {
+    if !rest.is_empty() {
         return Err(nom::Err::Error(CustomError::UnexpectedContent));
     }
     Ok((input, link))
 }
 
 // [labeled](https://link)
-pub(crate) fn labeled_link<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, raw_label): (&str, &str) = delimited(tag("["), is_not("]"), tag("]"))(input)?;
-    if raw_label.len() == 0 {
+    if raw_label.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
     let label = parse_all(raw_label);
 
     let (input, raw_link): (&str, &str) = delimited(tag("("), is_not(")"), tag(")"))(input)?;
-    if raw_link.len() == 0 {
+    if raw_link.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
     // check if result is valid link
     let (remainder, destination) = LinkDestination::parse(raw_link)?;
 
-    if remainder.len() == 0 {
+    if remainder.is_empty() {
         Ok((input, Element::LabeledLink { label, destination }))
     } else {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
 }
 
-pub(crate) fn parse_element<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn parse_element(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
@@ -151,9 +145,9 @@ pub(crate) fn parse_element<'a>(
 /// consumes all text until [parse_element] works again, internal use text instead
 ///
 /// its output is useable on its own, always combinate this with [nom::combinator::recognize]
-fn eat_markdown_text<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a str>> {
+fn eat_markdown_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
-    while remaining.len() > 0 {
+    while !remaining.is_empty() {
         // take 1, because other parsers didn't work (text is always the last used parser)
         remaining = take(1usize)(remaining)?.0;
         // peek if there is an element
@@ -170,9 +164,7 @@ fn eat_markdown_text<'a>(input: &'a str) -> IResult<&'a str, (), CustomError<&'a
 ///
 /// used as last parser, if the others do not consume the input it consumes the input until another parser works again
 /// (uses whitespace seperation to make the parsing faster)
-pub(crate) fn markdown_text<'a>(
-    input: &'a str,
-) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+pub(crate) fn markdown_text(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (rest, content) = recognize(eat_markdown_text)(input)?;
     Ok((rest, Element::Text(content)))
 }

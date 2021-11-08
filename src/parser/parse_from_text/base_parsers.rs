@@ -28,10 +28,7 @@ impl<I> ParseError<I> for CustomError<I> {
 }
 
 pub(crate) fn is_white_space(c: char) -> bool {
-    match c {
-        '\n' | '\r' | '\t' | ' ' => true,
-        _ => false,
-    }
+    matches!(c, '\n' | '\r' | '\t' | ' ')
 }
 
 pub(crate) fn is_not_white_space(c: char) -> bool {
@@ -39,10 +36,7 @@ pub(crate) fn is_not_white_space(c: char) -> bool {
 }
 
 pub(crate) fn is_white_space_but_not_linebreak(c: char) -> bool {
-    match c {
-        '\t' | ' ' => true,
-        _ => false,
-    }
+    matches!(c, '\t' | ' ')
 }
 
 /// delimited no whitespace start or end
@@ -55,10 +49,10 @@ pub(crate) fn direct_delimited<'a>(
         nom::bytes::complete::is_not(tag_str),
         tag(tag_str),
     )(input)?;
-    if content.len() == 0 {
+    if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    if is_white_space(content.chars().nth(0).unwrap())
+    if is_white_space(content.chars().next().unwrap())
         || is_white_space(content.chars().last().unwrap())
     {
         return Err(nom::Err::Error(CustomError::InvalidWhiteSpaceFound));

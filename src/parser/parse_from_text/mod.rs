@@ -6,11 +6,11 @@ mod markdown_elements;
 mod text_elements;
 
 /// parses text elements such as links and email addresses, excluding markdown
-pub(crate) fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub(crate) fn parse_only_text(input: &str) -> std::vec::Vec<Element> {
     let mut result = Vec::new();
     let mut remaining = input;
     // println!("p-{}", input);
-    while remaining.len() > 0 {
+    while !remaining.is_empty() {
         // println!("r-{}", remaining);
         if let Ok((rest, element)) = text_elements::parse_text_element(remaining) {
             // println!("e-{:?} - {}", element, remaining);
@@ -30,11 +30,11 @@ pub(crate) fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> 
 }
 
 /// parses all kinds of elements, including markdown
-pub(crate) fn parse_all<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub(crate) fn parse_all(input: &str) -> std::vec::Vec<Element> {
     let mut result = Vec::new();
     let mut remaining = input;
     // println!("p-{}", input);
-    while remaining.len() > 0 {
+    while !remaining.is_empty() {
         // println!("r-{}", remaining);
         if let Ok((rest, element)) = markdown_elements::parse_element(remaining) {
             // println!("e-{:?} - {}", element, remaining);
@@ -54,11 +54,11 @@ pub(crate) fn parse_all<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
 }
 
 /// parses delimited and labled links additional to the text elements
-pub(crate) fn parse_desktop_set<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub(crate) fn parse_desktop_set(input: &str) -> std::vec::Vec<Element> {
     let mut result = Vec::new();
     let mut remaining = input;
     // println!("p-{}", input);
-    while remaining.len() > 0 {
+    while !remaining.is_empty() {
         // println!("r-{}", remaining);
         if let Ok((rest, element)) = desktop_subset::parse_element(remaining) {
             // println!("e-{:?} - {}", element, remaining);

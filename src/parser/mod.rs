@@ -55,16 +55,16 @@ pub enum Element<'a> {
 }
 
 /// parses all kinds of elements, including markdown
-pub fn parse_markdown_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub fn parse_markdown_text(input: &str) -> std::vec::Vec<Element> {
     parse_from_text::parse_all(input)
 }
 
 /// parses text elements such as links and email addresses, excluding markdown
-pub fn parse_only_text<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub fn parse_only_text(input: &str) -> std::vec::Vec<Element> {
     parse_from_text::parse_only_text(input)
 }
 
 /// parses text and delimited/labled link elements to replicate current desktop elements
-pub fn parse_desktop_set<'a>(input: &'a str) -> std::vec::Vec<Element<'a>> {
+pub fn parse_desktop_set(input: &str) -> std::vec::Vec<Element> {
     parse_from_text::parse_desktop_set(input)
 }
