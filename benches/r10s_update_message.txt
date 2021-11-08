@@ -1,0 +1,7 @@
+and now: here is Delta Chat 1.24.2 - choose your flavour and mind your backups:
+- 🍋 https://testrun.org/deltachat-gplay-release-1.24.2.apk (android, overwrites existing gplay installs, should keep data)
+- 🍉 https://testrun.org/deltachat-fat-debug-1.24.2.apk (android, can be installed beside gplay)
+- 🍏 https://testflight.apple.com/join/uEMc1NxS (ios, update to 1.24.2 may take a day or so)
+there are some major changes in this version, most of that are widely discussed here, see https://github.com/deltachat/deltachat-android/blob/master/CHANGELOG.md or all the details.
+for testing, most important part seems to that we are forced by google to targeted api30 - and by that, we have to change the way how to read/write external files. this affects backup, keys, attachments, these areas should be tested carefully, eg. we just had one issue with only android10 ... @Jonathan, who thankfully did the api30 thingie wrote down a testing checklist at https://github.com/deltachat/deltachat-android/pull/2087
+and now ... happy testing :)
