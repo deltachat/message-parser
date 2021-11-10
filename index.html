@@ -44,6 +44,8 @@
       style="width: calc(100% - 10px)"
       rows="10"
     ></textarea>
+    <label for="enable_markdown">Enable Markdown</label><br>
+    <input type="checkbox" id="enable_markdown" name="enable_markdown" checked="true" />
     <h3>Output</h3>
     <div
       id="result"
@@ -53,6 +55,18 @@
         padding: 8px;
         background-color: rgb(255, 238, 220);
         border: 1px solid lightgray;
+      "
+    ></div>
+    <h3>Output - AST</h3>
+    <div
+      id="ast"
+      style="
+        min-width: 100px;
+        min-height: 50px;
+        padding: 8px;
+        background-color: rgb(223, 255, 220);
+        border: 1px solid lightgray;
+        white-space: pre;
       "
     ></div>
     <script type="module" src="example.js"></script>

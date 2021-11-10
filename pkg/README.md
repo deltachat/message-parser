@@ -10,7 +10,7 @@ see [example.js](./example.js)
 ### 🛠️ Build with `wasm-pack build`
 
 ```
-wasm-pack build
+wasm-pack build --scope deltachat --target web
 ```
 
 ### 🔬 Test in Headless Browsers with `wasm-pack test`
