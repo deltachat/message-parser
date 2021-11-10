@@ -24,8 +24,10 @@ fn hashtag_content_char(c: char) -> bool {
 }
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, _) = character::complete::char('#')(input)?;
-    let (input, content) = take_while1(hashtag_content_char)(input)?;
+    let (input, content) = recognize(tuple((
+        character::complete::char('#'),
+        take_while1(hashtag_content_char),
+    )))(input)?;
 
     Ok((input, Element::Tag(content)))
 }

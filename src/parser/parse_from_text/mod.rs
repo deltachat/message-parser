@@ -280,13 +280,13 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
         assert_eq!(
             parse_all(&input),
             vec![
-                Tag("hashtag"),
+                Tag("#hashtag"),
                 Linebreak,
                 Text("When your new here look for "),
-                Tag("noob"),
+                Tag("#noob"),
                 Linebreak,
                 Text("If your already an expert look for "),
-                Tag("expert")
+                Tag("#expert")
             ]
         );
     }
@@ -297,26 +297,32 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
         // revert this back to assert_eq, once implemented see https://github.com/deltachat/message-parser/issues/8 for more info
         assert_ne!(
             parse_all(&input),
-            vec![Tag("bücher"), Text(" "), Tag("Ängste")]
+            vec![Tag("#bücher"), Text(" "), Tag("#Ängste")]
         );
     }
 
     #[test]
     fn two_adjacent_hashtags() {
         let input = "#1#topic2";
-        assert_eq!(parse_all(&input), vec![Tag("1"), Tag("topic2")]);
+        assert_eq!(parse_all(&input), vec![Tag("#1"), Tag("#topic2")]);
     }
 
     #[test]
     fn two_hashtags_seperated_by_linebreak() {
         let input = "#1\n#topic2";
-        assert_eq!(parse_all(&input), vec![Tag("1"), Linebreak, Tag("topic2")]);
+        assert_eq!(
+            parse_all(&input),
+            vec![Tag("#1"), Linebreak, Tag("#topic2")]
+        );
     }
 
     #[test]
     fn two_hashtags_seperated_by_tab() {
         let input = "#1\t#topic2";
-        assert_eq!(parse_all(&input), vec![Tag("1"), Text("\t"), Tag("topic2")]);
+        assert_eq!(
+            parse_all(&input),
+            vec![Tag("#1"), Text("\t"), Tag("#topic2")]
+        );
     }
 
     #[test]
@@ -324,7 +330,7 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
         let input = "**#hashTagInsideOfBold**";
         assert_eq!(
             parse_all(&input),
-            vec![Bold(vec![Tag("hashTagInsideOfBold")])]
+            vec![Bold(vec![Tag("#hashTagInsideOfBold")])]
         );
     }
 
