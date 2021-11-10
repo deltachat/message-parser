@@ -115,7 +115,10 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     }
 }
 
-pub(crate) fn parse_element(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+pub(crate) fn parse_element(
+    input: &str,
+    prev_char: Option<char>,
+) -> IResult<&str, Element, CustomError<&str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
@@ -138,7 +141,7 @@ pub(crate) fn parse_element(input: &str) -> IResult<&str, Element, CustomError<&
     } else if let Ok((i, elm)) = delimited_link(input) {
         Ok((i, elm))
     } else {
-        parse_text_element(input)
+        parse_text_element(input, prev_char)
     }
 }
 
@@ -149,9 +152,10 @@ fn eat_markdown_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {
         // take 1, because other parsers didn't work (text is always the last used parser)
-        remaining = take(1usize)(remaining)?.0;
+        let (remainder, taken) = take(1usize)(remaining)?;
+        remaining = remainder;
         // peek if there is an element
-        if peek(parse_element)(remaining).is_ok() {
+        if peek(|input| parse_element(input, taken.chars().next()))(remaining).is_ok() {
             break;
         }
         // take until whitespace

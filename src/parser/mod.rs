@@ -3,7 +3,7 @@ mod parse_from_text;
 
 mod link_url;
 
-use link_url::LinkDestination;
+pub use link_url::LinkDestination;
 
 /// The representation of Elements for the Abstract Syntax Tree
 #[derive(Debug, PartialEq, Eq, Serialize)]

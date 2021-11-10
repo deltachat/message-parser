@@ -93,12 +93,7 @@ impl LinkDestination<'_> {
         }
     }
 
-    #[cfg(test)]
-    pub(crate) fn for_testing(trusted_real_url: &str) -> LinkDestination {
-        LinkDestination::parse(trusted_real_url).unwrap().1
-    }
-
-    pub(crate) fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
             let (hostname, punycode) = match info {
                 UrlInfo::CommonInternetSchemeURL {

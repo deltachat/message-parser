@@ -107,7 +107,10 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
     Ok((input, Element::BotCommandSuggestion(content)))
 }
 
-pub(crate) fn parse_text_element(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+pub(crate) fn parse_text_element(
+    input: &str,
+    prev_char: Option<char>,
+) -> IResult<&str, Element, CustomError<&str>> {
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
@@ -121,7 +124,13 @@ pub(crate) fn parse_text_element(input: &str) -> IResult<&str, Element, CustomEr
         Ok((i, elm))
     } else if let Ok((i, elm)) = link(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = bot_command_suggestion(input) {
+    } else if let Ok((i, elm)) = {
+        if prev_char == Some(' ') || prev_char == None {
+            bot_command_suggestion(input)
+        } else {
+            Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
+        }
+    } {
         Ok((i, elm))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))
@@ -137,9 +146,10 @@ fn eat_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {
         // take 1, because other parsers didn't work (text is always the last used parser)
-        remaining = take(1usize)(remaining)?.0;
+        let (remainder, taken) = take(1usize)(remaining)?;
+        remaining = remainder;
         // peek if there is an element
-        if peek(parse_text_element)(remaining).is_ok() {
+        if peek(|input| parse_text_element(input, taken.chars().next()))(remaining).is_ok() {
             break;
         }
         // take until whitespace

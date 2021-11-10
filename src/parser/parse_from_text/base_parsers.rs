@@ -15,6 +15,7 @@ pub enum CustomError<I> {
     InvalidEmail,
     InvalidLink,
     UnexpectedContent,
+    PrecedingWhitespaceMissing,
 }
 
 impl<I> ParseError<I> for CustomError<I> {
