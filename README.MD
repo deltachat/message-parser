@@ -20,15 +20,21 @@ that can then be displayed by the UIs how they see fit, for desktop it will be c
 
 If used for message parsing, don't parse messages that are over `10 000` chars in size to ensure performance stays excelent. (the lib could and should support more than that and should aim to be fast enough for it, but on slow devices or transpiled to wasm or asmjs limiting it makes sense to avoid laggy/freezed interface)
 
+### Benchmarking:
 
-
-### Benchmarking: 
 ```
 cargo install cargo-criterion
 ```
+
 benchmark:
+
 ```
 cargo criterion
 ```
 
 docs about benchmarking: https://bheisler.github.io/criterion.rs/book/criterion_rs.html
+
+## References
+
+Older discussion on introducing markdown into deltachat: https://github.com/deltachat/interface/pull/20
+Feature request for message markdown in the forum: https://support.delta.chat/t/markdown-support-in-chat/159
