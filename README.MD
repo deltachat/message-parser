@@ -11,6 +11,8 @@ Have the same rich message parsing on all platforms.
 The basic idea is that core can use this library to convert messages to an AST format,
 that can then be displayed by the UIs how they see fit, for desktop it will be converted to react elements.
 
+> Desktop already uses this package (minus the markdown, because it does not make sense to only have markdown only on one platform) as wasm module (see `./message_parser_wasm`), later this will probably be integrated into deltachat core.
+
 ## Coding Principles
 
 - **many** test cases
