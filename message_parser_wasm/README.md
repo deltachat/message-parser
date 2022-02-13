@@ -4,6 +4,8 @@ Parsing of Links, email addresses, simple text formatting (markdown subset), use
 
 The specification can be found in [spec.md](https://github.com/deltachat/message-parser/blob/master/message_parser_wasm/spec.md).
 
+The parser is written in rust with the [nom crate](https://github.com/Geal/nom) and compiled to web assembly for this package.
+
 ## The Idea behind it
 
 Have the same rich message parsing on all platforms.
