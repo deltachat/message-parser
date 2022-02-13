@@ -38,5 +38,5 @@ docs about benchmarking: https://bheisler.github.io/criterion.rs/book/criterion_
 
 ## References
 
-Older discussion on introducing markdown into deltachat: https://github.com/deltachat/interface/pull/20
-Feature request for message markdown in the forum: https://support.delta.chat/t/markdown-support-in-chat/159
+- Older discussion on introducing markdown into deltachat: https://github.com/deltachat/interface/pull/20
+- Feature request for message markdown in the forum: https://support.delta.chat/t/markdown-support-in-chat/159
