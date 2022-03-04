@@ -4,6 +4,8 @@ Parsing of Links, Email adresses, simple text formatting (markdown subset), user
 
 The specification can be found in [spec.md](./spec.md).
 
+WASM Demo: <https://deltachat.github.io/message-parser/>
+
 ## Idea behind it
 
 Have the same rich message parsing on all platforms.
