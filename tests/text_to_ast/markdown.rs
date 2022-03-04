@@ -552,3 +552,51 @@ fn labeled_link_example() {
         ]
     );
 }
+
+#[test]
+fn labeled_link_can_have_comma_or_dot_at_end() {
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat/en/help.)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: link_destination_for_testing("https://delta.chat/en/help.")
+            },
+            Text(".")
+        ]
+    );
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat/en/help,)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: link_destination_for_testing("https://delta.chat/en/help,")
+            },
+            Text(".")
+        ]
+    );
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat/en/help:)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: link_destination_for_testing("https://delta.chat/en/help:")
+            },
+            Text(".")
+        ]
+    );
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat/en/help;)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: link_destination_for_testing("https://delta.chat/en/help;")
+            },
+            Text(".")
+        ]
+    );
+}

@@ -289,3 +289,78 @@ fn labeled_link_example_should_not_work() {
         ]
     );
 }
+
+#[test]
+fn link_do_not_consume_last_comma() {
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help,"),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help")
+            },
+            Text(",")
+        ]
+    );
+}
+
+#[test]
+fn link_do_not_consume_last_semicolon_or_colon() {
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help;"),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help")
+            },
+            Text(";")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help:"),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help")
+            },
+            Text(":")
+        ]
+    );
+}
+
+#[test]
+fn link_do_not_consume_last_dot() {
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help."),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help")
+            },
+            Text(".")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help.txt."),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help.txt")
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn link_with_file_extention() {
+    assert_eq!(
+        parse_only_text("you can find the details on https://delta.chat/en/help.html"),
+        vec![
+            Text("you can find the details on "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/help.html")
+            }
+        ]
+    );
+}
