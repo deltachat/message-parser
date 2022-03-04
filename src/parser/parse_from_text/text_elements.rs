@@ -73,7 +73,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut parentheses_count = 0usize; // ()
     let mut curly_brackets_count = 0usize; // {}
     let mut brackets_count = 0usize; // []
-    let mut angle_backets = 0usize; // <>
+    let mut angle_brackets = 0usize; // <>
 
     let mut alternative_offset = None;
     for (i, char) in consumed.chars().enumerate() {
@@ -103,7 +103,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                 }
             }
             '<' => {
-                angle_backets += 1;
+                angle_brackets += 1;
                 // if there is no closing bracket in the link, then don't take the bracket as a part of the link
                 if (<&str>::clone(&consumed)).slice(i..).find('>').is_none() {
                     alternative_offset = Some(i);
@@ -135,11 +135,11 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                 }
             }
             '>' => {
-                if angle_backets == 0 {
+                if angle_brackets == 0 {
                     alternative_offset = Some(i);
                     break;
                 } else {
-                    angle_backets -= 1;
+                    angle_brackets -= 1;
                 }
             }
             _ => continue,
