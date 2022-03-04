@@ -162,9 +162,7 @@ fn email_address_standalone() {
 #[test]
 fn email_address_example() {
     assert_eq!(
-        parse_desktop_set(
-            "This is an email address: message.parser@example.com\nMessage me there"
-        ),
+        parse_desktop_set("This is an email address: message.parser@example.com\nMessage me there"),
         vec![
             Text("This is an email address: "),
             EmailAddress("message.parser@example.com"),
