@@ -3,6 +3,7 @@ use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
 use super::Element;
+use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
 use nom::{
     bytes::{
@@ -79,15 +80,35 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
         match char {
             '(' => {
                 parentheses_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find(')').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
             }
             '{' => {
                 curly_brackets_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find('}').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
             }
             '[' => {
                 brackets_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find(']').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
             }
             '<' => {
                 angle_backets += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find('>').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
             }
             ')' => {
                 if parentheses_count == 0 {
@@ -126,7 +147,6 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     }
 
     if let Some(offset) = alternative_offset {
-        use crate::nom::Slice;
         let remaining = input.slice(offset..);
         Ok((remaining, ()))
     } else {
@@ -138,7 +158,6 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // basically
     //let (input, content) = recognize(link_intern)(input)?;
     // but don't eat the last char if it is one of these: `.,;:`
-    use crate::nom::{Offset, Slice};
     let i = <&str>::clone(&input);
     let i2 = <&str>::clone(&input);
     let i3 = <&str>::clone(&input);

@@ -456,3 +456,30 @@ fn link_with_parenthesis_in_parenthesis_curly() {
         ]
     );
 }
+
+#[test]
+fn link_with_descriptive_parenthesis() {
+    assert_eq!(
+        parse_only_text("https://delta.chat/page(this is the link to our site)"),
+        vec![
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/page")
+            },
+            Text("(this is the link to our site)")
+        ]
+    );
+}
+
+#[test]
+fn link_in_parenthesis2() {
+    assert_eq!(
+        parse_only_text("A great chat app (see https://delta.chat/en/)"),
+        vec![
+            Text("A great chat app (see "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/")
+            },
+            Text(")")
+        ]
+    );
+}
