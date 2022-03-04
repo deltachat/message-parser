@@ -5,7 +5,7 @@ use dc_message_parser::parser::parse_markdown_text;
 fn bold_capitalized_command_suggestion() {
     let input = "**/TELL** world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Bold(vec![BotCommandSuggestion("/TELL")]), Text(" world")]
     );
 }
@@ -14,7 +14,7 @@ fn bold_capitalized_command_suggestion() {
 fn bold_command_suggestion() {
     let input = "**/yes** - write yes to the bot";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Bold(vec![BotCommandSuggestion("/yes")]),
             Text(" - write yes to the bot")
@@ -26,7 +26,7 @@ fn bold_command_suggestion() {
 fn command_suggestions() {
     let input = "/yes\n/move_a5_a6 \n/answer2_gameid or /answer__no";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             BotCommandSuggestion("/yes"),
             Linebreak,
@@ -44,7 +44,7 @@ fn command_suggestions() {
 fn invalid_command_suggestions() {
     let input = "/1\n /hello world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Text("/1"),
             Linebreak,
@@ -61,7 +61,7 @@ fn invalid_command_suggestions_too_long() {
 fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
 ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjadsfjhdasfjkldjkhfsabcnxbkzjadsfhhd";
     assert_eq!(
-            parse_markdown_text(&input),
+            parse_markdown_text(input),
             vec![
                 Text("/dfshadfshlhjkldfskhjlsdafhkjdkhflkdfalsklhdsfdfadfsadsfuresdffdssdfsdsd\
 fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
@@ -73,14 +73,14 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
 #[test]
 fn invalid_command_suggestions_should_be_text() {
     let input = "read/write";
-    assert_eq!(parse_markdown_text(&input), vec![Text("read/write")]);
+    assert_eq!(parse_markdown_text(input), vec![Text("read/write")]);
 }
 
 #[test]
 fn bold() {
     let input = "**hello** world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Bold(vec![Text("hello")]), Text(" world")]
     );
 }
@@ -88,7 +88,7 @@ fn bold() {
 fn not_bold() {
     let input = "**\nshould not be bold\n**";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Text("**"),
             Linebreak,
@@ -103,7 +103,7 @@ fn not_bold() {
 fn italics() {
     let input = "_hi_ world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Italics(vec![Text("hi")]), Text(" world")]
     );
 }
@@ -111,7 +111,7 @@ fn italics() {
 fn nested_bold_italics() {
     let input = "**_strange_ hello** world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Bold(vec![Italics(vec![Text("strange")]), Text(" hello"),]),
             Text(" world")
@@ -122,7 +122,7 @@ fn nested_bold_italics() {
 fn nested_bold_italics2() {
     let input = "**hello _strange_** world";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Bold(vec![Text("hello "), Italics(vec![Text("strange")])]),
             Text(" world")
@@ -133,7 +133,7 @@ fn nested_bold_italics2() {
 fn bold_italics_and_linebreak() {
     let input = "**bold**\ngreen\n\t**_lorem_ ipsum**";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Bold(vec![Text("bold")]),
             Linebreak,
@@ -149,7 +149,7 @@ fn bold_italics_and_linebreak() {
 fn strikethrough() {
     let input = "~~strikethrough~~ text ~~ notstrikethrough~~ text";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             StrikeThrough(vec![Text("strikethrough")]),
             Text(" text ~~ notstrikethrough~~ text")
@@ -160,7 +160,7 @@ fn strikethrough() {
 fn strikethrough_with_bold_inside() {
     let input = "~~strikethrough and **bold**, jo!~~";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![StrikeThrough(vec![
             Text("strikethrough and "),
             Bold(vec![Text("bold")]),
@@ -172,7 +172,7 @@ fn strikethrough_with_bold_inside() {
 fn inline_code() {
     let input = "hi there, you need to `cargo run` it.\nhi there, you need to ` cargo run ` it.";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Text("hi there, you need to "),
             InlineCode {
@@ -194,7 +194,7 @@ fn hashtag() {
     let input =
         "#hashtag\nWhen your new here look for #noob\nIf your already an expert look for #expert";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Tag("#hashtag"),
             Linebreak,
@@ -212,7 +212,7 @@ fn german_umlaut_hashtag() {
     let input = "#bücher #Ängste";
     // revert this back to assert_eq, once implemented see https://github.com/deltachat/message-parser/issues/8 for more info
     assert_ne!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Tag("#bücher"), Text(" "), Tag("#Ängste")]
     );
 }
@@ -220,14 +220,14 @@ fn german_umlaut_hashtag() {
 #[test]
 fn two_adjacent_hashtags() {
     let input = "#1#topic2";
-    assert_eq!(parse_markdown_text(&input), vec![Tag("#1"), Tag("#topic2")]);
+    assert_eq!(parse_markdown_text(input), vec![Tag("#1"), Tag("#topic2")]);
 }
 
 #[test]
 fn two_hashtags_seperated_by_linebreak() {
     let input = "#1\n#topic2";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Tag("#1"), Linebreak, Tag("#topic2")]
     );
 }
@@ -236,7 +236,7 @@ fn two_hashtags_seperated_by_linebreak() {
 fn two_hashtags_seperated_by_tab() {
     let input = "#1\t#topic2";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Tag("#1"), Text("\t"), Tag("#topic2")]
     );
 }
@@ -245,7 +245,7 @@ fn two_hashtags_seperated_by_tab() {
 fn bold_hashtag() {
     let input = "**#hashTagInsideOfBold**";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![Bold(vec![Tag("#hashTagInsideOfBold")])]
     );
 }
@@ -253,14 +253,14 @@ fn bold_hashtag() {
 #[test]
 fn code_fence_block_single_line_with_lang() {
     assert_eq!(
-        parse_markdown_text(&"```js alert('Hello World');```"),
+        parse_markdown_text("```js alert('Hello World');```"),
         vec![CodeBlock {
             language: Some("js"),
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"```rust let c = a + b;```"),
+        parse_markdown_text("```rust let c = a + b;```"),
         vec![CodeBlock {
             language: Some("rust"),
             content: "let c = a + b;"
@@ -271,14 +271,14 @@ fn code_fence_block_single_line_with_lang() {
 #[test]
 fn code_fence_block_single_line_without_lang() {
     assert_eq!(
-        parse_markdown_text(&"``` alert('Hello World');```"),
+        parse_markdown_text("``` alert('Hello World');```"),
         vec![CodeBlock {
             language: None,
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"``` let c = a + b;```"),
+        parse_markdown_text("``` let c = a + b;```"),
         vec![CodeBlock {
             language: None,
             content: "let c = a + b;"
@@ -288,14 +288,14 @@ fn code_fence_block_single_line_without_lang() {
     // no space should fail
     let input = "```alert('Hello World');```";
     assert_ne!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![CodeBlock {
             language: Some("alert"),
             content: "('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![
             Text("``"),
             InlineCode {
@@ -309,14 +309,14 @@ fn code_fence_block_single_line_without_lang() {
 #[test]
 fn code_fence_block_multi_line_with_lang() {
     assert_eq!(
-        parse_markdown_text(&"```js\nalert('Hello World');\n```"),
+        parse_markdown_text("```js\nalert('Hello World');\n```"),
         vec![CodeBlock {
             language: Some("js"),
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"```rust\nlet c = a + b;\n```"),
+        parse_markdown_text("```rust\nlet c = a + b;\n```"),
         vec![CodeBlock {
             language: Some("rust"),
             content: "let c = a + b;"
@@ -327,14 +327,14 @@ fn code_fence_block_multi_line_with_lang() {
 #[test]
 fn code_fence_block_multi_line_without_lang() {
     assert_eq!(
-        parse_markdown_text(&"```\nalert('Hello World');\n```"),
+        parse_markdown_text("```\nalert('Hello World');\n```"),
         vec![CodeBlock {
             language: None,
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"```\nlet c = a + b;\n```"),
+        parse_markdown_text("```\nlet c = a + b;\n```"),
         vec![CodeBlock {
             language: None,
             content: "let c = a + b;"
@@ -346,21 +346,21 @@ fn code_fence_block_multi_line_without_lang() {
 fn code_fence_block_multi_line_with_extra_spaces() {
     let input = "```js\t  \nalert('Hello World');\n```";
     assert_eq!(
-        parse_markdown_text(&input),
+        parse_markdown_text(input),
         vec![CodeBlock {
             language: Some("js"),
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"```    \nalert('Hello World');\n   ```"),
+        parse_markdown_text("```    \nalert('Hello World');\n   ```"),
         vec![CodeBlock {
             language: None,
             content: "alert('Hello World');"
         }]
     );
     assert_eq!(
-        parse_markdown_text(&"```\t \nlet c = a + b;\n\t  \t```"),
+        parse_markdown_text("```\t \nlet c = a + b;\n\t  \t```"),
         vec![CodeBlock {
             language: None,
             content: "let c = a + b;"
@@ -376,7 +376,7 @@ fn code_fence_block_embedded_into_text_example() {
             ```js\nlet myElement = document.getElementById(\"my-element\");\
             \nmyElement.onclick = (ev) => console.log(ev);```\nI hope this can help you.";
     assert_eq!(
-            parse_markdown_text(&input),
+            parse_markdown_text(input),
             vec![
                 Text("In javascript there is the "),
                 InlineCode { content: "document.getElementById(id)" },
@@ -414,7 +414,7 @@ fn email_address_standalone() {
 
     for input in test_cases {
         println!("testing {}", &input);
-        assert_eq!(parse_markdown_text(&input), vec![EmailAddress(&input)]);
+        assert_eq!(parse_markdown_text(input), vec![EmailAddress(input)]);
     }
 }
 
@@ -422,7 +422,7 @@ fn email_address_standalone() {
 fn email_address_example() {
     assert_eq!(
         parse_markdown_text(
-            &"This is an email address: message.parser@example.com\nMessage me there"
+            "This is an email address: message.parser@example.com\nMessage me there"
         ),
         vec![
             Text("This is an email address: "),
@@ -480,7 +480,7 @@ fn link() {
 fn test_link_example() {
     assert_eq!(
         parse_markdown_text(
-            &"This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"
+            "This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"
         ),
         vec![
             Text("This is an my site: "),
@@ -499,7 +499,7 @@ fn test_link_example() {
 fn test_delimited_link_example() {
     assert_eq!(
         parse_markdown_text(
-            &"This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
+            "This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
         ),
         vec![
             Text("This is an my site: "),
@@ -517,7 +517,7 @@ fn test_delimited_link_example() {
 #[test]
 fn labeled_link() {
     assert_eq!(
-        parse_markdown_text(&"[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+        parse_markdown_text("[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("a link")],
             destination: link_destination_for_testing(
@@ -527,7 +527,7 @@ fn labeled_link() {
     );
     assert_eq!(
         parse_markdown_text(
-            &"[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"
+            "[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"
         ),
         vec![LabeledLink {
             label: vec![Text("rich content "), Bold(vec![Text("bold")])],
@@ -541,7 +541,7 @@ fn labeled_link() {
 #[test]
 fn labeled_link_example() {
     assert_eq!(
-        parse_markdown_text(&"you can find the details [here](https://delta.chat/en/help)."),
+        parse_markdown_text("you can find the details [here](https://delta.chat/en/help)."),
         vec![
             Text("you can find the details "),
             LabeledLink {

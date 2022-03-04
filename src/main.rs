@@ -16,7 +16,7 @@ fn main() -> io::Result<()> {
 
     let output = parse_markdown_text(&buffer);
 
-    io::stdout().write_all(&format!("output: {:?}", output).as_bytes())?;
+    io::stdout().write_all(format!("output: {:?}", output).as_bytes())?;
 
     //println!("output: {:?}", output);
     Ok(())

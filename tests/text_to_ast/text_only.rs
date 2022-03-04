@@ -39,7 +39,7 @@ fn do_not_parse_markdown_elements() {
 fn command_suggestions() {
     let input = "/yes\n/move_a5_a6 \n/answer2_gameid or /answer__no";
     assert_eq!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![
             BotCommandSuggestion("/yes"),
             Linebreak,
@@ -57,7 +57,7 @@ fn command_suggestions() {
 fn invalid_command_suggestions() {
     let input = "/1\n /hello world";
     assert_eq!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![
             Text("/1"),
             Linebreak,
@@ -74,7 +74,7 @@ fn invalid_command_suggestions_too_long() {
 fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
 ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjadsfjhdasfjkldjkhfsabcnxbkzjadsfhhd";
     assert_eq!(
-            parse_only_text(&input),
+            parse_only_text(input),
             vec![
                 Text("/dfshadfshlhjkldfskhjlsdafhkjdkhflkdfalsklhdsfdfadfsadsfuresdffdssdfsdsd\
 fjhkdsfhkhdafskhjdafshkljerwnmsdbcxzgkhjdsaljwieoqruyitohsjbdgfisdyhbjasdkhaegrykasbdhfglhawefdhlj\
@@ -86,7 +86,7 @@ ghbsfznhlkrhszfdhflsdahadjsfhlkjdfaslhkdfsahljdfashjdhjskafkhljdfashjkldafshjads
 #[test]
 fn invalid_command_suggestions_should_be_text() {
     let input = "read/write";
-    assert_eq!(parse_only_text(&input), vec![Text("read/write")]);
+    assert_eq!(parse_only_text(input), vec![Text("read/write")]);
 }
 
 #[test]
@@ -94,7 +94,7 @@ fn hashtag() {
     let input =
         "#hashtag\nWhen your new here look for #noob\nIf your already an expert look for #expert";
     assert_eq!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![
             Tag("#hashtag"),
             Linebreak,
@@ -112,7 +112,7 @@ fn german_umlaut_hashtag() {
     let input = "#bücher #Ängste";
     // revert this back to assert_eq, once implemented see https://github.com/deltachat/message-parser/issues/8 for more info
     assert_ne!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![Tag("#bücher"), Text(" "), Tag("#Ängste")]
     );
 }
@@ -120,14 +120,14 @@ fn german_umlaut_hashtag() {
 #[test]
 fn two_adjacent_hashtags() {
     let input = "#1#topic2";
-    assert_eq!(parse_only_text(&input), vec![Tag("#1"), Tag("#topic2")]);
+    assert_eq!(parse_only_text(input), vec![Tag("#1"), Tag("#topic2")]);
 }
 
 #[test]
 fn two_hashtags_seperated_by_linebreak() {
     let input = "#1\n#topic2";
     assert_eq!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![Tag("#1"), Linebreak, Tag("#topic2")]
     );
 }
@@ -136,7 +136,7 @@ fn two_hashtags_seperated_by_linebreak() {
 fn two_hashtags_seperated_by_tab() {
     let input = "#1\t#topic2";
     assert_eq!(
-        parse_only_text(&input),
+        parse_only_text(input),
         vec![Tag("#1"), Text("\t"), Tag("#topic2")]
     );
 }
@@ -155,14 +155,14 @@ fn email_address_standalone() {
 
     for input in test_cases {
         println!("testing {}", &input);
-        assert_eq!(parse_only_text(&input), vec![EmailAddress(&input)]);
+        assert_eq!(parse_only_text(input), vec![EmailAddress(input)]);
     }
 }
 
 #[test]
 fn email_address_example() {
     assert_eq!(
-        parse_only_text(&"This is an email address: message.parser@example.com\nMessage me there"),
+        parse_only_text("This is an email address: message.parser@example.com\nMessage me there"),
         vec![
             Text("This is an email address: "),
             EmailAddress("message.parser@example.com"),
@@ -219,7 +219,7 @@ fn link() {
 fn test_link_example() {
     assert_eq!(
         parse_only_text(
-            &"This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"
+            "This is an my site: https://delta.chat/en/help?hi=5&e=4#section2.0\nVisit me there"
         ),
         vec![
             Text("This is an my site: "),
@@ -238,7 +238,7 @@ fn test_link_example() {
 fn delimited_link_should_not_work() {
     assert_ne!(
         parse_only_text(
-            &"This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
+            "This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
         ),
         vec![
             Text("This is an my site: "),
@@ -256,7 +256,7 @@ fn delimited_link_should_not_work() {
 #[test]
 fn labeled_link_should_not_work() {
     assert_ne!(
-        parse_only_text(&"[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+        parse_only_text("[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("a link")],
             destination: link_destination_for_testing(
@@ -265,7 +265,7 @@ fn labeled_link_should_not_work() {
         }]
     );
     assert_ne!(
-        parse_only_text(&"[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+        parse_only_text("[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("rich content "), Bold(vec![Text("bold")])],
             destination: link_destination_for_testing(
@@ -278,7 +278,7 @@ fn labeled_link_should_not_work() {
 #[test]
 fn labeled_link_example_should_not_work() {
     assert_ne!(
-        parse_only_text(&"you can find the details [here](https://delta.chat/en/help)."),
+        parse_only_text("you can find the details [here](https://delta.chat/en/help)."),
         vec![
             Text("you can find the details "),
             LabeledLink {
