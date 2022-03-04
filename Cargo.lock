@@ -206,7 +206,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "dc_message_parser"
+name = "deltachat_message_parser"
 version = "0.3.0"
 dependencies = [
  "criterion",
@@ -327,7 +327,7 @@ name = "message_parser_wasm"
 version = "0.3.0"
 dependencies = [
  "console_error_panic_hook",
- "dc_message_parser",
+ "deltachat_message_parser",
  "serde",
  "serde_json",
  "wasm-bindgen",

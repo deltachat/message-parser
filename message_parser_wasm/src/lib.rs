@@ -17,8 +17,8 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 #[wasm_bindgen]
 pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
     let ast = match enable_markdown {
-        true => dc_message_parser::parser::parse_markdown_text(s),
-        false => dc_message_parser::parser::parse_only_text(s),
+        true => deltachat_message_parser::parser::parse_markdown_text(s),
+        false => deltachat_message_parser::parser::parse_only_text(s),
     };
     JsValue::from_serde(&ast).expect("Element converts to JsValue")
 }
@@ -26,7 +26,7 @@ pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
 /// parses text to json AST (text elements and labled links, to replicate current desktop implementation)
 #[wasm_bindgen]
 pub fn parse_desktop_set(s: &str) -> JsValue {
-    JsValue::from_serde(&dc_message_parser::parser::parse_desktop_set(s))
+    JsValue::from_serde(&deltachat_message_parser::parser::parse_desktop_set(s))
         .expect("Element converts to JsValue")
 }
 

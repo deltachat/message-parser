@@ -45,16 +45,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in library 'dc_message_parser'",
+            "name": "Debug unit tests in library 'deltachat_message_parser'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
                     "--lib",
-                    "--package=dc_message_parser"
+                    "--package=deltachat_message_parser"
                 ],
                 "filter": {
-                    "name": "dc_message_parser",
+                    "name": "deltachat_message_parser",
                     "kind": "lib"
                 }
             },
@@ -64,15 +64,15 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'dc_message_parser'",
+            "name": "Debug executable 'deltachat_message_parser'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=dc_message_parser",
-                    "--package=dc_message_parser"
+                    "--bin=deltachat_message_parser",
+                    "--package=deltachat_message_parser"
                 ],
                 "filter": {
-                    "name": "dc_message_parser",
+                    "name": "deltachat_message_parser",
                     "kind": "bin"
                 }
             },
@@ -82,16 +82,16 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'dc_message_parser'",
+            "name": "Debug unit tests in executable 'deltachat_message_parser'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=dc_message_parser",
-                    "--package=dc_message_parser"
+                    "--bin=deltachat_message_parser",
+                    "--package=deltachat_message_parser"
                 ],
                 "filter": {
-                    "name": "dc_message_parser",
+                    "name": "deltachat_message_parser",
                     "kind": "bin"
                 }
             },

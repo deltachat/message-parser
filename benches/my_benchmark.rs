@@ -1,5 +1,5 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use dc_message_parser::parser::{parse_desktop_set, parse_markdown_text, parse_only_text};
+use deltachat_message_parser::parser::{parse_desktop_set, parse_markdown_text, parse_only_text};
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let testdata = include_str!("testdata.md");

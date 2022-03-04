@@ -1,8 +1,12 @@
 [package]
-name = "dc_message_parser"
+name = "deltachat_message_parser"
 version = "0.3.0"
 edition = "2018"
 license = "MPL-2.0"
+description = "email, link, hashtag, md and more - parsing for deltachat messages"
+repository = "https://github.com/deltachat/message-parser"
+keywords = ["markdown", "link", "deltachat", "dc", "message", "message-parser"]
+categories = ["parser-implementations"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

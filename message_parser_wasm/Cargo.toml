@@ -27,7 +27,7 @@ console_error_panic_hook = { version = "0.1.6", optional = true }
 #
 # Unfortunately, `wee_alloc` requires nightly Rust when targeting wasm for now.
 wee_alloc = { version = "0.4.5", optional = true }
-dc_message_parser = { path = "../" }
+deltachat_message_parser = { path = "../" }
 
 [dev-dependencies]
 serde = "1.0.130"
