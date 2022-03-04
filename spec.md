@@ -42,6 +42,8 @@ Make URLs clickable.
 
 - other links like `mailto:` (note there is just a single `:`, no `://`) will get separate parsing that includes a whitelisted protocol name, otherwise there will likely be unexpected behavior if user types `hello:world` - will be recognized as link.
 
+- `.`,`,`,`;`,`:` should not be parsed as an ending char of an inline-link(this rule is only for standalone/inline links)
+
 #### Allowed schemes:
 
 - all Common Internet Scheme links (containing `//` after scheme)

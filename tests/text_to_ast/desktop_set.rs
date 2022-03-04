@@ -293,3 +293,31 @@ fn labeled_link_example_should_not_work() {
         ]
     );
 }
+
+#[test]
+fn inline_link_do_not_eat_last_char_if_it_is_special() {
+    assert_eq!(
+        parse_desktop_set("https://delta.chat,"),
+        vec![
+            Link {
+                destination: link_destination_for_testing("https://delta.chat")
+            },
+            Text(",")
+        ]
+    );
+    assert_eq!(
+        parse_desktop_set("https://delta.chat."),
+        vec![
+            Link {
+                destination: link_destination_for_testing("https://delta.chat")
+            },
+            Text(".")
+        ]
+    );
+    assert_eq!(
+        parse_desktop_set("https://delta.chat/page.hi"),
+        vec![Link {
+            destination: link_destination_for_testing("https://delta.chat/page.hi")
+        }]
+    );
+}

@@ -71,7 +71,32 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
 }
 
 pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content) = recognize(link_intern)(input)?;
+    // basically
+    //let (input, content) = recognize(link_intern)(input)?;
+    // but don't eat the last char if it is one of these: `.,;:`
+    use crate::nom::{Offset, Slice};
+    let i = <&str>::clone(&input);
+    let i2 = <&str>::clone(&input);
+    let i3 = <&str>::clone(&input);
+    let (input, content) = match link_intern(i) {
+        Ok((remaining, _)) => {
+            let index = i2.offset(remaining);
+            let consumed = i2.slice(..index);
+            match consumed.chars().last() {
+                Some(c) => match c {
+                    '.' | ',' | ':' | ';' => {
+                        let index = input.offset(remaining) - 1;
+                        let consumed = i3.slice(..index);
+                        let remaining = input.slice(index..);
+                        Ok((remaining, consumed))
+                    }
+                    _ => Ok((remaining, consumed)),
+                },
+                _ => Ok((remaining, consumed)),
+            }
+        }
+        Err(e) => Err(e),
+    }?;
 
     // check if result is valid link
     let (remainder, destination) = LinkDestination::parse_standalone_with_whitelist(content)?;
