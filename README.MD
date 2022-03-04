@@ -1,4 +1,4 @@
-# [Draft] DeltaChat Message Parser
+# DeltaChat Message Parser
 
 Parsing of Links, Email adresses, simple text formatting (markdown subset), user mentions, hashtags and more in DeltaChat messages.
 
