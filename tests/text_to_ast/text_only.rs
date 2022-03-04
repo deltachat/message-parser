@@ -364,3 +364,122 @@ fn link_with_file_extention() {
         ]
     );
 }
+
+#[test]
+fn parenthesis_in_links() {
+    assert_eq!(
+        parse_only_text("links can contain parenthesis, https://en.wikipedia.org/wiki/Bracket_(disambiguation) is an example of this."),
+        vec![
+            Text("links can contain parenthesis, "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_(disambiguation)")
+            },
+            Text(" is an example of this.")
+        ]
+    );
+}
+
+#[test]
+fn link_in_parenthesis() {
+    assert_eq!(
+        parse_only_text(
+            "for more information see (https://github.com/deltachat/message-parser/issues/12)"
+        ),
+        vec![
+            Text("for more information see ("),
+            Link {
+                destination: link_destination_for_testing(
+                    "https://github.com/deltachat/message-parser/issues/12"
+                )
+            },
+            Text(")")
+        ]
+    );
+}
+
+#[test]
+fn link_with_parenthesis_in_parenthesis() {
+    assert_eq!(
+        parse_only_text("there are links that contain parenthesis (for example https://en.wikipedia.org/wiki/Bracket_(disambiguation))"),
+        vec![
+            Text("there are links that contain parenthesis (for example "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_(disambiguation)")
+            },
+            Text(")")
+        ]
+    );
+}
+
+#[test]
+fn link_with_different_parenthesis_in_parenthesis() {
+    assert_eq!(
+        parse_only_text(
+            "()(for [example{ https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]])}"
+        ),
+        vec![
+            Text("()(for [example{ "),
+            Link {
+                destination: link_destination_for_testing(
+                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]"
+                )
+            },
+            Text("])}")
+        ]
+    );
+}
+
+#[test]
+fn link_with_backets_in_backets() {
+    assert_eq!(
+        parse_only_text("there are links that contain backets [for example https://en.wikipedia.org/wiki/Bracket_[disambiguation]]"),
+        vec![
+            Text("there are links that contain backets [for example "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_[disambiguation]")
+            },
+            Text("]")
+        ]
+    );
+}
+
+#[test]
+fn link_with_parenthesis_in_parenthesis_curly() {
+    assert_eq!(
+        parse_only_text("there are links that contain parenthesis {for example https://en.wikipedia.org/wiki/Bracket_{disambiguation}}"),
+        vec![
+            Text("there are links that contain parenthesis {for example "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_{disambiguation}")
+            },
+            Text("}")
+        ]
+    );
+}
+
+#[test]
+fn link_with_descriptive_parenthesis() {
+    assert_eq!(
+        parse_only_text("https://delta.chat/page(this is the link to our site)"),
+        vec![
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/page")
+            },
+            Text("(this is the link to our site)")
+        ]
+    );
+}
+
+#[test]
+fn link_in_parenthesis2() {
+    assert_eq!(
+        parse_only_text("A great chat app (see https://delta.chat/en/)"),
+        vec![
+            Text("A great chat app (see "),
+            Link {
+                destination: link_destination_for_testing("https://delta.chat/en/")
+            },
+            Text(")")
+        ]
+    );
+}

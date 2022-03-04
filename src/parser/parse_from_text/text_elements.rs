@@ -3,6 +3,7 @@ use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
 use super::Element;
+use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
 use nom::{
     bytes::{
@@ -66,15 +67,97 @@ fn not_link_part_char(c: char) -> bool {
 fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(not_link_part_char)(input)?;
     let (input, _) = tag(":")(input)?;
-    let (input, _) = take_while1(is_not_white_space)(input)?;
-    Ok((input, ()))
+    let i = <&str>::clone(&input);
+    let (remaining, consumed) = take_while1(is_not_white_space)(i)?;
+
+    let mut parentheses_count = 0usize; // ()
+    let mut curly_brackets_count = 0usize; // {}
+    let mut brackets_count = 0usize; // []
+    let mut angle_brackets = 0usize; // <>
+
+    let mut alternative_offset = None;
+    for (i, char) in consumed.chars().enumerate() {
+        match char {
+            '(' => {
+                parentheses_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find(')').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
+            }
+            '{' => {
+                curly_brackets_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find('}').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
+            }
+            '[' => {
+                brackets_count += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find(']').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
+            }
+            '<' => {
+                angle_brackets += 1;
+                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
+                if (<&str>::clone(&consumed)).slice(i..).find('>').is_none() {
+                    alternative_offset = Some(i);
+                    break;
+                }
+            }
+            ')' => {
+                if parentheses_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    parentheses_count -= 1;
+                }
+            }
+            '}' => {
+                if curly_brackets_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    curly_brackets_count -= 1;
+                }
+            }
+            ']' => {
+                if brackets_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    brackets_count -= 1;
+                }
+            }
+            '>' => {
+                if angle_brackets == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    angle_brackets -= 1;
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    if let Some(offset) = alternative_offset {
+        let remaining = input.slice(offset..);
+        Ok((remaining, ()))
+    } else {
+        Ok((remaining, ()))
+    }
 }
 
 pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // basically
     //let (input, content) = recognize(link_intern)(input)?;
     // but don't eat the last char if it is one of these: `.,;:`
-    use crate::nom::{Offset, Slice};
     let i = <&str>::clone(&input);
     let i2 = <&str>::clone(&input);
     let i3 = <&str>::clone(&input);

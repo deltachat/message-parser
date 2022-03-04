@@ -187,7 +187,10 @@ fn is_safe(char: char) -> bool {
 }
 
 fn is_extra(char: char) -> bool {
-    matches!(char, '!' | '*' | '\'' | '(' | ')' | ',')
+    matches!(
+        char,
+        '!' | '*' | '\'' | '(' | ')' | ',' | '{' | '}' | '[' | ']' | '<' | '>'
+    )
 }
 
 fn is_unreserved(char: char) -> bool {
