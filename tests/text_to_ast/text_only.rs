@@ -365,8 +365,6 @@ fn link_with_file_extention() {
     );
 }
 
-
-
 #[test]
 fn parenthesis_in_links() {
     assert_eq!(
@@ -384,17 +382,20 @@ fn parenthesis_in_links() {
 #[test]
 fn link_in_parenthesis() {
     assert_eq!(
-        parse_only_text("for more information see (https://github.com/deltachat/message-parser/issues/12)"),
+        parse_only_text(
+            "for more information see (https://github.com/deltachat/message-parser/issues/12)"
+        ),
         vec![
             Text("for more information see ("),
             Link {
-                destination: link_destination_for_testing("https://github.com/deltachat/message-parser/issues/12")
+                destination: link_destination_for_testing(
+                    "https://github.com/deltachat/message-parser/issues/12"
+                )
             },
             Text(")")
         ]
     );
 }
-
 
 #[test]
 fn link_with_parenthesis_in_parenthesis() {
@@ -413,13 +414,45 @@ fn link_with_parenthesis_in_parenthesis() {
 #[test]
 fn link_with_different_parenthesis_in_parenthesis() {
     assert_eq!(
-        parse_only_text("()(for [example{ https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]])}"),
+        parse_only_text(
+            "()(for [example{ https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]])}"
+        ),
         vec![
             Text("()(for [example{ "),
             Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]")
+                destination: link_destination_for_testing(
+                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]"
+                )
             },
             Text("])}")
+        ]
+    );
+}
+
+#[test]
+fn link_with_backets_in_backets() {
+    assert_eq!(
+        parse_only_text("there are links that contain backets [for example https://en.wikipedia.org/wiki/Bracket_[disambiguation]]"),
+        vec![
+            Text("there are links that contain backets [for example "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_[disambiguation]")
+            },
+            Text("]")
+        ]
+    );
+}
+
+#[test]
+fn link_with_parenthesis_in_parenthesis_curly() {
+    assert_eq!(
+        parse_only_text("there are links that contain parenthesis {for example https://en.wikipedia.org/wiki/Bracket_{disambiguation}}"),
+        vec![
+            Text("there are links that contain parenthesis {for example "),
+            Link {
+                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_{disambiguation}")
+            },
+            Text("}")
         ]
     );
 }

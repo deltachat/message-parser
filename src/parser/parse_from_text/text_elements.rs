@@ -66,8 +66,72 @@ fn not_link_part_char(c: char) -> bool {
 fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(not_link_part_char)(input)?;
     let (input, _) = tag(":")(input)?;
-    let (input, _) = take_while1(is_not_white_space)(input)?;
-    Ok((input, ()))
+    let i = <&str>::clone(&input);
+    let (remaining, consumed) = take_while1(is_not_white_space)(i)?;
+
+    let mut parentheses_count = 0usize; // ()
+    let mut curly_brackets_count = 0usize; // {}
+    let mut brackets_count = 0usize; // []
+    let mut angle_backets = 0usize; // <>
+
+    let mut alternative_offset = None;
+    for (i, char) in consumed.chars().enumerate() {
+        match char {
+            '(' => {
+                parentheses_count += 1;
+            }
+            '{' => {
+                curly_brackets_count += 1;
+            }
+            '[' => {
+                brackets_count += 1;
+            }
+            '<' => {
+                angle_backets += 1;
+            }
+            ')' => {
+                if parentheses_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    parentheses_count -= 1;
+                }
+            }
+            '}' => {
+                if curly_brackets_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    curly_brackets_count -= 1;
+                }
+            }
+            ']' => {
+                if brackets_count == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    brackets_count -= 1;
+                }
+            }
+            '>' => {
+                if angle_backets == 0 {
+                    alternative_offset = Some(i);
+                    break;
+                } else {
+                    angle_backets -= 1;
+                }
+            }
+            _ => continue,
+        }
+    }
+
+    if let Some(offset) = alternative_offset {
+        use crate::nom::Slice;
+        let remaining = input.slice(offset..);
+        Ok((remaining, ()))
+    } else {
+        Ok((remaining, ()))
+    }
 }
 
 pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
