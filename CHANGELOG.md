@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- update rust toolchain to `1.60.0`
+
 ## 0.3.0 - Squashing Link Bugs
 
 ## Changed
