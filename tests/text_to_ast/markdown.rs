@@ -466,7 +466,7 @@ fn link() {
     }
 
     for input in &test_cases {
-        println!("testing {}", format!("<{}>", input));
+        println!("testing <{}>", input);
         assert_eq!(
             parse_markdown_text(input),
             vec![Link {

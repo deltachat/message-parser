@@ -3,6 +3,7 @@
 ## Unreleased
 
 - update rust toolchain to `1.60.0`
+- enable more clippy lints to prevent panics
 
 ## 0.3.0 - Squashing Link Bugs
 

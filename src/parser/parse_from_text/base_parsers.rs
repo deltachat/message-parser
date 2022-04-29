@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 ///! Base utility parsers, used by both text and markdown parsers
 use nom::{
     bytes::complete::tag,
@@ -16,6 +18,8 @@ pub enum CustomError<I> {
     InvalidLink,
     UnexpectedContent,
     PrecedingWhitespaceMissing,
+    OptionIsUnxepectedNone,
+    UnxepectedError(String),
 }
 
 impl<I> ParseError<I> for CustomError<I> {
@@ -25,6 +29,31 @@ impl<I> ParseError<I> for CustomError<I> {
 
     fn append(_: I, _: ErrorKind, other: Self) -> Self {
         other
+    }
+}
+
+pub trait IntoCustomError<I, T> {
+    fn into_result(self) -> Result<T, nom::Err<CustomError<I>>>;
+}
+
+impl<I, T> IntoCustomError<I, T> for Option<T> {
+    fn into_result(self: Option<T>) -> Result<T, nom::Err<CustomError<I>>> {
+        match self {
+            Some(v) => Ok(v),
+            None => Err(nom::Err::Error(CustomError::OptionIsUnxepectedNone)),
+        }
+    }
+}
+
+impl<I, T, E: Debug> IntoCustomError<I, T> for Result<T, E> {
+    fn into_result(self: Result<T, E>) -> Result<T, nom::Err<CustomError<I>>> {
+        match self {
+            Ok(v) => Ok(v),
+            Err(err) => Err(nom::Err::Error(CustomError::UnxepectedError(format!(
+                "{:?}",
+                err
+            )))),
+        }
     }
 }
 
@@ -53,8 +82,8 @@ pub(crate) fn direct_delimited<'a>(
     if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    if is_white_space(content.chars().next().unwrap())
-        || is_white_space(content.chars().last().unwrap())
+    if is_white_space(content.chars().next().into_result()?)
+        || is_white_space(content.chars().last().into_result()?)
     {
         return Err(nom::Err::Error(CustomError::InvalidWhiteSpaceFound));
     }

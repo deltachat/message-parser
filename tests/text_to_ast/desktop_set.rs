@@ -205,7 +205,7 @@ fn link() {
     }
 
     for input in &test_cases {
-        println!("testing {}", format!("<{}>", input));
+        println!("testing <{}>", input);
         assert_eq!(
             parse_desktop_set(input),
             vec![Link {
