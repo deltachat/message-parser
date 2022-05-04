@@ -18,7 +18,7 @@ pub enum CustomError<I> {
     InvalidLink,
     UnexpectedContent,
     PrecedingWhitespaceMissing,
-    OptionIsUnxepectedNone,
+    OptionIsUnexpectedNone,
     UnxepectedError(String),
 }
 
@@ -40,7 +40,7 @@ impl<I, T> IntoCustomError<I, T> for Option<T> {
     fn into_result(self: Option<T>) -> Result<T, nom::Err<CustomError<I>>> {
         match self {
             Some(v) => Ok(v),
-            None => Err(nom::Err::Error(CustomError::OptionIsUnxepectedNone)),
+            None => Err(nom::Err::Error(CustomError::OptionIsUnexpectedNone)),
         }
     }
 }
