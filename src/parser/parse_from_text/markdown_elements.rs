@@ -51,14 +51,14 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     };
 
     // remove spaces and last newline at end
-    let mut offset = 0;
+    let mut offset: usize = 0;
     let mut c_iter = content.chars().rev();
     while is_white_space_but_not_linebreak(
         c_iter
             .next()
             .ok_or(nom::Err::Error(CustomError::NoContent))?,
     ) {
-        offset += 1
+        offset = offset.saturating_add(1);
     }
 
     if content
@@ -68,14 +68,16 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         .ok_or(nom::Err::Error(CustomError::NoContent))?
         == '\n'
     {
-        offset += 1
+        offset = offset.saturating_add(1);
     }
 
     Ok((
         input,
         Element::CodeBlock {
             language: lang,
-            content: &content[0..content.chars().count() - offset],
+            content: content
+                .get(0..content.chars().count().saturating_sub(offset))
+                .into_result()?,
         },
     ))
 }

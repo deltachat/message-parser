@@ -376,6 +376,7 @@ fn parse_url(input: &str) -> IResult<&str, (&str, UrlInfo), LinkParseError<&str>
 
 #[cfg(test)]
 mod test {
+    #![allow(clippy::unwrap_used)]
     use crate::parser::link_url::{parse_url, punycode_encode, UrlInfo};
 
     #[test]

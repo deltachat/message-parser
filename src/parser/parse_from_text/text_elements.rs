@@ -79,7 +79,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     for (i, char) in consumed.chars().enumerate() {
         match char {
             '(' => {
-                parentheses_count += 1;
+                parentheses_count = parentheses_count.saturating_add(1);
                 // if there is no closing bracket in the link, then don't take the bracket as a part of the link
                 if (<&str>::clone(&consumed)).slice(i..).find(')').is_none() {
                     alternative_offset = Some(i);
@@ -87,7 +87,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                 }
             }
             '{' => {
-                curly_brackets_count += 1;
+                curly_brackets_count = curly_brackets_count.saturating_add(1);
                 // if there is no closing bracket in the link, then don't take the bracket as a part of the link
                 if (<&str>::clone(&consumed)).slice(i..).find('}').is_none() {
                     alternative_offset = Some(i);
@@ -95,7 +95,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                 }
             }
             '[' => {
-                brackets_count += 1;
+                brackets_count = brackets_count.saturating_add(1);
                 // if there is no closing bracket in the link, then don't take the bracket as a part of the link
                 if (<&str>::clone(&consumed)).slice(i..).find(']').is_none() {
                     alternative_offset = Some(i);
@@ -103,7 +103,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                 }
             }
             '<' => {
-                angle_brackets += 1;
+                angle_brackets = angle_brackets.saturating_add(1);
                 // if there is no closing bracket in the link, then don't take the bracket as a part of the link
                 if (<&str>::clone(&consumed)).slice(i..).find('>').is_none() {
                     alternative_offset = Some(i);
@@ -115,7 +115,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                     alternative_offset = Some(i);
                     break;
                 } else {
-                    parentheses_count -= 1;
+                    parentheses_count = parentheses_count.saturating_sub(1);
                 }
             }
             '}' => {
@@ -123,7 +123,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                     alternative_offset = Some(i);
                     break;
                 } else {
-                    curly_brackets_count -= 1;
+                    curly_brackets_count = curly_brackets_count.saturating_sub(1);
                 }
             }
             ']' => {
@@ -131,7 +131,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                     alternative_offset = Some(i);
                     break;
                 } else {
-                    brackets_count -= 1;
+                    brackets_count = brackets_count.saturating_sub(1);
                 }
             }
             '>' => {
@@ -139,7 +139,7 @@ fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
                     alternative_offset = Some(i);
                     break;
                 } else {
-                    angle_brackets -= 1;
+                    angle_brackets = angle_brackets.saturating_sub(1);
                 }
             }
             _ => continue,
@@ -168,7 +168,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
             match consumed.chars().last() {
                 Some(c) => match c {
                     '.' | ',' | ':' | ';' => {
-                        let index = input.offset(remaining) - 1;
+                        let index = input.offset(remaining).saturating_sub(1);
                         let consumed = i3.slice(..index);
                         let remaining = input.slice(index..);
                         Ok((remaining, consumed))
