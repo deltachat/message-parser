@@ -2,8 +2,14 @@
 
 ## Unreleased
 
+## Changed
+
 - update rust toolchain to `1.60.0`
 - enable more clippy lints to prevent panics
+
+## Fixed
+
+- fix: do not parse last dot for email addresses #19
 
 ## 0.3.0 - Squashing Link Bugs
 
