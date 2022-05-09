@@ -173,6 +173,62 @@ fn email_address_example() {
 }
 
 #[test]
+fn email_address_do_not_parse_last_dot() {
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld."),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn email_address_do_not_parse_last_char_if_special() {
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld!"),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text("!")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld?"),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text("?")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld,"),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text(",")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld:"),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text(":")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can reach me on me@provider.tld;"),
+        vec![
+            Text("you can reach me on "),
+            EmailAddress("me@provider.tld"),
+            Text(";")
+        ]
+    );
+}
+
+#[test]
 fn link() {
     let test_cases = vec![
         "http://delta.chat",

@@ -34,7 +34,10 @@ fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
 }
 
 fn not_email_address_part_char(c: char) -> bool {
-    matches!(c, '@' | '\n' | '\r' | '\t' | ' ' | ':')
+    matches!(
+        c,
+        '@' | '\n' | '\r' | '\t' | ' ' | ':' | ';' | '!' | '?' | ','
+    )
 }
 
 fn email_address_part_char(c: char) -> bool {
@@ -50,7 +53,27 @@ fn email_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
 }
 
 fn email_address(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content) = recognize(email_intern)(input)?;
+    // basically
+    // let (input, content) = recognize(email_intern)(input)?;
+    // but don't eat the last char if it is a dot.
+    let i = <&str>::clone(&input);
+    let i2 = <&str>::clone(&input);
+    let i3 = <&str>::clone(&input);
+    let (input, content) = match email_intern(i) {
+        Ok((remaining, _)) => {
+            let index = i2.offset(remaining);
+            let consumed = i2.slice(..index);
+            if let Some('.') = consumed.chars().last() {
+                let index = input.offset(remaining).saturating_sub(1);
+                let consumed = i3.slice(..index);
+                let remaining = input.slice(index..);
+                Ok((remaining, consumed))
+            } else {
+                Ok((remaining, consumed))
+            }
+        }
+        Err(e) => Err(e),
+    }?;
     // check if result is valid email
     if true {
         Ok((input, Element::EmailAddress(content)))
