@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0 - Fixing Email, Preserve the Dots!
+
 ## Changed
 
 - update rust toolchain to `1.60.0`
