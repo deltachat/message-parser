@@ -44,8 +44,12 @@
       style="width: calc(100% - 10px)"
       rows="10"
     ></textarea>
-    <label for="enable_markdown">Enable Markdown</label><br>
-    <input type="checkbox" id="enable_markdown" name="enable_markdown" checked="true" />
+    <label for="parse_mode">Mode: </label>
+    <select name="parse_mode" id="parse_mode">
+      <option value="text">TEXT Only</option>
+      <option value="desktop">DESKTOP TEXT</option>
+      <option value="markdown">MARKDOWN</option>
+    </select>
     <h3>Output</h3>
     <div
       id="result"

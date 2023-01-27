@@ -1,6 +1,9 @@
 //@ts-check
 
-import init, { parse_text } from "./pkg/message_parser_wasm.js";
+import init, {
+  parse_desktop_set,
+  parse_text,
+} from "./pkg/message_parser_wasm.js";
 
 /** @typedef {import("./pkg/message_parser_wasm.js").ParsedElement} ParsedElement */
 
@@ -57,13 +60,11 @@ function renderElement(elm) {
 
     case "Tag":
       let tag = document.createElement("a");
-      tag.innerText = "#" + elm.c;
+      tag.innerText = elm.c;
       tag.href = "#";
       tag.onclick = () =>
         alert(
-          `Clicked on a hastag, this should open search for the text "${
-            "#" + elm.c
-          }"`
+          `Clicked on a hastag, this should open search for the text "${elm.c}"`
         );
       return tag;
 
@@ -86,16 +87,14 @@ function renderElement(elm) {
       return email;
 
     case "BotCommandSuggestion":
-        let bcs = document.createElement("a");
-        bcs.innerText = elm.c;
-        bcs.href = "#";
-        bcs.onclick = () =>
-          alert(
-            `Clicked on a BotCommandSuggestion, this should replace the current draft and if the draft is not empty it should ask whether it should be replaced"${
-              "#" + elm.c
-            }"`
-          );
-        return bcs;
+      let bcs = document.createElement("a");
+      bcs.innerText = elm.c;
+      bcs.href = "#";
+      bcs.onclick = () =>
+        alert(
+          `Clicked on a BotCommandSuggestion, this should replace the current draft and if the draft is not empty it should ask whether it should be replaced"${elm.c}"`
+        );
+      return bcs;
 
     case "Linebreak":
       return document.createElement("br");
@@ -117,8 +116,9 @@ init().then(() => {
   const input = document.getElementById("input");
   const output = document.getElementById("result");
   const output_ast = document.getElementById("ast");
-  /** @type {HTMLInputElement} */
-  const enable_markdown_checkbox = document.getElementById("enable_markdown");
+  /** @type {HTMLSelectElement} */
+  const parse_mode = document.getElementById("parse_mode");
+  parse_mode.value = localStorage.getItem("lastMode") || "text";
 
   let running = false;
   let should_run_again = false;
@@ -130,11 +130,26 @@ init().then(() => {
     }
     running = true;
 
+    /** @type {'text'|'desktop'|'markdown'} */
+    //@ts-ignore
+    const mode = parse_mode.value;
+
     /** @type {ParsedElement[]} */
-    let parsed = parse_text(
-      input.value,
-      Boolean(enable_markdown_checkbox.checked)
-    );
+    let parsed = [];
+
+    switch (mode) {
+      case "desktop":
+        parsed = parse_desktop_set(input.value);
+        break;
+      case "markdown":
+        parsed = parse_text(input.value, true);
+        break;
+      case "text":
+      default:
+        parsed = parse_text(input.value, false);
+        break;
+    }
+
     // console.log(parsed);
 
     output.innerText = "";
@@ -150,5 +165,8 @@ init().then(() => {
   action();
 
   input.onkeyup = action;
-  enable_markdown_checkbox.onchange = action;
+  parse_mode.onchange = () => {
+    localStorage.setItem("lastMode", parse_mode.value);
+    action();
+  };
 });
