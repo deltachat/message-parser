@@ -61,9 +61,7 @@ function renderElement(elm) {
       tag.href = "#";
       tag.onclick = () =>
         alert(
-          `Clicked on a hastag, this should open search for the text "${
-            "#" + elm.c
-          }"`
+          `Clicked on a hastag, this should open search for the text "${elm.c}"`
         );
       return tag;
 
@@ -86,16 +84,14 @@ function renderElement(elm) {
       return email;
 
     case "BotCommandSuggestion":
-        let bcs = document.createElement("a");
-        bcs.innerText = elm.c;
-        bcs.href = "#";
-        bcs.onclick = () =>
-          alert(
-            `Clicked on a BotCommandSuggestion, this should replace the current draft and if the draft is not empty it should ask whether it should be replaced"${
-              "#" + elm.c
-            }"`
-          );
-        return bcs;
+      let bcs = document.createElement("a");
+      bcs.innerText = elm.c;
+      bcs.href = "#";
+      bcs.onclick = () =>
+        alert(
+          `Clicked on a BotCommandSuggestion, this should replace the current draft and if the draft is not empty it should ask whether it should be replaced"${elm.c}"`
+        );
+      return bcs;
 
     case "Linebreak":
       return document.createElement("br");
