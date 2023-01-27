@@ -1,6 +1,9 @@
 //@ts-check
 
-import init, { parse_text } from "./pkg/message_parser_wasm.js";
+import init, {
+  parse_desktop_set,
+  parse_text,
+} from "./pkg/message_parser_wasm.js";
 
 /** @typedef {import("./pkg/message_parser_wasm.js").ParsedElement} ParsedElement */
 
@@ -113,8 +116,9 @@ init().then(() => {
   const input = document.getElementById("input");
   const output = document.getElementById("result");
   const output_ast = document.getElementById("ast");
-  /** @type {HTMLInputElement} */
-  const enable_markdown_checkbox = document.getElementById("enable_markdown");
+  /** @type {HTMLSelectElement} */
+  const parse_mode = document.getElementById("parse_mode");
+  parse_mode.value = localStorage.getItem("lastMode") || "text";
 
   let running = false;
   let should_run_again = false;
@@ -126,11 +130,26 @@ init().then(() => {
     }
     running = true;
 
+    /** @type {'text'|'desktop'|'markdown'} */
+    //@ts-ignore
+    const mode = parse_mode.value;
+
     /** @type {ParsedElement[]} */
-    let parsed = parse_text(
-      input.value,
-      Boolean(enable_markdown_checkbox.checked)
-    );
+    let parsed = [];
+
+    switch (mode) {
+      case "desktop":
+        parsed = parse_desktop_set(input.value);
+        break;
+      case "markdown":
+        parsed = parse_text(input.value, true);
+        break;
+      case "text":
+      default:
+        parsed = parse_text(input.value, false);
+        break;
+    }
+
     // console.log(parsed);
 
     output.innerText = "";
@@ -146,5 +165,8 @@ init().then(() => {
   action();
 
   input.onkeyup = action;
-  enable_markdown_checkbox.onchange = action;
+  parse_mode.onchange = () => {
+    localStorage.setItem("lastMode", parse_mode.value);
+    action();
+  };
 });
