@@ -57,7 +57,7 @@ function renderElement(elm) {
 
     case "Tag":
       let tag = document.createElement("a");
-      tag.innerText = "#" + elm.c;
+      tag.innerText = elm.c;
       tag.href = "#";
       tag.onclick = () =>
         alert(
