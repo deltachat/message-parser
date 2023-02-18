@@ -496,6 +496,21 @@ fn test_link_example() {
 }
 
 #[test]
+fn delimited_email_example() {
+    assert_eq!(
+        parse_markdown_text(
+            "This is an my site: <hello@delta.chat>\nMessage me there"
+        ),
+        vec![
+            Text("This is an my site: "),
+            EmailAddress("hello@delta.chat"),
+            Linebreak,
+            Text("Message me there")
+        ]
+    );
+}
+
+#[test]
 fn test_delimited_link_example() {
     assert_eq!(
         parse_markdown_text(

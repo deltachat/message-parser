@@ -291,6 +291,19 @@ fn test_link_example() {
 }
 
 #[test]
+fn delimited_email_should_not_work() {
+    assert_ne!(
+        parse_only_text("This is an my site: <hello@delta.chat>\nMessage me there"),
+        vec![
+            Text("This is an my site: "),
+            EmailAddress("hello@delta.chat"),
+            Linebreak,
+            Text("Message me there")
+        ]
+    );
+}
+
+#[test]
 fn delimited_link_should_not_work() {
     assert_ne!(
         parse_only_text(
