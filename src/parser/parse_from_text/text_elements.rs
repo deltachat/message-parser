@@ -52,7 +52,7 @@ fn email_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     Ok((input, ()))
 }
 
-pub (crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     // basically
     // let (input, content) = recognize(email_intern)(input)?;
     // but don't eat the last char if it is a dot.

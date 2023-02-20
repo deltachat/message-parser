@@ -237,9 +237,7 @@ fn test_link_example() {
 #[test]
 fn delimited_email_example() {
     assert_eq!(
-        parse_desktop_set(
-            "This is an my site: <hello@delta.chat>\nMessage me there"
-        ),
+        parse_desktop_set("This is an my site: <hello@delta.chat>\nMessage me there"),
         vec![
             Text("This is an my site: "),
             EmailAddress("hello@delta.chat"),

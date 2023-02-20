@@ -2,7 +2,7 @@
 //! and also we can keep delimited and labled links in desktop
 
 use super::base_parsers::*;
-use super::markdown_elements::{delimited_link, labeled_link, delimited_email_address};
+use super::markdown_elements::{delimited_email_address, delimited_link, labeled_link};
 use super::text_elements::parse_text_element;
 use super::Element;
 use nom::{
