@@ -2,24 +2,32 @@
 
 ## Unreleased
 
+### Added
+
+- support for `<delimited@email.address>`
+
+### Fixed
+
+- fix: code block with emojis removed some chars at the end
+
 ## 0.4.0 - Fixing Email, Preserve the Dots!
 
-## Changed
+### Changed
 
 - update rust toolchain to `1.60.0`
 - enable more clippy lints to prevent panics
 
-## Fixed
+### Fixed
 
 - fix: do not parse last dot for email addresses #19
 
 ## 0.3.0 - Squashing Link Bugs
 
-## Changed
+### Changed
 
 - `()`, `[]`, `{}`, `<>` brackets are now parsed as part of links (but only if they are opened and then closed again properly)
 
-## Fixed
+### Fixed
 
 - count brackets in links to fix #12
 - fix links eating trailing `.`,`,`,`;` or `:` #13
