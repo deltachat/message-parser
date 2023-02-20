@@ -18,6 +18,7 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content): (&str, &str) =
         delimited(tag("```"), nom::bytes::complete::is_not("```"), tag("```"))(input)?;
 
+    // parse language
     let (content, lang) = if is_white_space(
         content
             .chars()
@@ -38,6 +39,7 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         .next()
         .ok_or(nom::Err::Error(CustomError::NoContent))?;
 
+    // remove starting whitespace and first newline (if there is any).
     let content = if is_white_space_but_not_linebreak(char_in_question) {
         // remove whitespaces until newline or non whitespaces
         let (content, _) = take_while(is_white_space_but_not_linebreak)(content)?;
@@ -50,33 +52,22 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         content
     };
 
-    // remove spaces and last newline at end
+    // remove spaces and newlines at end of content
     let mut offset: usize = 0;
     let mut c_iter = content.chars().rev();
-    while is_white_space_but_not_linebreak(
+    while is_white_space(
         c_iter
             .next()
             .ok_or(nom::Err::Error(CustomError::NoContent))?,
     ) {
         offset = offset.saturating_add(1);
     }
-
-    if content
-        .chars()
-        .rev()
-        .nth(offset)
-        .ok_or(nom::Err::Error(CustomError::NoContent))?
-        == '\n'
-    {
-        offset = offset.saturating_add(1);
-    }
-
     Ok((
         input,
         Element::CodeBlock {
             language: lang,
             content: content
-                .get(0..content.chars().count().saturating_sub(offset))
+                .get(0..content.bytes().count().saturating_sub(offset))
                 .into_result()?,
         },
     ))

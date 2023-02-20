@@ -325,7 +325,7 @@ fn code_fence_block_multi_line_with_lang() {
 }
 
 #[test]
-fn code_fence_block_multi_line_without_lang() {
+fn code_fence_block_one_line_without_lang() {
     assert_eq!(
         parse_markdown_text("```\nalert('Hello World');\n```"),
         vec![CodeBlock {
@@ -338,6 +338,65 @@ fn code_fence_block_multi_line_without_lang() {
         vec![CodeBlock {
             language: None,
             content: "let c = a + b;"
+        }]
+    );
+}
+
+#[test]
+fn code_fence_block_remove_whitespaces_at_the_end() {
+    assert_eq!(
+        parse_markdown_text("```\nhello world  \t   \n    \n```"),
+        vec![CodeBlock {
+            language: None,
+            content: "hello world"
+        }]
+    );
+    assert_eq!(
+        parse_markdown_text("```js\nalert(\"hi\")  \t   \n    \n```"),
+        vec![CodeBlock {
+            language: Some("js"),
+            content: "alert(\"hi\")"
+        }]
+    );
+}
+
+#[test]
+fn code_fence_block_with_emoji() {
+    assert_eq!(
+        parse_markdown_text("``` 🤔123```"),
+        vec![CodeBlock {
+            language: None,
+            content: "🤔123"
+        }]
+    );
+    assert_eq!(
+        parse_markdown_text("```\n🤔100123456\n\n```"),
+        vec![CodeBlock {
+            language: None,
+            content: "🤔100123456"
+        }]
+    );
+    assert_eq!(
+        parse_markdown_text("```\n🤔Result🤔\n100123456```"),
+        vec![CodeBlock {
+            language: None,
+            content: "🤔Result🤔\n100123456"
+        }]
+    );
+    assert_eq!(
+        parse_markdown_text("```\n🤔Result🤔\n000123456\n```"),
+        vec![CodeBlock {
+            language: None,
+            content: "🤔Result🤔\n000123456"
+        }]
+    );
+    assert_eq!(
+        parse_markdown_text(
+            "```\n🤔Result🤔\nCODE:       33 | CLASSES:       35 | SCSS:      119\n\n\n```"
+        ),
+        vec![CodeBlock {
+            language: None,
+            content: "🤔Result🤔\nCODE:       33 | CLASSES:       35 | SCSS:      119"
         }]
     );
 }
