@@ -1,4 +1,5 @@
 use crate::parser::link_url::LinkDestination;
+use crate::parser::parse_from_text::text_elements::email_address;
 
 use super::text_elements::{link, parse_text_element};
 use super::Element;
@@ -73,6 +74,19 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     ))
 }
 
+// <hello@delta.chat>
+pub(crate) fn delimited_email_address(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
+    if content.is_empty() {
+        return Err(nom::Err::Error(CustomError::NoContent));
+    }
+    let (rest, email) = email_address(content)?;
+    if !rest.is_empty() {
+        return Err(nom::Err::Error(CustomError::UnexpectedContent));
+    }
+    Ok((input, email))
+}
+
 // <https://link>
 pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
@@ -130,6 +144,8 @@ pub(crate) fn parse_element(
     } else if let Ok((i, b)) = inline_code(input) {
         Ok((i, Element::InlineCode { content: b }))
     } else if let Ok((i, elm)) = labeled_link(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = delimited_email_address(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = delimited_link(input) {
         Ok((i, elm))

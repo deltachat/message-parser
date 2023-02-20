@@ -11,14 +11,16 @@
   - [Hashtags: `#tag`](#hashtag)
 - Desktop (made for what desktop now supports, so we can use the wasm version of the message parser as drop-in replacement)
   - All from Text (see above)
-  - [Labeled Links: `[Name](url)`](#labled-links)
+  - [Delimited Email addresses: `<hello@delta.chat>`](#delimited-email-addresses)
   - [Delimited Links: `<http://example.org>`](#delimited-links)
+  - [Labeled Links: `[Name](url)`](#labled-links)
 - (everything) Markdown
   - [_italics_: `*italics*`](#italics)
   - [**bold**: `**bold**`](#bold)
   - [~~strikethrough~~: `~~strikethrough~~`](#strikethrough)
   - [`inline-code`: `` `inline-code` ``](#inline-code)
   - [Code Block: ` ``` fence code block ``` `](#code-block)
+  - [Delimited Email addresses: `<hello@delta.chat>`](#delimited-email-addresses)
   - [Delimited Links: `<http://example.org>`](#delimited-links)
   - [Labeled Links: `[Name](url)`](#labled-links)
 
@@ -152,6 +154,12 @@ RIGHT: ` ``` hello world``` `
 see https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code-and-syntax-highlighting
 
 Parsing will remove trailing whitespaces and linebreaks at the end of the codeblock content.
+
+<a name="delimited-email-addresses" id="delimited-email-addresses"></a>
+
+### `<hello@delta.chat>` - Delimited Email addresses
+
+same format as normal email addresses enclosed in `<>`.
 
 <a name="delimited-links" id="delimited-links"></a>
 

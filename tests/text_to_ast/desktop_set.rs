@@ -235,20 +235,14 @@ fn test_link_example() {
 }
 
 #[test]
-fn delimited_link_should_not_work() {
+fn delimited_email_example() {
     assert_eq!(
-        parse_desktop_set(
-            "This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
-        ),
+        parse_desktop_set("This is an my site: <hello@delta.chat>\nMessage me there"),
         vec![
             Text("This is an my site: "),
-            Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
-                )
-            },
+            EmailAddress("hello@delta.chat"),
             Linebreak,
-            Text("Visit me there")
+            Text("Message me there")
         ]
     );
 }
