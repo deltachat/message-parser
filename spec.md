@@ -153,6 +153,8 @@ RIGHT: ` ``` hello world``` `
 
 see https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#code-and-syntax-highlighting
 
+Parsing will remove trailing whitespaces and linebreaks at the end of the codeblock content.
+
 <a name="delimited-email-addresses" id="delimited-email-addresses"></a>
 
 ### `<hello@delta.chat>` - Delimited Email addresses
