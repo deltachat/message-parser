@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0 - Delimited email addresses and fixing greedy codeblock
+
 ### Added
 
 - support for `<delimited@email.address>`
