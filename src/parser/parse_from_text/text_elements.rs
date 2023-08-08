@@ -36,7 +36,7 @@ fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
 fn not_email_address_part_char(c: char) -> bool {
     matches!(
         c,
-        '@' | '\n' | '\r' | '\t' | ' ' | ':' | ';' | '!' | '?' | ','
+        '@' | '\n' | '\r' | '\t' | ' ' | ':' | ';' | '!' | '?' | ',' | '(' | ')' | '{' | '}' | '[' | ']'
     )
 }
 
