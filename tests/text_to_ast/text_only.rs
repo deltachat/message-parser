@@ -264,7 +264,7 @@ fn link() {
         "mailto:delta@example.com",
         "mailto:delta@example.com?subject=hi&body=hello%20world",
         "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more url test cases
+        "https://ü.app#help", // TODO add more urls for testing
     ];
 
     for input in &test_cases {
