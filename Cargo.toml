@@ -24,6 +24,8 @@ nom = "6"
 serde = "1.0.126"
 serde_derive = "1.0.126"
 unic-idna-punycode = "0.9.0"
+icu_properties = "1.2.0"
+icu_testdata = "1.2.0"
 
 [workspace]
 members = ["message_parser_wasm"]

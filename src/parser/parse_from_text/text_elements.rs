@@ -15,19 +15,29 @@ use nom::{
     sequence::tuple,
     AsChar, IResult,
 };
+use icu_properties::{sets, sets::{CodePointSetDataBorrowed, CodePointSetData}};
 
 named!(linebreak<&str, char>, char!('\n'));
 
-fn hashtag_content_char(c: char) -> bool {
-    // !(is_white_space(c) || c == '#')
-    // simpler parsing for now, see https://github.com/deltachat/message-parser/issues/8
-    c.is_alphanum()
+fn hashtag_start_char(c: char) -> bool {
+    matches!(
+        c,
+        '#' | '﹟' | '＃'
+    )
 }
 
-fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+fn hashtag_content_char(c: char, sets: &Vec<CodePointSetDataBorrowed>) -> bool {
+    if hashtag_start_char(c) {
+        false
+    } else {
+        sets.iter().map(|set| set.contains(c)).any(|b| b) || matches!(c, '+' | '-' | '_')
+    }
+}
+
+fn hashtag<'a>(input: &'a str, sets: &Vec<CodePointSetDataBorrowed>) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
     let (input, content) = recognize(tuple((
         character::complete::char('#'),
-        take_while1(hashtag_content_char),
+        take_while1(|c| hashtag_content_char(c, sets)),
     )))(input)?;
 
     Ok((input, Element::Tag(content)))
@@ -262,8 +272,17 @@ pub(crate) fn parse_text_element(
     //
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
+    
+    let valid_hashtag_char_sets: Vec<CodePointSetData> = {
+        let mut tmp_vec: Vec<CodePointSetData> = vec![];
+        let data = &icu_testdata::unstable();
+        tmp_vec.push(sets::load_xid_continue(data).expect(""));
+        tmp_vec.push(sets::load_emoji_component(data).expect(""));
+        tmp_vec.push(sets::load_extended_pictographic(data).expect(""));
+        tmp_vec
+    };
 
-    if let Ok((i, elm)) = hashtag(input) {
+    if let Ok((i, elm)) = hashtag(input, valid_hashtag_char_sets.iter().map(|set| set.as_borrowed()).collect()) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
