@@ -19,13 +19,6 @@ use icu_properties::{sets, sets::{CodePointSetDataBorrowed, CodePointSetData}};
 
 named!(linebreak<&str, char>, char!('\n'));
 
-fn hashtag_start_char(c: char) -> bool {
-    matches!(
-        c,
-        '#' | '﹟' | '＃'
-    )
-}
-
 fn hashtag_content_char(c: char, sets: &Vec<CodePointSetDataBorrowed>) -> bool {
     if hashtag_start_char(c) {
         false
