@@ -1,5 +1,5 @@
 use super::*;
-use deltachat_message_parser::parser::parse_only_text;
+use deltachat_message_parser::parser::{parse_only_text, LinkDestination};
 
 #[test]
 fn do_not_parse_markdown_elements() {
@@ -264,7 +264,7 @@ fn link() {
         "mailto:delta@example.com",
         "mailto:delta@example.com?subject=hi&body=hello%20world",
         "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more url test cases
+        "https://ü.app#help", // TODO add more urls for testing
     ];
 
     for input in &test_cases {
@@ -286,6 +286,19 @@ fn link() {
             }]
         );
     }
+
+    let input = "http://[2001:0db8:85a3:08d3::0370:7344]:8080/";
+    let hostname = "[2001:0db8:85a3:08d3::0370:7344]";
+    assert_eq!(
+        parse_only_text(input),
+        vec![Link {
+            destination: LinkDestination {
+                target: input,
+                hostname: Some(hostname),
+                punycode: None,
+            }
+        }]
+    );
 }
 
 #[test]

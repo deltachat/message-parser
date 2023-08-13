@@ -174,7 +174,7 @@ fn email_address_example() {
 
 #[test]
 fn link() {
-    let test_cases = vec![
+    let test_cases_no_puny_code = vec![
         "http://delta.chat",
         "http://delta.chat:8080",
         "http://localhost",
@@ -185,31 +185,45 @@ fn link() {
         "https://delta.chat/en/help?hi=5&e=4",
         "https://delta.chat?hi=5&e=4",
         "https://delta.chat/en/help?hi=5&e=4#section2.0",
-        "https://delta#section2.0",
         "http://delta.chat:8080?hi=5&e=4#section2.0",
         "http://delta.chat:8080#section2.0",
         "mailto:delta@example.com",
         "mailto:delta@example.com?subject=hi&body=hello%20world",
+    ];
+    let test_cases_with_punycode = vec![
         "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more url test cases
+        "https://ü.app#help",
+        "https://delta#section2.0",
     ];
 
-    for input in &test_cases {
-        println!("testing {}", input);
+    for input in &test_cases_no_puny_code {
+        println!("testing {input}");
         assert_eq!(
             parse_desktop_set(input),
             vec![Link {
                 destination: link_destination_for_testing(input)
             }]
         );
+        let result = parse_desktop_set(input);
+        assert_eq!(result.len(), 1);
+        assert!(matches!(
+            result[0],
+            Link {
+                destination: LinkDestination {
+                    target: _,
+                    punycode: None,
+                    hostname: _
+                }
+            }
+        ));
     }
 
-    for input in &test_cases {
-        println!("testing <{}>", input);
+    for input in &test_cases_with_punycode {
+        println!("testing {input}");
         assert_eq!(
             parse_desktop_set(input),
             vec![Link {
-                destination: link_destination_for_testing(input)
+                destination: link_destination_for_testing(input),
             }]
         );
     }
