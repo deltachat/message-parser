@@ -157,6 +157,23 @@ fn email_address_standalone() {
         println!("testing {}", &input);
         assert_eq!(parse_only_text(input), vec![EmailAddress(input)]);
     }
+
+    assert_eq!(
+        parse_only_text("(mrcow@moo.com)"),
+        vec![Text("("), EmailAddress("mrcow@moo.com"), Text(")")]
+    );
+    assert_eq!(
+        parse_only_text("(mr.cow@moo.com"),
+        vec![Text("("), EmailAddress("mr.cow@moo.com")]
+    );
+    assert_eq!(
+        parse_only_text("[mr.cow@moo.com]"),
+        vec![Text("["), EmailAddress("mr.cow@moo.com"), Text("]")]
+    );
+    assert_eq!(
+        parse_only_text("mr.cow@moo.com}"),
+        vec![EmailAddress("mr.cow@moo.com"), Text("}")]
+    );
 }
 
 #[test]

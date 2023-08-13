@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fixed: Fixed the bug of brackets being parsed as part of the email address(#34)
+
 ## 0.5.0 - Delimited email addresses and fixing greedy codeblock
 
 ### Added
