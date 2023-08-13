@@ -328,7 +328,6 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
         let (input, _) = opt(login)(input)?;
         // parse host
         let (input, (host, is_ipv6)) = host(input)?;
-        println!("host {host} input {input}");
         // parse port
         let (input, _) = opt(tuple((char(':'), digit1)))(input)?;
         // parse urlpath
