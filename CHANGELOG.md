@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0 - Fix email in parentheses and wrong IPv6 puny code warning
+
 ### Fixed
  - Fixed problem of IPv6 links being detected as punycode
  - fixed: Fixed the bug of brackets being parsed as part of the email address(#34)
