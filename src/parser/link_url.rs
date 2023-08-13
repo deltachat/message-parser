@@ -26,12 +26,12 @@ use super::parse_from_text::base_parsers::{is_not_white_space, CustomError};
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct LinkDestination<'a> {
-    target: &'a str,
+    pub target: &'a str,
     /// hostname if it was found
-    hostname: Option<&'a str>,
+    pub hostname: Option<&'a str>,
     /// contains data for the punycode warning if punycode was detected
     /// (the host part contains non ascii unicode characters)
-    punycode: Option<PunycodeWarning>,
+    pub punycode: Option<PunycodeWarning>,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
