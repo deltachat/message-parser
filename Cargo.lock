@@ -212,6 +212,7 @@ dependencies = [
  "criterion",
  "icu_properties",
  "icu_testdata",
+ "lazy_static",
  "nom",
  "serde",
  "serde_derive",

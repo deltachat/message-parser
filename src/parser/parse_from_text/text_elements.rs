@@ -16,21 +16,34 @@ use nom::{
     AsChar, IResult,
 };
 use icu_properties::{sets, sets::{CodePointSetDataBorrowed, CodePointSetData}};
+use lazy_static::lazy_static;
 
 named!(linebreak<&str, char>, char!('\n'));
 
-fn hashtag_content_char(c: char, sets: &Vec<CodePointSetDataBorrowed>) -> bool {
-    if c == '#' {
-        false
-    } else {
-        sets.iter().map(|set| set.contains(c)).any(|b| b) || matches!(c, '+' | '-' | '_')
-    }
+lazy_static! {
+    static ref HASHTAG_CONTENT_SETS_ORIG: Vec<CodePointSetData> = {
+        let sets: Vec<CodePointSetData> = vec![];
+        let data = &icu_testdata::unstable();
+        sets.push(sets::load_xid_continue(data).expect(""));
+        sets.push(sets::load_emoji_component(data).expect(""));
+        sets.push(sets::load_extended_pictographic(data).expect(""));
+        sets
+    };
+    static ref HASHTAG_CONTENT_SETS_BORROWED: Vec<CodePointSetDataBorrowed> = {
+        let sets: Vec<CodePointSetDataBorrowed> = vec![];
+        HASHTAG_CONTENT_SETS_ORIG.iter().for_each(|set| sets.push(set));
+        sets
+    };
 }
 
-fn hashtag<'a>(input: &'a str, sets: &Vec<CodePointSetDataBorrowed>) -> IResult<&'a str, Element<'a>, CustomError<&'a str>> {
+fn hashtag_content_char(c: char) -> bool {
+    c != '#' && (matches!(c, '+' | '-' | '_') || HASHTAG_CONTENT_SETS_BORROWED.iter().map(|set| set.contains(c)).any(|b| b))
+}
+
+fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(tuple((
         character::complete::char('#'),
-        take_while1(|c| hashtag_content_char(c, sets)),
+        take_while1(hashtag_content_char),
     )))(input)?;
 
     Ok((input, Element::Tag(content)))
@@ -265,24 +278,8 @@ pub(crate) fn parse_text_element(
     //
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
-    
-    let valid_hashtag_char_sets: Vec<CodePointSetData> = {
-        let mut tmp_vec: Vec<CodePointSetData> = vec![];
-        let data = &icu_testdata::unstable();
-        tmp_vec.push(sets::load_xid_continue(data).expect(""));
-        tmp_vec.push(sets::load_emoji_component(data).expect(""));
-        tmp_vec.push(sets::load_extended_pictographic(data).expect(""));
-        tmp_vec
-    };
-
-    let borrows: Vec<CodePointSetDataBorrowed> = {
-        let mut tmp_vec: Vec<CodePointSetDataBorrowed> = vec![];
-        valid_hashtag_char_sets.iter().for_each(|set|
-            tmp_vec.push(set.as_borrowed()) );
-        tmp_vec
-    };
-
-    if let Ok((i, elm)) = hashtag(input, &borrows.clone()) {
+   
+    if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
