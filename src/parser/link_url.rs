@@ -335,7 +335,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
             alt((char('/'), char('?'), char('#'))),
             x_char_sequence,
         )))(input)?;
-        
+
         let is_puny = if is_ipv6 {
             false
         } else {

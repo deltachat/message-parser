@@ -207,7 +207,16 @@ fn link() {
         );
         let result = parse_desktop_set(input);
         assert_eq!(result.len(), 1);
-        assert!(matches!(result[0], Link { destination: LinkDestination { target: _, punycode: None, hostname: _ }}));
+        assert!(matches!(
+            result[0],
+            Link {
+                destination: LinkDestination {
+                    target: _,
+                    punycode: None,
+                    hostname: _
+                }
+            }
+        ));
     }
 
     for input in &test_cases_with_punycode {
