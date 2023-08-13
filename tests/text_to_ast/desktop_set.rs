@@ -1,6 +1,5 @@
 use super::*;
 use deltachat_message_parser::parser::parse_desktop_set;
-use deltachat_message_parser::parser::Element;
 
 #[test]
 fn do_not_parse_markdown_elements() {
