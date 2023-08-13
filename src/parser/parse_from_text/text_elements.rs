@@ -20,7 +20,7 @@ use icu_properties::{sets, sets::{CodePointSetDataBorrowed, CodePointSetData}};
 named!(linebreak<&str, char>, char!('\n'));
 
 fn hashtag_content_char(c: char, sets: &Vec<CodePointSetDataBorrowed>) -> bool {
-    if hashtag_start_char(c) {
+    if c == '#' {
         false
     } else {
         sets.iter().map(|set| set.contains(c)).any(|b| b) || matches!(c, '+' | '-' | '_')
@@ -275,7 +275,14 @@ pub(crate) fn parse_text_element(
         tmp_vec
     };
 
-    if let Ok((i, elm)) = hashtag(input, valid_hashtag_char_sets.iter().map(|set| set.as_borrowed()).collect()) {
+    let borrows: Vec<CodePointSetDataBorrowed> = {
+        let mut tmp_vec: Vec<CodePointSetDataBorrowed> = vec![];
+        valid_hashtag_char_sets.iter().for_each(|set|
+            tmp_vec.push(set.as_borrowed()) );
+        tmp_vec
+    };
+
+    if let Ok((i, elm)) = hashtag(input, &borrows.clone()) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))

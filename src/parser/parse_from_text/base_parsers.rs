@@ -10,7 +10,7 @@ use nom::{
 };
 
 #[derive(Debug)]
-struct PropertiesErrorWrapper {
+pub struct PropertiesErrorWrapper {
     inner: PropertiesError
 }
 
