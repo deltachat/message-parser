@@ -186,7 +186,6 @@ fn link() {
         "https://delta.chat/en/help?hi=5&e=4",
         "https://delta.chat?hi=5&e=4",
         "https://delta.chat/en/help?hi=5&e=4#section2.0",
-        "https://delta#section2.0",
         "http://delta.chat:8080?hi=5&e=4#section2.0",
         "http://delta.chat:8080#section2.0",
         "mailto:delta@example.com",
@@ -195,6 +194,7 @@ fn link() {
     let test_cases_with_punycode = vec![
         "mailto:foö@ü.chat",
         "https://ü.app#help",
+        "https://delta#section2.0",
     ];
 
     for input in &test_cases_no_puny_code {
@@ -207,7 +207,7 @@ fn link() {
         );
         let result = parse_desktop_set(input);
         assert_eq!(result.len(), 1);
-        assert!(matches!(result[0], Element::Link { destination: LinkDestination { target: _, punycode: None, hostname: _ }}));
+        assert!(matches!(result[0], Link { destination: LinkDestination { target: _, punycode: None, hostname: _ }}));
     }
 
     for input in &test_cases_with_punycode {
