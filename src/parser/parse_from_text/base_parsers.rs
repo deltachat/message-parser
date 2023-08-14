@@ -8,7 +8,6 @@ use nom::{
     IResult,
 };
 
-
 #[derive(Debug, PartialEq)]
 pub enum CustomError<I> {
     NoContent,
@@ -20,7 +19,7 @@ pub enum CustomError<I> {
     UnexpectedContent,
     PrecedingWhitespaceMissing,
     OptionIsUnexpectedNone,
-    UnxepectedError(String)
+    UnxepectedError(String),
 }
 
 impl<I> ParseError<I> for CustomError<I> {

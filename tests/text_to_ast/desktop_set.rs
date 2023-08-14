@@ -141,7 +141,6 @@ fn two_hashtags_seperated_by_tab() {
     );
 }
 
-
 #[test]
 fn email_address_standalone() {
     let test_cases = vec![

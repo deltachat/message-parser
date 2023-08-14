@@ -868,7 +868,7 @@ static HASHTAG_CONTENT_CHAR_RANGES: [[u32; 2]; 850] = [
     [0x2ceb0, 0x2ebe0],
     [0x2f800, 0x2fa1d],
     [0x30000, 0x3134a],
-    [0xe0100, 0xe01ef]
+    [0xe0100, 0xe01ef],
 ];
 
 fn hashtag_content_char(c: char) -> bool {
@@ -880,7 +880,7 @@ fn hashtag_content_char(c: char) -> bool {
         let code: u32 = c as u32;
         let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| range[0]);
         match index {
-            Ok(_) => { true }
+            Ok(_) => true,
             Err(index) => {
                 let range0 = {
                     if index == 850 {
@@ -898,7 +898,9 @@ fn hashtag_content_char(c: char) -> bool {
                         HASHTAG_CONTENT_CHAR_RANGES[index - 1]
                     }
                 };
-                if (code >= range0[0] && code <= range0[1]) || (code >= range1[0] && code <= range1[1]) {
+                if (code >= range0[0] && code <= range0[1])
+                    || (code >= range1[0] && code <= range1[1])
+                {
                     return true;
                 }
                 false
@@ -1145,7 +1147,7 @@ pub(crate) fn parse_text_element(
     //
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
-   
+
     if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
