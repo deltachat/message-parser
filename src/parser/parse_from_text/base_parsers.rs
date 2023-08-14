@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use icu_properties::PropertiesError;
 
 ///! Base utility parsers, used by both text and markdown parsers
 use nom::{
@@ -8,49 +7,6 @@ use nom::{
     sequence::delimited,
     IResult,
 };
-
-#[derive(Debug)]
-pub struct PropertiesErrorWrapper {
-    inner: PropertiesError
-}
-
-impl PartialEq for PropertiesErrorWrapper {
-    fn eq(&self, other: &Self) -> bool {
-        match self.inner {
-            PropertiesError::UnexpectedPropertyName => {
-                match other.inner {
-                    PropertiesError::UnexpectedPropertyName => { true }
-                    _ => { false}
-                }
-            }
-            PropertiesError::PropDataLoad(data_error) => {
-                match other.inner  {
-                    PropertiesError::PropDataLoad(data_error2) => {
-                        data_error == data_error2
-                    }
-                    _ => { false }
-                }
-            }
-            PropertiesError::UnknownScriptId(id) => {
-                match other.inner  {
-                    PropertiesError::UnknownScriptId(id2) => {
-                        id == id2
-                    }
-                    _ => { false }
-                }
-            }
-            PropertiesError::UnknownGeneralCategoryGroup(group) => {
-                match other.inner  {
-                    PropertiesError::UnknownGeneralCategoryGroup(group2) => {
-                        group == group2
-                    }
-                    _ => { false }
-                }
-            }
-            _ => { false }
-        }
-    }
-}
 
 
 #[derive(Debug, PartialEq)]
@@ -64,8 +20,7 @@ pub enum CustomError<I> {
     UnexpectedContent,
     PrecedingWhitespaceMissing,
     OptionIsUnexpectedNone,
-    UnxepectedError(String),
-    ICUError(PropertiesErrorWrapper),
+    UnxepectedError(String)
 }
 
 impl<I> ParseError<I> for CustomError<I> {

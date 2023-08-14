@@ -210,7 +210,6 @@ name = "deltachat_message_parser"
 version = "0.6.0"
 dependencies = [
  "criterion",
- "icu_properties",
  "icu_testdata",
  "lazy_static",
  "nom",

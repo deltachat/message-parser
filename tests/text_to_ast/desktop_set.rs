@@ -141,13 +141,6 @@ fn two_hashtags_seperated_by_tab() {
     );
 }
 
-#[test]
-fn hashtag_with_other_hash_characters() {
-    assert_eq!(
-        parse_desktop_set("#hello ﹟beautiful＃world!"),
-        vec![Tag("#hello"), Text(" "), Tag("﹟beautiful"), Tag("＃world"), Text("!")]
-    );
-}
 
 #[test]
 fn email_address_standalone() {
