@@ -1155,7 +1155,7 @@ pub(crate) fn parse_text_element(
     } else if let Ok((i, elm)) = link(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = {
-        if prev_char == Some(' ') || prev_char == None {
+        if prev_char == Some(' ') || prev_char.is_none() {
             bot_command_suggestion(input)
         } else {
             Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
