@@ -16,7 +16,7 @@ use nom::{
     AsChar, IResult,
 };
 
-use hashtag_content_char_ranges::HASHTAG_CONTENT_CHAR_RANGES;
+use crate::parser::parse_from_text::hashtag_content_char_ranges::find_range_for_char;
 
 named!(linebreak<&str, char>, char!('\n'));
 
@@ -26,33 +26,10 @@ fn hashtag_content_char(c: char) -> bool {
     } else if matches!(c, '+' | '-' | '_') {
         true
     } else {
-        let code: u32 = c as u32;
-        let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| range[0]);
-        match index {
-            Ok(_) => true,
-            Err(index) => {
-                let range0 = {
-                    if index == 850 {
-                        HASHTAG_CONTENT_CHAR_RANGES[849]
-                    } else {
-                        HASHTAG_CONTENT_CHAR_RANGES[index]
-                    }
-                };
-                let range1 = {
-                    if index == 0 {
-                        HASHTAG_CONTENT_CHAR_RANGES[1]
-                    } else if index == 850 {
-                        HASHTAG_CONTENT_CHAR_RANGES[849]
-                    } else {
-                        HASHTAG_CONTENT_CHAR_RANGES[index - 1]
-                    }
-                };
-                if (code >= range0[0] && code <= range0[1])
-                    || (code >= range1[0] && code <= range1[1])
-                {
-                    return true;
-                }
-                false
+        match find_range_for_char(c) {
+            None => { true }
+            Some(ranges) => {
+                ranges.iter().map(|range| range.contains(&(c as u32))).collect::<Vec<bool>>().iter().any(|b| *b)
             }
         }
     }
