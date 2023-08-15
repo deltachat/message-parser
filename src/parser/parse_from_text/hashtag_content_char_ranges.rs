@@ -855,23 +855,25 @@ static HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0xe0100..=0xe01ef,
 ];
 
-pub fn find_range_for_char(c: char) -> Option<Vec<&'static RangeInclusive<u32>>> {
+pub enum FindRangeResult {
+    WasOnRangeStart,
+    Range(&'static RangeInclusive<u32>),
+}
+
+pub fn find_range_for_char(c: char) -> FindRangeResult {
     let code: u32 = c as u32;
     let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
     match index {
-        Ok(_) => None,
+        Ok(_) => FindRangeResult::WasOnRangeStart,
         Err(index) => {
-            let mut ranges: Vec<&RangeInclusive<u32>> = vec![];
-            if index == NUMBER_OF_RANGES {
-                ranges.push(&HASHTAG_CONTENT_CHAR_RANGES[NUMBER_OF_RANGES - 1]);
-            } else if index == 0 {
-                ranges.push(&HASHTAG_CONTENT_CHAR_RANGES[1]);
-                ranges.push(&HASHTAG_CONTENT_CHAR_RANGES[0]);
-            } else {
-                ranges.push(&HASHTAG_CONTENT_CHAR_RANGES[index]);
-                ranges.push(&HASHTAG_CONTENT_CHAR_RANGES[index - 1]);
+            match index {
+                0 => {
+                    FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[0])
+                }
+                index => {
+                    FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[index - 1])
+                }
             }
-            Some(ranges)
         }
     }
 }
