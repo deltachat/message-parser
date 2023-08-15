@@ -865,15 +865,9 @@ pub fn find_range_for_char(c: char) -> FindRangeResult {
     let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
-        Err(index) => {
-            match index {
-                0 => {
-                    FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[0])
-                }
-                index => {
-                    FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[index - 1])
-                }
-            }
-        }
+        Err(index) => match index {
+            0 => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[0]),
+            index => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[index - 1]),
+        },
     }
 }

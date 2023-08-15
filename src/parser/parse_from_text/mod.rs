@@ -2,9 +2,9 @@ use super::Element;
 
 pub(crate) mod base_parsers;
 mod desktop_subset;
+mod hashtag_content_char_ranges;
 mod markdown_elements;
 mod text_elements;
-mod hashtag_content_char_ranges;
 
 /// parses text elements such as links and email addresses, excluding markdown
 pub(crate) fn parse_only_text(input: &str) -> std::vec::Vec<Element> {

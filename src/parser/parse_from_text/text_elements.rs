@@ -16,7 +16,9 @@ use nom::{
     AsChar, IResult,
 };
 
-use crate::parser::parse_from_text::hashtag_content_char_ranges::{find_range_for_char, FindRangeResult};
+use crate::parser::parse_from_text::hashtag_content_char_ranges::{
+    find_range_for_char, FindRangeResult,
+};
 
 named!(linebreak<&str, char>, char!('\n'));
 
@@ -27,8 +29,8 @@ fn hashtag_content_char(c: char) -> bool {
         true
     } else {
         match find_range_for_char(c) {
-            FindRangeResult::WasOnRangeStart => { true }
-            FindRangeResult::Range(range) => { range.contains(&(c as u32)) }
+            FindRangeResult::WasOnRangeStart => true,
+            FindRangeResult::Range(range) => range.contains(&(c as u32)),
         }
     }
 }
