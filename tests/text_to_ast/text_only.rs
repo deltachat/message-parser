@@ -142,6 +142,24 @@ fn two_hashtags_seperated_by_tab() {
 }
 
 #[test]
+fn persian_hashtags() {
+    let input = "راجع به نرم‌افزار #آزاد و #متنباز چی شنیدی؟";
+    assert_eq!(
+        parse_only_text(input),
+        vec![Text("راجع به نرم‌افزار "), Tag("#أزاد"), Text(" و "), Tag("#متنباز"), Text(" چی شنیدی؟")]
+    );
+}
+
+#[test]
+fn persian_hashtag_with_underline() {
+    let input = "میازار موری که دانه‌کش است. #ابوالقاسم_فردوسی";
+    assert_eq!(
+        parse_only_text(input),
+        vec![Text("میازار موری که دانه‌کش است. "), Tag("#ابوالقاسم_فردوسی")]
+    );
+}
+
+#[test]
 fn email_address_standalone() {
     let test_cases = vec![
         "message.parser@example.com",
