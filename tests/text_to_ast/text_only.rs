@@ -146,7 +146,13 @@ fn persian_hashtags() {
     let input = "راجع به نرم‌افزار #آزاد و #متنباز چی شنیدی؟";
     assert_eq!(
         parse_only_text(input),
-        vec![Text("راجع به نرم‌افزار "), Tag("#أزاد"), Text(" و "), Tag("#متنباز"), Text(" چی شنیدی؟")]
+        vec![
+            Text("راجع به نرم‌افزار "),
+            Tag("#أزاد"),
+            Text(" و "),
+            Tag("#متنباز"),
+            Text(" چی شنیدی؟")
+        ]
     );
 }
 
@@ -155,7 +161,10 @@ fn persian_hashtag_with_underline() {
     let input = "میازار موری که دانه‌کش است. #ابوالقاسم_فردوسی";
     assert_eq!(
         parse_only_text(input),
-        vec![Text("میازار موری که دانه‌کش است. "), Tag("#ابوالقاسم_فردوسی")]
+        vec![
+            Text("میازار موری که دانه‌کش است. "),
+            Tag("#ابوالقاسم_فردوسی")
+        ]
     );
 }
 
