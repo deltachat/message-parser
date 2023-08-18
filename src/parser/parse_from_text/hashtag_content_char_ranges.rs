@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 const NUMBER_OF_RANGES: usize = 850;
 
-static HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
+const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0x23..=0x23,
     0x2a..=0x2a,
     0x30..=0x39,
