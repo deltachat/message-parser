@@ -2,7 +2,6 @@ use std::ops::RangeInclusive;
 
 const NUMBER_OF_RANGES: usize = 850;
 
-
 /*
  * This is a sorted array of unicode character ranges
  * which can be a hashtag content character.
@@ -876,20 +875,14 @@ pub enum FindRangeResult<'a> {
 impl PartialEq for FindRangeResult<'_> {
     fn eq(&self, other: &Self) -> bool {
         match self {
-            FindRangeResult::WasOnRangeStart => {
-                match other {
-                    FindRangeResult::WasOnRangeStart => { true }
-                    _ => { false }
-                }
-            }
-            FindRangeResult::Range(range) => {
-                match other {
-                    FindRangeResult::Range(range_) => {
-                        range == range_
-                    }
-                    _ => { false }
-                }
-            }
+            FindRangeResult::WasOnRangeStart => match other {
+                FindRangeResult::WasOnRangeStart => true,
+                _ => false,
+            },
+            FindRangeResult::Range(range) => match other {
+                FindRangeResult::Range(range_) => range == range_,
+                _ => false,
+            },
         }
     }
 }
