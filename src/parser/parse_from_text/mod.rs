@@ -2,7 +2,7 @@ use super::Element;
 
 pub(crate) mod base_parsers;
 mod desktop_subset;
-mod hashtag_content_char_ranges;
+pub mod hashtag_content_char_ranges;
 mod markdown_elements;
 mod text_elements;
 

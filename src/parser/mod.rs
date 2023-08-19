@@ -1,5 +1,5 @@
 // mod email;
-mod parse_from_text;
+pub mod parse_from_text;
 
 mod link_url;
 

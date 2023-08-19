@@ -2,6 +2,18 @@ use std::ops::RangeInclusive;
 
 const NUMBER_OF_RANGES: usize = 850;
 
+
+/*
+ * This is a sorted array of unicode character ranges
+ * which can be a hashtag content character.
+ * The unicode classes/blocks which can be a hashtag content
+ * character, are XID_Continue, Extended_Pictographic and Emoji_component excluding the start
+ * characters. We use a binary search here to find out the given character belongs to which range,
+ * if any.
+ * These ranges are extracted from the XML file provided by unicode.org using a simple Python
+ * script.
+ * -- Farooq
+ */
 const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0x23..=0x23,
     0x2a..=0x2a,
@@ -855,14 +867,35 @@ const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0xe0100..=0xe01ef,
 ];
 
+#[derive(Debug)]
 pub enum FindRangeResult {
     WasOnRangeStart,
     Range(&'static RangeInclusive<u32>),
 }
 
-pub fn find_range_for_char(c: char) -> FindRangeResult {
-    let code: u32 = c as u32;
-    let index: usize = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
+impl PartialEq for FindRangeResult {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            FindRangeResult::WasOnRangeStart => {
+                match other {
+                    FindRangeResult::WasOnRangeStart => { true }
+                    _ => { false }
+                }
+            }
+            FindRangeResult::Range(range) => {
+                match other {
+                    FindRangeResult::Range(range_) => {
+                        range == range_
+                    }
+                    _ => { false }
+                }
+            }
+        }
+    }
+}
+
+pub fn find_range_for_char(code: u32) -> FindRangeResult {
+    let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
         Err(index) => match index {

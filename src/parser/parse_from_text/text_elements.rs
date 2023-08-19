@@ -23,14 +23,15 @@ use crate::parser::parse_from_text::hashtag_content_char_ranges::{
 named!(linebreak<&str, char>, char!('\n'));
 
 fn hashtag_content_char(c: char) -> bool {
-    if c == '#' {
+    if matches!(c, '#' | '﹟' | '＃') {
         false
     } else if matches!(c, '+' | '-' | '_') {
         true
     } else {
-        match find_range_for_char(c) {
+        let code: u32 = c as u32;
+        match find_range_for_char(code) {
             FindRangeResult::WasOnRangeStart => true,
-            FindRangeResult::Range(range) => range.contains(&(c as u32)),
+            FindRangeResult::Range(range) => range.contains(&code),
         }
     }
 }
