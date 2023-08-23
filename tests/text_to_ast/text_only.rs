@@ -142,8 +142,7 @@ fn hashtag() {
 #[test]
 fn german_umlaut_hashtag() {
     let input = "#bücher #Ängste";
-    // revert this back to assert_eq, once implemented see https://github.com/deltachat/message-parser/issues/8 for more info
-    assert_ne!(
+    assert_eq!(
         parse_only_text(input),
         vec![Tag("#bücher"), Text(" "), Tag("#Ängste")]
     );
@@ -180,7 +179,7 @@ fn persian_hashtags() {
         parse_only_text(input),
         vec![
             Text("راجع به نرم‌افزار "),
-            Tag("#أزاد"),
+            Tag("#آزاد"),
             Text(" و "),
             Tag("#متنباز"),
             Text(" چی شنیدی؟")
