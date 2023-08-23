@@ -1,37 +1,5 @@
 use super::*;
-use deltachat_message_parser::parser::parse_from_text::hashtag_content_char_ranges::{
-    find_range_for_char, FindRangeResult,
-};
 use deltachat_message_parser::parser::{parse_only_text, LinkDestination};
-use std::ops::RangeInclusive;
-
-#[test]
-fn test_range_function() {
-    // these must return WasOnRangeStart
-    let codes: Vec<u32> = vec![0x30000, 0xe0100, 0x23, 0x30, 0x171f, 0x176e, 0x10fb0];
-    for code in codes.iter() {
-        assert_eq!(find_range_for_char(*code), FindRangeResult::WasOnRangeStart);
-    }
-
-    // these must be return associated ranges
-    let codes: Vec<(u32, RangeInclusive<u32>)> = vec![
-        (0x11066 + 5, 0x11066..=0x11075),  // in range
-        (0x11000 + 10, 0x11000..=0x11046), // in range
-        (0x11046 + 2, 0x11000..=0x11046),  // out of range
-        (0x10, 0x23..=0x23),
-        (0x09, 0x23..=0x23),
-        (0x0, 0x23..=0x23),
-        (0x25, 0x23..=0x23),
-        (0x2a + 1, 0x2a..=0x2a),
-        (0xfffff, 0xe0100..=0xe01ef),
-        // ^ this is beyond ranges and must return the
-        // last range
-    ];
-
-    for (code, range) in codes.iter() {
-        assert_eq!(find_range_for_char(*code), FindRangeResult::Range(range));
-    }
-}
 
 #[test]
 fn do_not_parse_markdown_elements() {

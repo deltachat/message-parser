@@ -2,6 +2,7 @@
 use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
+use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
@@ -16,25 +17,7 @@ use nom::{
     AsChar, IResult,
 };
 
-use crate::parser::parse_from_text::hashtag_content_char_ranges::{
-    find_range_for_char, FindRangeResult,
-};
-
 named!(linebreak<&str, char>, char!('\n'));
-
-fn hashtag_content_char(c: char) -> bool {
-    if matches!(c, '#' | '﹟' | '＃') {
-        false
-    } else if matches!(c, '+' | '-' | '_') {
-        true
-    } else {
-        let code: u32 = c as u32;
-        match find_range_for_char(code) {
-            FindRangeResult::WasOnRangeStart => true,
-            FindRangeResult::Range(range) => range.contains(&code),
-        }
-    }
-}
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(tuple((
