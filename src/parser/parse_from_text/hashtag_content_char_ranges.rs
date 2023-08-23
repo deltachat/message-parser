@@ -866,25 +866,10 @@ const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0xe0100..=0xe01ef,
 ];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum FindRangeResult<'a> {
     WasOnRangeStart,
     Range(&'a RangeInclusive<u32>),
-}
-
-impl PartialEq for FindRangeResult<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        match self {
-            FindRangeResult::WasOnRangeStart => match other {
-                FindRangeResult::WasOnRangeStart => true,
-                _ => false,
-            },
-            FindRangeResult::Range(range) => match other {
-                FindRangeResult::Range(range_) => range == range_,
-                _ => false,
-            },
-        }
-    }
 }
 
 pub fn find_range_for_char<'a>(code: u32) -> FindRangeResult<'a> {
