@@ -10,7 +10,7 @@ const NUMBER_OF_RANGES: usize = 850;
  * characters. We use a binary search here to find out the given character belongs to which range,
  * if any.
  * These ranges are extracted from the XML file provided by unicode.org using a simple Python
- * script. The script file can be found in `scripts/` in the root. The XML file can be found in 
+ * script. The script file can be found in `scripts/` in the root. The XML file can be found in
  * https://www.unicode.org/ucd/
  * I've used the flat XML file and the script works with that. As of writing this comment, it can
  * be found in https://www.unicode.org/Public/UCD/latest/ucdxml/ucd.all.flat.zip
