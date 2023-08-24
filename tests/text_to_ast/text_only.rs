@@ -110,8 +110,7 @@ fn hashtag() {
 #[test]
 fn german_umlaut_hashtag() {
     let input = "#bücher #Ängste";
-    // revert this back to assert_eq, once implemented see https://github.com/deltachat/message-parser/issues/8 for more info
-    assert_ne!(
+    assert_eq!(
         parse_only_text(input),
         vec![Tag("#bücher"), Text(" "), Tag("#Ängste")]
     );
@@ -138,6 +137,33 @@ fn two_hashtags_seperated_by_tab() {
     assert_eq!(
         parse_only_text(input),
         vec![Tag("#1"), Text("\t"), Tag("#topic2")]
+    );
+}
+
+#[test]
+fn persian_hashtags() {
+    let input = "راجع به نرم‌افزار #آزاد و #متنباز چی شنیدی؟";
+    assert_eq!(
+        parse_only_text(input),
+        vec![
+            Text("راجع به نرم‌افزار "),
+            Tag("#آزاد"),
+            Text(" و "),
+            Tag("#متنباز"),
+            Text(" چی شنیدی؟")
+        ]
+    );
+}
+
+#[test]
+fn persian_hashtag_with_underline() {
+    let input = "میازار موری که دانه‌کش است. #ابوالقاسم_فردوسی";
+    assert_eq!(
+        parse_only_text(input),
+        vec![
+            Text("میازار موری که دانه‌کش است. "),
+            Tag("#ابوالقاسم_فردوسی")
+        ]
     );
 }
 

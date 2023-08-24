@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+ - hashtag parsing per UAX31
+
 ## 0.6.0 - Fix email in parentheses and wrong IPv6 puny code warning
 
 ### Fixed

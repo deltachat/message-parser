@@ -2,6 +2,7 @@
 use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
+use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
@@ -17,12 +18,6 @@ use nom::{
 };
 
 named!(linebreak<&str, char>, char!('\n'));
-
-fn hashtag_content_char(c: char) -> bool {
-    // !(is_white_space(c) || c == '#')
-    // simpler parsing for now, see https://github.com/deltachat/message-parser/issues/8
-    c.is_alphanum()
-}
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(tuple((
@@ -270,7 +265,7 @@ pub(crate) fn parse_text_element(
     } else if let Ok((i, elm)) = link(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = {
-        if prev_char == Some(' ') || prev_char == None {
+        if prev_char == Some(' ') || prev_char.is_none() {
             bot_command_suggestion(input)
         } else {
             Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))

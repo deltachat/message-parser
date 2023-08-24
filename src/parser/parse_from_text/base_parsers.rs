@@ -89,3 +89,11 @@ pub(crate) fn direct_delimited<'a>(
     }
     Ok((input, content))
 }
+
+/*
+impl From<PropertiesError> for Err<CustomError<I>> {
+    fn from(_: I, perror: PropertiesError) {
+        nom::Err(CustomError::ICUError(perror))
+    }
+}
+*/
