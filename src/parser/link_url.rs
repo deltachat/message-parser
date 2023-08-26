@@ -32,6 +32,13 @@ pub struct LinkDestination<'a> {
     /// contains data for the punycode warning if punycode was detected
     /// (the host part contains non ascii unicode characters)
     pub punycode: Option<PunycodeWarning>,
+    /// scheme
+    pub scheme: &'a str,
+    /// If scheme is not in a trusted list (like http, mailto),
+    /// then clients should ask for user confirmation.
+    /// Background is that some schemes are handled by apps that have vulnarabilies in their scheme handling
+    /// https://positive.security/blog/url-open-rce (https://web.archive.org/web/20230825142740/https://positive.security/blog/url-open-rce)
+    pub scheme_warning: bool,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -41,9 +48,48 @@ pub struct PunycodeWarning {
     punycode_encoded_url: String,
 }
 
-/// determines which schemes get linkifyed
-fn is_allowed_scheme(scheme: &str) -> bool {
-    matches!(scheme.to_ascii_lowercase().as_ref(), "mailto" | "news")
+/// determines which generic schemes (without '://') get linkifyed
+fn is_allowed_generic_scheme(scheme: &str) -> bool {
+    matches!(
+        scheme.to_ascii_lowercase().as_ref(),
+        "mailto"
+            | "news"
+            | "feed"
+            | "tel"
+            | "sms"
+            | "geo"
+            | "maps"
+            | "bitcoin"
+            | "bitcoincash"
+            | "eth"
+            | "ethereum"
+            | "magnet"
+    )
+}
+
+/// Schemes that are considered safe,
+/// meaning the usual handlers are not attackable with the schemes.
+/// Remote file schemes should be excluded from this whitelist as they are often unsafe (some allow execution of remote files)
+fn is_scheme_considered_safe(scheme: &str) -> bool {
+    matches!(
+        scheme.to_ascii_lowercase().as_ref(),
+        // websites
+        "https" | "http" | "mailto" | "news" | "feed"
+        // mobile phones
+        | "tel" | "sms"
+        // geographic
+        | "geo" | "maps"
+        // Decentralized web
+        | "ipfs" | "ipns" | "dweb" | "dat" | "ssb"
+        // crypto curencies
+        | "bitcoin" | "bitcoincash" | "eth" | "ethereum"
+        // payment
+        | "payto" /* https://datatracker.ietf.org/doc/html/rfc8905, but has probably not high adoption */ | "taler"
+        // debian apps
+        | "apt"
+        // torrent
+        | "magnet"
+    )
 }
 
 impl LinkDestination<'_> {
@@ -53,11 +99,12 @@ impl LinkDestination<'_> {
         input: &str,
     ) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode) = match info {
+            let (hostname, punycode, scheme) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
+                    scheme,
                 } => {
                     if has_puny_code_in_host_name {
                         (
@@ -67,16 +114,17 @@ impl LinkDestination<'_> {
                                 punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
                                 ascii_hostname,
                             }),
+                            scheme,
                         )
                     } else {
-                        (Some(hostname), None)
+                        (Some(hostname), None, scheme)
                     }
                 }
                 UrlInfo::GenericUrl { scheme } => {
-                    if !is_allowed_scheme(scheme) {
+                    if !is_allowed_generic_scheme(scheme) {
                         return Err(nom::Err::Error(CustomError::InvalidLink));
                     }
-                    (None, None)
+                    (None, None, scheme)
                 }
             };
 
@@ -86,6 +134,8 @@ impl LinkDestination<'_> {
                     target: link,
                     hostname,
                     punycode,
+                    scheme,
+                    scheme_warning: !is_scheme_considered_safe(scheme),
                 },
             ))
         } else {
@@ -95,11 +145,12 @@ impl LinkDestination<'_> {
 
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode) = match info {
+            let (hostname, punycode, scheme) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
+                    scheme,
                 } => {
                     if has_puny_code_in_host_name {
                         (
@@ -109,12 +160,13 @@ impl LinkDestination<'_> {
                                 punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
                                 ascii_hostname,
                             }),
+                            scheme,
                         )
                     } else {
-                        (Some(hostname), None)
+                        (Some(hostname), None, scheme)
                     }
                 }
-                UrlInfo::GenericUrl { .. } => (None, None),
+                UrlInfo::GenericUrl { scheme, .. } => (None, None, scheme),
             };
 
             Ok((
@@ -123,6 +175,8 @@ impl LinkDestination<'_> {
                     target: link,
                     hostname,
                     punycode,
+                    scheme,
+                    scheme_warning: !is_scheme_considered_safe(scheme),
                 },
             ))
         } else {
@@ -138,6 +192,7 @@ enum UrlInfo<'a> {
         has_puny_code_in_host_name: bool,
         hostname: &'a str,
         ascii_hostname: String,
+        scheme: &'a str,
     },
     GenericUrl {
         scheme: &'a str,
@@ -352,6 +407,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
         Ok((
             input,
             UrlInfo::CommonInternetSchemeURL {
+                scheme,
                 hostname: host,
                 has_puny_code_in_host_name: is_puny,
                 ascii_hostname: if is_puny {

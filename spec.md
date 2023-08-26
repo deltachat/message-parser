@@ -48,9 +48,17 @@ Make URLs clickable.
 
 #### Allowed schemes:
 
-- all Common Internet Scheme links (containing `//` after scheme)
-- mailto
-- news
+- all Common Internet Scheme links (containing `//` after scheme),
+- `mailto:`, `news:`, `feed:`
+- `tel:`, `sms:`, `geo:`, `maps:`
+- `bitcoin:`, `bitcoincash:`, `eth:`, `ethereum:`
+- `magnet:`
+
+#### User warnings
+
+- Links whose hostnames contain unicode/punycode gets a confirmation dialog with warning when opening, to prevent [IDN homograph attacks](https://en.wikipedia.org/wiki/IDN_homograph_attack).
+- Links with URI schemes that are not in our list of being considered safe get a warning / confirmation dialog.
+Background is that some schemes are handled by apps that have vulnarabilies in their scheme handling https://positive.security/blog/url-open-rce (https://web.archive.org/web/20230825142740/https://positive.security/blog/url-open-rce)
 
 ##### `mailto:email@address.example.com`
 
