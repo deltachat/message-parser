@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 - All the Hashtags
+
 ### Added
 
  - hashtag parsing per UAX31
