@@ -46,11 +46,13 @@ Make URLs clickable.
 
 - `.`,`,`,`;`,`:` should not be parsed as an ending char of an inline-link(this rule is only for standalone/inline links)
 
-#### Allowed schemes:
+#### Linkified schemes:
 
-- all Common Internet Scheme links (containing `//` after scheme)
-- mailto
-- news
+- all Common Internet Scheme links (containing `//` after scheme),
+- `mailto:`, `news:`, `feed:`
+- `tel:`, `sms:`, `geo:`, `maps:`
+- `bitcoin:`, `bitcoincash:`, `eth:`, `ethereum:`
+- `magnet:`
 
 ##### `mailto:email@address.example.com`
 
