@@ -32,6 +32,8 @@ pub struct LinkDestination<'a> {
     /// contains data for the punycode warning if punycode was detected
     /// (the host part contains non ascii unicode characters)
     pub punycode: Option<PunycodeWarning>,
+    /// scheme
+    pub scheme: &'a str,
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -41,9 +43,23 @@ pub struct PunycodeWarning {
     punycode_encoded_url: String,
 }
 
-/// determines which schemes get linkifyed
-fn is_allowed_scheme(scheme: &str) -> bool {
-    matches!(scheme.to_ascii_lowercase().as_ref(), "mailto" | "news")
+/// determines which generic schemes (without '://') get linkifyed
+fn is_allowed_generic_scheme(scheme: &str) -> bool {
+    matches!(
+        scheme.to_ascii_lowercase().as_ref(),
+        "mailto"
+            | "news"
+            | "feed"
+            | "tel"
+            | "sms"
+            | "geo"
+            | "maps"
+            | "bitcoin"
+            | "bitcoincash"
+            | "eth"
+            | "ethereum"
+            | "magnet"
+    )
 }
 
 impl LinkDestination<'_> {
@@ -53,11 +69,12 @@ impl LinkDestination<'_> {
         input: &str,
     ) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode) = match info {
+            let (hostname, punycode, scheme) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
+                    scheme,
                 } => {
                     if has_puny_code_in_host_name {
                         (
@@ -67,16 +84,17 @@ impl LinkDestination<'_> {
                                 punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
                                 ascii_hostname,
                             }),
+                            scheme,
                         )
                     } else {
-                        (Some(hostname), None)
+                        (Some(hostname), None, scheme)
                     }
                 }
                 UrlInfo::GenericUrl { scheme } => {
-                    if !is_allowed_scheme(scheme) {
+                    if !is_allowed_generic_scheme(scheme) {
                         return Err(nom::Err::Error(CustomError::InvalidLink));
                     }
-                    (None, None)
+                    (None, None, scheme)
                 }
             };
 
@@ -86,6 +104,7 @@ impl LinkDestination<'_> {
                     target: link,
                     hostname,
                     punycode,
+                    scheme,
                 },
             ))
         } else {
@@ -95,11 +114,12 @@ impl LinkDestination<'_> {
 
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode) = match info {
+            let (hostname, punycode, scheme) = match info {
                 UrlInfo::CommonInternetSchemeURL {
                     has_puny_code_in_host_name,
                     hostname,
                     ascii_hostname,
+                    scheme,
                 } => {
                     if has_puny_code_in_host_name {
                         (
@@ -109,12 +129,13 @@ impl LinkDestination<'_> {
                                 punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
                                 ascii_hostname,
                             }),
+                            scheme,
                         )
                     } else {
-                        (Some(hostname), None)
+                        (Some(hostname), None, scheme)
                     }
                 }
-                UrlInfo::GenericUrl { .. } => (None, None),
+                UrlInfo::GenericUrl { scheme, .. } => (None, None, scheme),
             };
 
             Ok((
@@ -123,6 +144,7 @@ impl LinkDestination<'_> {
                     target: link,
                     hostname,
                     punycode,
+                    scheme,
                 },
             ))
         } else {
@@ -138,6 +160,7 @@ enum UrlInfo<'a> {
         has_puny_code_in_host_name: bool,
         hostname: &'a str,
         ascii_hostname: String,
+        scheme: &'a str,
     },
     GenericUrl {
         scheme: &'a str,
@@ -352,6 +375,7 @@ fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseErro
         Ok((
             input,
             UrlInfo::CommonInternetSchemeURL {
+                scheme,
                 hostname: host,
                 has_puny_code_in_host_name: is_puny,
                 ascii_hostname: if is_puny {
@@ -443,7 +467,8 @@ mod test {
                 UrlInfo::CommonInternetSchemeURL {
                     hostname: "münchen.de",
                     has_puny_code_in_host_name: true,
-                    ascii_hostname: "xn--mnchen-3ya.de".to_owned()
+                    ascii_hostname: "xn--mnchen-3ya.de".to_owned(),
+                    scheme: "http"
                 }
             )
         );
@@ -455,8 +480,63 @@ mod test {
                 UrlInfo::CommonInternetSchemeURL {
                     hostname: "muenchen.de",
                     has_puny_code_in_host_name: false,
-                    ascii_hostname: "muenchen.de".to_owned()
+                    ascii_hostname: "muenchen.de".to_owned(),
+                    scheme: "http"
                 }
+            )
+        );
+    }
+
+    #[test]
+    fn common_schemes() {
+        assert_eq!(
+            parse_url("http://delta.chat").unwrap().1,
+            (
+                "http://delta.chat",
+                UrlInfo::CommonInternetSchemeURL {
+                    hostname: "delta.chat",
+                    has_puny_code_in_host_name: false,
+                    ascii_hostname: "delta.chat".to_owned(),
+                    scheme: "http"
+                }
+            )
+        );
+        assert_eq!(
+            parse_url("https://delta.chat").unwrap().1,
+            (
+                "https://delta.chat",
+                UrlInfo::CommonInternetSchemeURL {
+                    hostname: "delta.chat",
+                    has_puny_code_in_host_name: false,
+                    ascii_hostname: "delta.chat".to_owned(),
+                    scheme: "https"
+                }
+            )
+        );
+    }
+    #[test]
+    fn generic_schemes() {
+        assert_eq!(
+            parse_url("mailto:someone@example.com").unwrap().1,
+            (
+                "mailto:someone@example.com",
+                UrlInfo::GenericUrl { scheme: "mailto" }
+            )
+        );
+        assert_eq!(
+            parse_url("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
+                .unwrap()
+                .1,
+            (
+                "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
+                UrlInfo::GenericUrl { scheme: "bitcoin" }
+            )
+        );
+        assert_eq!(
+            parse_url("geo:37.786971,-122.399677").unwrap().1,
+            (
+                "geo:37.786971,-122.399677",
+                UrlInfo::GenericUrl { scheme: "geo" }
             )
         );
     }

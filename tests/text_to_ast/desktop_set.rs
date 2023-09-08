@@ -211,7 +211,8 @@ fn link() {
                 destination: LinkDestination {
                     target: _,
                     punycode: None,
-                    hostname: _
+                    hostname: _,
+                    scheme: _,
                 }
             }
         ));

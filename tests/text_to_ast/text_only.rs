@@ -322,6 +322,7 @@ fn link() {
                 target: input,
                 hostname: Some(hostname),
                 punycode: None,
+                scheme: "http"
             }
         }]
     );
