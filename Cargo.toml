@@ -20,7 +20,7 @@ include = [
 ]
 
 [dependencies]
-nom = "6"
+nom = "7.1.3"
 serde = "1.0.126"
 serde_derive = "1.0.126"
 unic-idna-punycode = "0.9.0"

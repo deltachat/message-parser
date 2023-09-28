@@ -6,18 +6,21 @@ use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
+use nom::character::complete::char;
 use nom::{
     bytes::{
         complete::{tag, take, take_while1},
         streaming::take_till1,
     },
-    character::{self, streaming::char},
+    character,
     combinator::{peek, recognize, verify},
     sequence::tuple,
     AsChar, IResult,
 };
 
-named!(linebreak<&str, char>, char!('\n'));
+fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
+    char('\n')(input)
+}
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(tuple((

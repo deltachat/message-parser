@@ -23,7 +23,6 @@
     clippy::empty_loop
 )]
 
-#[macro_use]
 extern crate nom;
 pub mod parser;
 
