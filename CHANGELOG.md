@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- upgraded nom to 7
+
 ## 0.7.0 - All the Hashtags
 
 ### Added

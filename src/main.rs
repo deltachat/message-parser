@@ -3,7 +3,6 @@ use std::io::{self, Read, Write};
 use parser::parse_markdown_text;
 #[allow(dead_code)]
 mod parser;
-#[macro_use]
 extern crate nom;
 #[macro_use]
 extern crate serde_derive;

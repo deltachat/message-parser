@@ -13,11 +13,12 @@ use nom::{
     IResult,
 };
 
-named!(inline_code<&str, &str>, delimited!(tag!("`"), is_not!("`"), tag!("`")));
+fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    delimited(tag("`"), is_not("`"), tag("`"))(input)
+}
 
 fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content): (&str, &str) =
-        delimited(tag("```"), nom::bytes::complete::is_not("```"), tag("```"))(input)?;
+    let (input, content): (&str, &str) = delimited(tag("```"), is_not("```"), tag("```"))(input)?;
 
     // parse language
     let (content, lang) = if is_white_space(
