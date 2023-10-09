@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.0 - Nom 7 and more Generic URI Schemes
+
 ### Changed
 - upgraded nom to 7
 - The following generic schemes (schemes that don't end in `://`) get linkified now:
