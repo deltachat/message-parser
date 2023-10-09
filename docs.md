@@ -32,3 +32,18 @@ The single most important thing for this crate is testing, as long as we cover a
 The second principle is speed, we can test that with benchmarks.
 
 The third priority is binary size, so be careful with huge extra libraries, maybe there is a better way.
+
+
+
+### Release Process
+
+0. checkout current master and make sure no body message with master while you make the release.
+1. Update changelog
+2. bump versions in `Cargo.toml` and `message_parser_wasm/Cargo.toml`
+3. do a commit to master with message `prepare [version]`
+4. `git push`
+5. `git tag [version]` and `git push --tags`
+6. `cargo publish`
+7. `cd message_parser_wasm/`
+8. `wasm-pack build --scope deltachat --target web`
+9. `wasm-pack publish --target web`
