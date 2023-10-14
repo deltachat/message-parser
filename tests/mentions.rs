@@ -22,3 +22,12 @@ fn extract_mentions_are_deduped_and_sorted() {
         ]
     )
 }
+
+#[test]
+fn extract_mentions_false_positive() {
+    let mention_text = "my text@example@example.com, more text";
+    assert_eq!(
+        extract_mention_addresses(mention_text),
+        Vec::<String>::new()
+    );
+}
