@@ -1,3 +1,7 @@
+use nom::bytes::complete::take_until;
+
+use self::base_parsers::CustomError;
+
 use super::Element;
 
 pub(crate) mod base_parsers;
@@ -75,5 +79,25 @@ pub(crate) fn parse_desktop_set(input: &str) -> std::vec::Vec<Element> {
             break;
         }
     }
+    result
+}
+
+/// Extract mentions as email addresses from a text
+/// The addresses are sorted and deduplicated
+pub(crate) fn extract_mention_addresses(input: &str) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut remaining = input;
+    while !remaining.is_empty() {
+        if let Ok((rest, Element::Mention { address })) = text_elements::mention(remaining) {
+            result.push(address.to_owned());
+            remaining = rest;
+        } else if let Ok((_, rest)) = take_until::<&str, &str, CustomError<&str>>("@")(remaining) {
+            remaining = rest;
+        } else {
+            break;
+        }
+    }
+    result.sort();
+    result.dedup();
     result
 }

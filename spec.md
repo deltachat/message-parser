@@ -6,6 +6,7 @@
 
 - Text only
   - [Email addresses: `hello@delta.chat`](#email-addresses)
+  - [Mentions `@hello@delta.chat`](#mentions)
   - [Links: `https://delta.chat` and `mailto:hello@delta.chat`](#links)
   - [Bot `/commands`](#bot-commands)
   - [Hashtags: `#tag`](#hashtag)
@@ -33,6 +34,33 @@ Text elements that are displayed as is with no change to the content, just enhan
 ### `hello@delta.chat` - Email addresses
 
 Make email addresses clickable, opens the chat with that contact and creates it if it does not already exist.
+
+#### Format
+
+- format should follow standards (as time of writing the current implementation is still fairly dumb)
+- trailing `.` is not part of the email address and should not be parsed with it.
+
+<a name="mentions" id="mentions"></a>
+
+### Mentions `@hello@delta.chat`
+
+Clickable mentions, opens profile view for a contact.
+UI may replace email address by display name
+and highlight it to distinguish it from normal text.
+(like other messengers do it, look at telegram, discord, element and so on)
+
+#### Format
+
+A valid email address preceded by an `@` character.
+Reuses parsing logic from [email address](#email-addresses).
+
+#### Other uses
+
+There will be a dedicated api that just extracts mentions from a text that will be used by deltachat core to be able to notify users when they are mentioned.
+
+#### In Message Composer
+
+the message input field should provide autocomletions as user types @Displayname or @user@email.address
 
 <a name="links" id="links"></a>
 
@@ -187,21 +215,7 @@ URL parsing allows all valid URLs, no restrictions on schemes, no whitelist is n
 
 - ':' + [A-z0-9_-] + ':' ?
 - could also be used for custom DC emojis in the future
-
-### Mentions `@username`
-
-Clickable. (could get replaced with a user hash/email/ID on send/on receive so that it's still valid on name change.)
-
-On sending/receiving, this is transformed into an internal representation:
-
-Implementation idea:
-
-1. user types @Displayname and at best gets autocompletion while typing the URL
-2. on sending, the username is converted to the transmission format (special format that contains the email address as ID)
-3. on receiving/storing the message inside the database, this format is converted again to contain the local contact ID to allow for future email address migration/rotation.
-   (4.) on forwarding/sharing as chat history, the ID representation needs to be converted from the contact ID format to the transmission format again
-
-see discords mention code for reference/inspiration https://blog.discordapp.com/how-discord-renders-rich-messages-on-the-android-app-67b0e5d56fbe
+- In Message Composer: should provide auto completions that replace the text by the unicode emoji, or the complete code if it is a custom emoji.
 
 ### `$[inline TeX]$` and `$$[Tex displayed in block(new line)]$$`
 

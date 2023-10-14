@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- add @mentions
+  - new `Element::Mention{ address: &str }`
+  - new api `extract_mention_addresses` to extract
+
 ## 0.8.0 - Nom 7 and more Generic URI Schemes
 
 ### Changed

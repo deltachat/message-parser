@@ -272,6 +272,89 @@ fn email_address_do_not_parse_last_char_if_special() {
 }
 
 #[test]
+fn mention_example() {
+    assert_eq!(
+        parse_only_text("This is not very easy.\n Please ask @hello@example.com"),
+        vec![
+            Text("This is not very easy."),
+            Linebreak,
+            Text(" Please ask "),
+            Mention {
+                address: "hello@example.com"
+            },
+        ]
+    );
+}
+
+#[test]
+fn mention_do_not_parse_last_dot() {
+    assert_eq!(
+        parse_only_text("you can ping me like this @me@provider.tld."),
+        vec![
+            Text("you can ping me like this "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn mention_do_not_parse_last_char_if_special() {
+    assert_eq!(
+        parse_only_text("you can ping me via @me@provider.tld!"),
+        vec![
+            Text("you can ping me via "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text("!")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can ping me via @me@provider.tld?"),
+        vec![
+            Text("you can ping me via "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text("?")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can ping me via @me@provider.tld,"),
+        vec![
+            Text("you can ping me via "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text(",")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can ping me via @me@provider.tld:"),
+        vec![
+            Text("you can ping me via "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text(":")
+        ]
+    );
+    assert_eq!(
+        parse_only_text("you can ping me via @me@provider.tld;"),
+        vec![
+            Text("you can ping me via "),
+            Mention {
+                address: "me@provider.tld"
+            },
+            Text(";")
+        ]
+    );
+}
+
+#[test]
 fn link() {
     let test_cases = vec![
         "http://delta.chat",

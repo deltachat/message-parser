@@ -22,10 +22,10 @@ pub enum Element<'a> {
         destination: LinkDestination<'a>,
     },
     EmailAddress(&'a str),
+    Mention {
+        address: &'a str,
+    },
     // Later:
-    // Mention {
-    //     internal_id: &str
-    // },
     /// On click, the command gets prefilled as the draft, so it can be easily send.
     BotCommandSuggestion(&'a str),
 
@@ -67,4 +67,9 @@ pub fn parse_only_text(input: &str) -> std::vec::Vec<Element> {
 /// parses text and delimited/labled link elements to replicate current desktop elements
 pub fn parse_desktop_set(input: &str) -> std::vec::Vec<Element> {
     parse_from_text::parse_desktop_set(input)
+}
+
+/// Extract mentions as email addresses from a text
+pub fn extract_mention_addresses(input: &str) -> Vec<String> {
+    parse_from_text::extract_mention_addresses(input)
 }
