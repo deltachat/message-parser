@@ -5,7 +5,7 @@ fn extract_mentions() {
     let mention_text = "Ping @email@address.tld and @email1@address.tld!";
     assert_eq!(
         extract_mention_addresses(mention_text),
-        vec!["email@address.tld", "email1@address.tld"]
+        vec!["email1@address.tld", "email@address.tld"]
     )
 }
 
@@ -15,11 +15,7 @@ fn extract_mentions_are_deduped_and_sorted() {
         "Ping @email@address.tld, @abc@example.com, @abc@example.com and @email1@address.tld!\n@email1@address.tld your opinion would be especially helpful.";
     assert_eq!(
         extract_mention_addresses(mention_text),
-        vec![
-            "@abc@example.com",
-            "email@address.tld",
-            "email1@address.tld"
-        ]
+        vec!["abc@example.com", "email1@address.tld", "email@address.tld"]
     )
 }
 

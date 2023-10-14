@@ -91,9 +91,12 @@ pub(crate) fn extract_mention_addresses(input: &str) -> Vec<String> {
         if let Ok((rest, Element::Mention { address })) = text_elements::mention(remaining) {
             result.push(address.to_owned());
             remaining = rest;
-        } else if let Ok((_, rest)) = take_until::<&str, &str, CustomError<&str>>("@")(remaining) {
+            continue;
+        }
+        if let Ok((rest, _)) = take_until::<&str, &str, CustomError<&str>>(" @")(remaining) {
             remaining = rest;
         } else {
+            // there is no mention anymore in this message
             break;
         }
     }
