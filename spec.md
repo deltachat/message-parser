@@ -38,7 +38,7 @@ Make email addresses clickable, opens the chat with that contact and creates it 
 #### Format
 
 - format should follow standards (as time of writing the current implementation is still fairly dumb)
-- trailing `.` is not part of the email address and should not be parsed with it.
+- `.`-s are a part of the email address, but trailing ones are removed.
 
 <a name="mentions" id="mentions"></a>
 

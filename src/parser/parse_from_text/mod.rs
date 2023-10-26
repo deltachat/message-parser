@@ -100,7 +100,7 @@ pub(crate) fn extract_mention_addresses(input: &str) -> Vec<String> {
             break;
         }
     }
-    result.sort();
+    result.sort_unstable();
     result.dedup();
     result
 }

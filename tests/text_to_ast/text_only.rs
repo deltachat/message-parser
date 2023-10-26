@@ -302,56 +302,18 @@ fn mention_do_not_parse_last_dot() {
 
 #[test]
 fn mention_do_not_parse_last_char_if_special() {
-    assert_eq!(
-        parse_only_text("you can ping me via @me@provider.tld!"),
-        vec![
-            Text("you can ping me via "),
-            Mention {
-                address: "me@provider.tld"
-            },
-            Text("!")
-        ]
-    );
-    assert_eq!(
-        parse_only_text("you can ping me via @me@provider.tld?"),
-        vec![
-            Text("you can ping me via "),
-            Mention {
-                address: "me@provider.tld"
-            },
-            Text("?")
-        ]
-    );
-    assert_eq!(
-        parse_only_text("you can ping me via @me@provider.tld,"),
-        vec![
-            Text("you can ping me via "),
-            Mention {
-                address: "me@provider.tld"
-            },
-            Text(",")
-        ]
-    );
-    assert_eq!(
-        parse_only_text("you can ping me via @me@provider.tld:"),
-        vec![
-            Text("you can ping me via "),
-            Mention {
-                address: "me@provider.tld"
-            },
-            Text(":")
-        ]
-    );
-    assert_eq!(
-        parse_only_text("you can ping me via @me@provider.tld;"),
-        vec![
-            Text("you can ping me via "),
-            Mention {
-                address: "me@provider.tld"
-            },
-            Text(";")
-        ]
-    );
+    for c in ["!", "?", ",", ":", ";"] {
+        assert_eq!(
+            parse_only_text(&("you can ping me via @me@provider.tld".to_string() + c)),
+            vec![
+                Text("you can ping me via "),
+                Mention {
+                    address: "me@provider.tld"
+                },
+                Text(c)
+            ]
+        );
+    }
 }
 
 #[test]
