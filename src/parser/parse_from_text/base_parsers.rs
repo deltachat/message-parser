@@ -8,7 +8,7 @@ use nom::{
     IResult,
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum CustomError<I> {
     NoContent,
     InvalidWhiteSpaceFound,
