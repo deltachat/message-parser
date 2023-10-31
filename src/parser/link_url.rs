@@ -167,7 +167,7 @@ enum UrlInfo<'a> {
     },
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum LinkParseError<I> {
     Nom(I, ErrorKind),
     ThisIsNotPercentEncoding,
@@ -188,7 +188,7 @@ fn is_reserved(char: char) -> bool {
 }
 
 fn is_hex_digit(c: char) -> bool {
-    c.is_digit(16)
+    c.is_ascii_digit()
 }
 
 fn escaped_char(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {

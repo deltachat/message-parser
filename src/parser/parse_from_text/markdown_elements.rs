@@ -69,7 +69,7 @@ fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         Element::CodeBlock {
             language: lang,
             content: content
-                .get(0..content.bytes().count().saturating_sub(offset))
+                .get(0..content.len().saturating_sub(offset))
                 .into_result()?,
         },
     ))
