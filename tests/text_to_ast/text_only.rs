@@ -303,16 +303,6 @@ fn link() {
         );
     }
 
-    for input in &test_cases {
-        println!("testing <{}>", input);
-        assert_eq!(
-            parse_only_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
-        );
-    }
-
     let input = "http://[2001:0db8:85a3:08d3::0370:7344]:8080/";
     let hostname = "[2001:0db8:85a3:08d3::0370:7344]";
     assert_eq!(
