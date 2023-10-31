@@ -319,6 +319,43 @@ fn link() {
 }
 
 #[test]
+fn link_special_chars_in_location_part() {
+    // see "links that have non spec chars in the location part are not clickable #16"
+    // https://github.com/deltachat/message-parser/issues/16
+    let test_cases = vec![
+        // from the issue
+        "https://delta.chat/üäö",
+        "https://90eghtesadi.com/Content/Detail/2139889/فیلم-مناظره-واکاوی-قرارداد-۲۵-ساله-ایران-و-چین",
+        "https://move-it-sportcamps.de/krafttraining-kinder-jugendliche/#:~:text=Sch%C3%A4dliche%20Nebenwirkungen%20beim%20Krafttraining%20f%C3%BCr,Leichtathletik%20als%20bessere%20Alternative%20gelten.",
+        "https://int.bahn.de/en/buchung/fahrplan/suche#sts=true&so=Freiburg(Breisgau)%20Hbf&zo=Gl%C3%BCckstadt&kl=2&r=13:16:KLASSENLOS:1&soid=A%3D1%40O%3DFreiburg(Breisgau)%20Hbf%40X%3D7841174%40Y%3D47997696%40U%3D80%40L%3D8000107%40B%3D1%40p%3D1695240090%40&zoid=A%3D1%40O%3DGl%C3%BCckstadt%40X%3D9428318%40Y%3D53788610%40U%3D80%40L%3D8002293%40B%3D1%40p%3D1695240090%40&hd=2023-09-23T08:00:59&hza=D&ar=false&s=true&d=false&hz=%5B%5D&fm=false&bp=false",
+        "https://www.erbrechtsinfo.com/allgemeines-erbrecht/pflichtteilsergaenzungsanspruch-niessbrauch/#:~:text=Wird%20ein%20Nießbrauch%20bei%20einer,Schenkenden%20herausfallen%2C%20einen%20Pflichtteilsergänzungsanspruch%20auslösen",
+        // from https://developer.mozilla.org/en-US/docs/Web/Text_fragments
+        "https://example.com#:~:text=for",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=human",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=linked%20URL",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=human,url",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=linked%20URL,defining%20a%20value",
+        "https://example.com/#:~:text=asking-,for",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=sent-,referrer",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=linked%20URL,-'s%20format",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=downgrade:-,The%20Referer,be%20sent,-to%20origins",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=causes&text=linked",
+        "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#:~:text=linked%20URL,-'s%20format&text=Deprecated-,attributes,attribute",
+    ];
+
+    for input in &test_cases {
+        println!("testing {}", input);
+        assert_eq!(
+            parse_only_text(input),
+            vec![Link {
+                destination: link_destination_for_testing(input)
+            }]
+        );
+    }
+}
+
+
+#[test]
 fn test_link_example() {
     assert_eq!(
         parse_only_text(
