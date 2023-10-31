@@ -30,7 +30,7 @@
     clippy::todo,
     clippy::expect_used,
     clippy::unimplemented,
-    clippy::manual_strip,  
+    clippy::manual_strip,
 )]
 
 extern crate nom;
