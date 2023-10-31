@@ -17,10 +17,20 @@
     clippy::panic_in_result_fn,
     clippy::unwrap_in_result,
     clippy::unwrap_used,
-    // maybe we should use?
     clippy::string_slice,
-    // additional lints
-    clippy::empty_loop
+    clippy::empty_loop,
+    clippy::correctness,
+    clippy::needless_borrow,
+    clippy::cast_lossless,
+    clippy::obfuscated_if_else,
+    clippy::index_refutable_slice,
+    clippy::panic_in_result_fn,
+    clippy::unwrap_in_result,
+    clippy::exit,
+    clippy::todo,
+    clippy::expect_used,
+    clippy::unimplemented,
+    clippy::manual_strip,  
 )]
 
 extern crate nom;
