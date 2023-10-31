@@ -354,6 +354,56 @@ fn link_special_chars_in_location_part() {
     }
 }
 
+#[test]
+fn link_stop_at_ending_char() {
+    let endings = vec![
+        "\"",
+        "'",
+        "''",
+        "\n\n",
+    ];
+
+    for end_case in &endings {
+        let test_case = format!("https://delta.chat/delta{end_case}");
+        println!("testing {}", test_case);
+        let mut parsed_ending = parse_only_text(end_case);
+        let mut result = vec![Link {
+            destination: link_destination_for_testing("https://delta.chat/delta")
+        }];
+        result.append(&mut parsed_ending);
+        assert_eq!(
+            parse_only_text(&test_case),
+            result
+        );
+    }
+}
+
+#[test]
+fn link_stop_at_ending_char_with_space() {
+    let endings = vec![
+        "\" ",
+        "' ",
+        "'' ",
+        "\n\n ",
+        " ",
+        ": "
+    ];
+
+    for end_case in &endings {
+        let test_case = format!("https://delta.chat/delta{end_case}");
+        println!("testing {}", test_case);
+        let mut parsed_ending = parse_only_text(end_case);
+        let mut result = vec![Link {
+            destination: link_destination_for_testing("https://delta.chat/delta")
+        }];
+        result.append(&mut parsed_ending);
+        assert_eq!(
+            parse_only_text(&test_case),
+            result
+        );
+    }
+}
+
 
 #[test]
 fn test_link_example() {
