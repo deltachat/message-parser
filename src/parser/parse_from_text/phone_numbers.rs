@@ -1,0 +1,101 @@
+use super::base_parsers::*;
+use super::Element;
+
+use nom::bytes::complete::{tag, take_while};
+use nom::character::complete::satisfy;
+use nom::combinator::opt;
+use nom::sequence::{delimited, tuple};
+use nom::{bytes::complete::take_while1, combinator::recognize, IResult};
+
+/// spaces, dots, or dashes
+fn is_sdd(input: char) -> bool {
+    matches!(input, ' ' | '.' | '-')
+}
+
+fn is_digit(input: char) -> bool {
+    input.is_digit(10)
+}
+
+fn is_digit_or_ssd(input: char) -> bool {
+    is_digit(input) || is_sdd(input)
+}
+
+fn internal_telephone_number(input: &str) -> IResult<&str, String, CustomError<&str>> {
+    // reimplement the android regex rules: from PHONE in android/util/Patterns.java
+    let (input, (country, area, local)) = tuple((
+        opt(tuple((
+            opt(tag("+")),
+            take_while1(is_digit),
+            take_while(is_sdd),
+        ))), // +<digits><sdd>*
+        opt(tuple((
+            delimited(tag("("), take_while1(is_digit), tag(")")),
+            take_while(is_sdd),
+        ))), // (<digits>)<sdd>*
+        delimited(
+            satisfy(is_digit),
+            take_while1(is_digit_or_ssd), 
+            // /\ error is that this also eats the last number, we need some other way to express this
+            // basically eat all is_digit_or_ssd, but if last is a number, don't eat the last number.
+            satisfy(is_digit),
+        ), // <digit><digit|sdd>+<digit>
+    ))(input)?;
+
+    // construct the telephone number uri (currently used by the test in this file)
+    let country = country
+        .map(|(plus, digits, _)| format!("{}{digits}", plus.unwrap_or("")))
+        .unwrap_or_else(|| "".to_owned());
+    let area = area.map(|(digits, _)| digits).unwrap_or("");
+    let telephone_number_uri = format!("tel:{}{}{}", country, area, local);
+    Ok((input, telephone_number_uri))
+}
+
+pub(crate) fn telephone_number(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, original_number) = recognize(internal_telephone_number)(input)?;
+    let (_, tel_link) = internal_telephone_number(original_number)?;
+    Ok((
+        input,
+        Element::TelephoneNumber {
+            number: original_number,
+            tel_link,
+        },
+    ))
+}
+
+#[cfg(test)]
+mod test {
+    #![allow(clippy::unwrap_used)]
+
+    use crate::parser::{parse_from_text::phone_numbers::telephone_number, Element};
+
+    #[test]
+    fn test_phone_numbers() {
+        // from https://stackoverflow.com/a/29767609/7655232
+        let test_cases = vec![
+            ("(123) 456-7890", "1234567890"),
+            ("(123)456-7890", "1234567890"),
+            ("123-456-7890", "1234567890"),
+            ("123.456.7890", "1234567890"),
+            ("1234567890", "1234567890"),
+            ("+31636363634", "+31636363634"),
+            ("075-63546725", "07563546725"),
+            // from wikipedia https://de.wikipedia.org/w/index.php?title=Rufnummer&oldid=236385081#Nationales
+            ("089 1234567", "0891234567"),
+            // https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Telekommunikation/Unternehmen_Institutionen/Nummerierung/Rufnummern/Mittlg148_2021.pdf?__blob=publicationFile&v=1
+            ("(0)152 28817386", "015228817386"),
+            ("69 90009000", "6990009000"),
+            ("90009000", "90009000"),
+        ];
+
+        for (number, expected_uri) in test_cases {
+            println!("testing {number}");
+            assert_eq!(
+                telephone_number(number).unwrap().1,
+                Element::TelephoneNumber {
+                    number,
+                    tel_link: expected_uri.to_owned()
+                }
+            )
+        }
+    }
+}
