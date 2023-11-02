@@ -20,7 +20,7 @@ fn is_sdd(input: char) -> bool {
 }
 
 fn is_digit(input: char) -> bool {
-    input.is_digit(10)
+    input.is_ascii_digit()
 }
 
 fn is_digit_or_ssd(input: char) -> bool {
