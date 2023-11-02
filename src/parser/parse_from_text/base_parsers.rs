@@ -19,6 +19,7 @@ pub enum CustomError<I> {
     UnexpectedContent,
     PrecedingWhitespaceMissing,
     OptionIsUnexpectedNone,
+    PhoneNumberNotEnoughDigits,
     UnxepectedError(String),
 }
 

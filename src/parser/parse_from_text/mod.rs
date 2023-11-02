@@ -4,6 +4,7 @@ pub(crate) mod base_parsers;
 mod desktop_subset;
 pub mod hashtag_content_char_ranges;
 mod markdown_elements;
+mod phone_numbers;
 mod text_elements;
 
 /// parses text elements such as links and email addresses, excluding markdown

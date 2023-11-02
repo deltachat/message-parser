@@ -57,5 +57,6 @@ export type ParsedElement =
   | {
       t: "LabeledLink";
       c: { label: ParsedElement[]; destination: LinkDestination };
-    };
+    }
+  | {t: "TelephoneNumber", c: {number: string, tel_link: string}};
 "#;
