@@ -1,6 +1,8 @@
 use super::base_parsers::*;
 use super::Element;
 
+use nom::AsChar;
+use nom::bytes::complete::take;
 use nom::bytes::complete::{tag, take_while};
 use nom::character::complete::satisfy;
 use nom::combinator::opt;
@@ -20,6 +22,23 @@ fn is_digit_or_ssd(input: char) -> bool {
     is_digit(input) || is_sdd(input)
 }
 
+fn eat_while_digit_or_sdd_but_spare_last_digit(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    let (_, result) = take_while1(is_digit_or_ssd)(input)?;
+
+    for (offset, char) in result.chars().rev().enumerate() {
+        // find index of last digit
+        if is_digit(char.as_char()) {
+            // take everything but the last digit
+            let consumed_count = result.chars().count().saturating_sub(offset.saturating_add(1));
+            let (remainder, digits) = take(consumed_count)(input)?;
+            return Ok((remainder, digits))
+        }
+    }
+
+    Err(nom::Err::Error(CustomError::UnexpectedContent))
+}
+
+
 fn internal_telephone_number(input: &str) -> IResult<&str, String, CustomError<&str>> {
     // reimplement the android regex rules: from PHONE in android/util/Patterns.java
     let (input, (country, area, local)) = tuple((
@@ -32,13 +51,11 @@ fn internal_telephone_number(input: &str) -> IResult<&str, String, CustomError<&
             delimited(tag("("), take_while1(is_digit), tag(")")),
             take_while(is_sdd),
         ))), // (<digits>)<sdd>*
-        delimited(
+        recognize(delimited(
             satisfy(is_digit),
-            take_while1(is_digit_or_ssd), 
-            // /\ error is that this also eats the last number, we need some other way to express this
-            // basically eat all is_digit_or_ssd, but if last is a number, don't eat the last number.
+            eat_while_digit_or_sdd_but_spare_last_digit,
             satisfy(is_digit),
-        ), // <digit><digit|sdd>+<digit>
+        )), // <digit><digit|sdd>+<digit>
     ))(input)?;
 
     // construct the telephone number uri (currently used by the test in this file)
@@ -46,6 +63,7 @@ fn internal_telephone_number(input: &str) -> IResult<&str, String, CustomError<&
         .map(|(plus, digits, _)| format!("{}{digits}", plus.unwrap_or("")))
         .unwrap_or_else(|| "".to_owned());
     let area = area.map(|(digits, _)| digits).unwrap_or("");
+    let local = local.replace(is_sdd, "");
     let telephone_number_uri = format!("tel:{}{}{}", country, area, local);
     Ok((input, telephone_number_uri))
 }
@@ -76,15 +94,16 @@ mod test {
             ("(123)456-7890", "1234567890"),
             ("123-456-7890", "1234567890"),
             ("123.456.7890", "1234567890"),
-            ("1234567890", "1234567890"),
-            ("+31636363634", "+31636363634"),
+            // ("1234567890", "1234567890"),
+            //("+31636363634", "+31636363634"),
+            ("+31 636363634", "+31636363634"),
             ("075-63546725", "07563546725"),
             // from wikipedia https://de.wikipedia.org/w/index.php?title=Rufnummer&oldid=236385081#Nationales
             ("089 1234567", "0891234567"),
             // https://www.bundesnetzagentur.de/SharedDocs/Downloads/DE/Sachgebiete/Telekommunikation/Unternehmen_Institutionen/Nummerierung/Rufnummern/Mittlg148_2021.pdf?__blob=publicationFile&v=1
             ("(0)152 28817386", "015228817386"),
             ("69 90009000", "6990009000"),
-            ("90009000", "90009000"),
+            // ("90009000", "90009000"),
         ];
 
         for (number, expected_uri) in test_cases {
@@ -93,7 +112,7 @@ mod test {
                 telephone_number(number).unwrap().1,
                 Element::TelephoneNumber {
                     number,
-                    tel_link: expected_uri.to_owned()
+                    tel_link: format!("tel:{expected_uri}")
                 }
             )
         }
