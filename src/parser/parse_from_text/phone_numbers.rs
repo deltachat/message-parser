@@ -1,13 +1,17 @@
 use super::base_parsers::*;
 use super::Element;
 
-use nom::AsChar;
 use nom::bytes::complete::take;
-use nom::bytes::complete::{tag, take_while};
+use nom::bytes::complete::{tag, take_while, take_while_m_n};
 use nom::character::complete::satisfy;
 use nom::combinator::opt;
 use nom::sequence::{delimited, tuple};
-use nom::{bytes::complete::take_while1, combinator::recognize, IResult};
+use nom::AsChar;
+use nom::{combinator::recognize, IResult};
+
+const MAX_COUNTRY_LEN: usize = 3;
+const MAX_AREA_LEN: usize = 10; // TODO find real number?
+const MAX_LOCAL_LEN: usize = 15; // TODO find real number?
 
 /// spaces, dots, or dashes
 fn is_sdd(input: char) -> bool {
@@ -22,33 +26,41 @@ fn is_digit_or_ssd(input: char) -> bool {
     is_digit(input) || is_sdd(input)
 }
 
-fn eat_while_digit_or_sdd_but_spare_last_digit(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    let (_, result) = take_while1(is_digit_or_ssd)(input)?;
+fn eat_while_digit_or_sdd_but_spare_last_digit(
+    input: &str,
+) -> IResult<&str, &str, CustomError<&str>> {
+    let (_, result) = take_while_m_n(1, MAX_LOCAL_LEN, is_digit_or_ssd)(input)?;
 
     for (offset, char) in result.chars().rev().enumerate() {
         // find index of last digit
         if is_digit(char.as_char()) {
             // take everything but the last digit
-            let consumed_count = result.chars().count().saturating_sub(offset.saturating_add(1));
+            let consumed_count = result
+                .chars()
+                .count()
+                .saturating_sub(offset.saturating_add(1));
             let (remainder, digits) = take(consumed_count)(input)?;
-            return Ok((remainder, digits))
+            return Ok((remainder, digits));
         }
     }
 
     Err(nom::Err::Error(CustomError::UnexpectedContent))
 }
 
-
 fn internal_telephone_number(input: &str) -> IResult<&str, String, CustomError<&str>> {
     // reimplement the android regex rules: from PHONE in android/util/Patterns.java
     let (input, (country, area, local)) = tuple((
         opt(tuple((
             opt(tag("+")),
-            take_while1(is_digit),
+            take_while_m_n(1, MAX_COUNTRY_LEN, is_digit),
             take_while(is_sdd),
         ))), // +<digits><sdd>*
         opt(tuple((
-            delimited(tag("("), take_while1(is_digit), tag(")")),
+            delimited(
+                tag("("),
+                take_while_m_n(1, MAX_AREA_LEN, is_digit),
+                tag(")"),
+            ),
             take_while(is_sdd),
         ))), // (<digits>)<sdd>*
         recognize(delimited(
@@ -104,6 +116,9 @@ mod test {
             ("(0)152 28817386", "015228817386"),
             ("69 90009000", "6990009000"),
             // ("90009000", "90009000"),
+            // https://en.wikipedia.org/w/index.php?title=E.123&oldid=1181303803
+            ("(0607) 123 4567", "06071234567"),
+            ("+22 607 123 4567", "+226071234567"),
         ];
 
         for (number, expected_uri) in test_cases {
