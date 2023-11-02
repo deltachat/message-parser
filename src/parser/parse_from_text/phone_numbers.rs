@@ -139,7 +139,7 @@ mod test {
     }
 
     #[test]
-    fn test_not_enough_digits(){
+    fn test_not_enough_digits() {
         telephone_number("(0)152 28").expect_err("fails because number is to short");
         telephone_number("152 28").expect_err("fails because too short");
         telephone_number("(152) 28").expect_err("fails because too short");

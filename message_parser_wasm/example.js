@@ -96,6 +96,12 @@ function renderElement(elm) {
         );
       return bcs;
 
+    case "TelephoneNumber":
+      let tn = document.createElement("a");
+      tn.innerText = elm.c.number;
+      tn.href = elm.c.tel_link;
+      return tn;
+
     case "Linebreak":
       return document.createElement("br");
 

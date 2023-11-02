@@ -3,6 +3,7 @@ use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
 use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::phone_numbers::telephone_number;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
@@ -274,6 +275,8 @@ pub(crate) fn parse_text_element(
             Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
         }
     } {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = telephone_number(input) {
         Ok((i, elm))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))

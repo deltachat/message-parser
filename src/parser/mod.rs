@@ -21,7 +21,7 @@ pub enum Element<'a> {
     Link {
         destination: LinkDestination<'a>,
     },
-    TelephoneNumber{
+    TelephoneNumber {
         /// number exactly how it was found in the input text
         number: &'a str,
         /// the tel: link (without special chars, but keeps the + in the beginning if it is present)
