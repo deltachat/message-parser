@@ -12,6 +12,7 @@ use nom::{combinator::recognize, IResult};
 const MAX_COUNTRY_LEN: usize = 3;
 const MAX_AREA_LEN: usize = 10; // TODO find real number?
 const MAX_LOCAL_LEN: usize = 15; // TODO find real number?
+const PHONE_NUMBER_MINIMUM_DIGITS: usize = 5;
 
 /// spaces, dots, or dashes
 fn is_sdd(input: char) -> bool {
@@ -30,6 +31,10 @@ fn eat_while_digit_or_sdd_but_spare_last_digit(
     input: &str,
 ) -> IResult<&str, &str, CustomError<&str>> {
     let (_, result) = take_while_m_n(1, MAX_LOCAL_LEN, is_digit_or_ssd)(input)?;
+
+    if result.chars().filter(|c| is_digit(*c)).count() < PHONE_NUMBER_MINIMUM_DIGITS {
+        return Err(nom::Err::Error(CustomError::PhoneNumberNotEnoughDigits));
+    }
 
     for (offset, char) in result.chars().rev().enumerate() {
         // find index of last digit
@@ -131,5 +136,12 @@ mod test {
                 }
             )
         }
+    }
+
+    #[test]
+    fn test_not_enough_digits(){
+        telephone_number("(0)152 28").expect_err("fails because number is to short");
+        telephone_number("152 28").expect_err("fails because too short");
+        telephone_number("(152) 28").expect_err("fails because too short");
     }
 }
