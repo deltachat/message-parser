@@ -20,6 +20,7 @@ export type ParsedElement =
   | { t: "InlineCode"; c: { content: string } }
   | { t: "CodeBlock"; c: { language: null | string; content: string } }
   | { t: "EmailAddress"; c: string }
+  | { t: "Mention"; c: { address: string } }
   | { t: "BotCommandSuggestion"; c: string }
   | { t: "Link"; c: { destination: LinkDestination } }
   | {

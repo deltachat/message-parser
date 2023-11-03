@@ -85,6 +85,15 @@ function renderElement(elm) {
       email.innerText = elm.c;
       email.href = "mailto:" + elm.c;
       return email;
+    
+    case "Mention":
+      let mention = document.createElement("span");
+      mention.innerText = "@" + elm.c.address;
+      mention.onclick = () => {
+        alert(`Clicked on a Mention, this should open view profile view for ${elm.c.address}`)
+      }
+      mention.className = "mention"
+      return mention
 
     case "BotCommandSuggestion":
       let bcs = document.createElement("a");

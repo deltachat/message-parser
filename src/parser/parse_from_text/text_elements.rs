@@ -94,6 +94,18 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     }
 }
 
+pub(crate) fn mention(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, _) = tag("@")(input)?;
+    let (input, email) = email_address(input)?;
+    if let Element::EmailAddress(address) = email {
+        Ok((input, Element::Mention { address }))
+    } else {
+        Err(nom::Err::Error(CustomError::UnxepectedError(
+            "no email, should not happen".to_string(),
+        )))
+    }
+}
+
 fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
 }
@@ -262,6 +274,8 @@ pub(crate) fn parse_text_element(
     // text elements parsers MUST NOT call the parser for markdown elements internally
 
     if let Ok((i, elm)) = hashtag(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = mention(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
