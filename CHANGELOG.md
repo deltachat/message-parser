@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Fixed
+- fix bot command suggestion with `@`- char was detected as email address
+
 ## 0.8.0 - Nom 7 and more Generic URI Schemes
 
 ### Changed
