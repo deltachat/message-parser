@@ -188,7 +188,7 @@ fn is_reserved(char: char) -> bool {
 }
 
 fn is_hex_digit(c: char) -> bool {
-    c.is_ascii_digit()
+    c.is_ascii_hexdigit()
 }
 
 fn escaped_char(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
