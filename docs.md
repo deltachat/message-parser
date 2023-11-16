@@ -14,9 +14,9 @@ while !remaining_input.is_empty() {
     let res = {
         // try the following parsers in this order (order is important with some parsers)
         1. hashtag(input)
-        2. email_address(input)
-        3. link(input)
-        4. bot_command_suggestion(input)
+        2. bot_command_suggestion(input)
+        3. email_address(input)
+        4. link(input)
         5. linebreak(input)
         last option: consumes all text until [parse_text_element] works again
     }

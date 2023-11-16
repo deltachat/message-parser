@@ -263,10 +263,6 @@ pub(crate) fn parse_text_element(
 
     if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = email_address(input) {
-        Ok((i, elm))
-    } else if let Ok((i, elm)) = link(input) {
-        Ok((i, elm))
     } else if let Ok((i, elm)) = {
         if prev_char == Some(' ') || prev_char.is_none() {
             bot_command_suggestion(input)
@@ -274,6 +270,10 @@ pub(crate) fn parse_text_element(
             Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
         }
     } {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = email_address(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = link(input) {
         Ok((i, elm))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))
