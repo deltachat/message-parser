@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.9.0 - Improve BotCommandSuggestion Parsing
+
 ### Fixed
 - fix bot command suggestion with `@`- char was detected as email address
 
