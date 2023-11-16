@@ -232,6 +232,7 @@ mod emoji_test {
             assert_eq!(get_first_emoji("'#️⃣"), None);
             assert_eq!(get_first_emoji("❤️‍🔥Hashtag"), Some("❤️‍🔥"));
             assert_eq!(get_first_emoji("👩🏽‍❤️‍👨🏽Hashtag"), Some("👩🏽‍❤️‍👨🏽"));
+            assert_eq!(get_first_emoji("🇪🇸🚧"), Some("🇪🇸"));
         }
 
         #[test]
@@ -254,6 +255,10 @@ mod emoji_test {
             // hair color
             assert_eq!(count_emojis_if_only_contains_emoji("👨‍🦰"), Some(1));
             assert_eq!(count_emojis_if_only_contains_emoji("👨‍🦳"), Some(1));
+            assert_eq!(
+                count_emojis_if_only_contains_emoji("🇪🇸🚧🚧🚧🚧🚧🚧🚧"),
+                Some(8)
+            );
         }
     }
 }
