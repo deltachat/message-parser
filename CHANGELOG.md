@@ -4,7 +4,7 @@
 
 ### Added
 - Add new methods for working with emojis (they are standalone helper functions and not part of message parsing):
-  - `parser::is_emoji::emoji` - nom parser that eats one emoji
+  - `parser::is_emoji::emoji`(rust only) - nom parser that eats one emoji
   - `parser::is_emoji::get_first_emoji(text)` - get first emoji if text begins with an emoji
   - `parser::is_emoji::count_emojis_if_only_contains_emoji(text)` - counts emojis in texts that contain only emojis
 

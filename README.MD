@@ -48,7 +48,7 @@ docs about benchmarking: https://bheisler.github.io/criterion.rs/book/criterion_
 
 Additionally to message parsing this crate also contains some useful functions for working with emojis.
 
-- `parser::is_emoji::emoji` - nom parser that eats one emoji
+-  `parser::is_emoji::emoji` (rust only) - nom parser that eats one emoji
     - idea: could potentially be used by core to filter reactions to only emojis
 - `parser::is_emoji::get_first_emoji(text)` - get first emoji if text begins with an emoji
     - idea: can be used by UI to get the first emoji of a chat name to display it as text avatar

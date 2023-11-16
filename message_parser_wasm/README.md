@@ -56,6 +56,16 @@ For usage in react you can look at how we integrated this package in deltachat-d
 
 If you want to see it in action in deltachat-desktop, feel free to download it on <https://get.delta.chat>.
 
+
+### Emoji Helper functions
+
+```js
+/** returns first emoji from text if text begins with an emoji */
+export function get_first_emoji(input: string): string | undefined;
+/** If string contains only emojis count the emojis otherwise retuns null */
+export function count_emojis_if_only_contains_emoji(input: string): number | undefined;
+```
+
 ### For Devs
 
 #### 🛠️ Build with `wasm-pack build`
