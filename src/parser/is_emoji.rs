@@ -112,6 +112,8 @@ macro_rules! emoji_with_variant {
         ))
     };
 }
+
+// nom parser that eats one emoji
 pub fn emoji(input: &str) -> IResult<&str, &str> {
     recognize(tuple((
         emoji_with_variant!(),
@@ -123,7 +125,7 @@ pub fn emoji(input: &str) -> IResult<&str, &str> {
     )))(input)
 }
 
-/// get first emoji from text
+/// returns first emoji from text if text begins with an emoji
 pub fn get_first_emoji(text: &str) -> Option<&str> {
     if let Ok((_, emoji)) = emoji(text) {
         Some(emoji)
