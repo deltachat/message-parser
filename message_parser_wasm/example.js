@@ -3,6 +3,8 @@
 import init, {
   parse_desktop_set,
   parse_text,
+  get_first_emoji,
+  count_emojis_if_only_contains_emoji,
 } from "./pkg/message_parser_wasm.js";
 
 /** @typedef {import("./pkg/message_parser_wasm.js").ParsedElement} ParsedElement */
@@ -169,4 +171,19 @@ init().then(() => {
     localStorage.setItem("lastMode", parse_mode.value);
     action();
   };
+
+  // emoji helpers
+  /** @type {HTMLInputElement} */
+  const emoji_input = document.getElementById("emoji-test");
+  const emoji_out_first = document.getElementById("emoji-test-first");
+  const emoji_out_count = document.getElementById("emoji-test-count");
+  const emoji_update = () => {
+    const text = emoji_input.value;
+    emoji_out_first.innerText = String(get_first_emoji(text));
+    emoji_out_count.innerText = String(
+      count_emojis_if_only_contains_emoji(text)
+    );
+    setTimeout(emoji_update, 1)
+  };
+  emoji_input.onchange = emoji_input.onkeydown = ()=>setTimeout(emoji_update, 1);
 });

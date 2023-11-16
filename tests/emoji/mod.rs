@@ -14,7 +14,7 @@ fn test_all_desktop_emoji_picker_emojis() {
     let failed_count = failed.len();
     if !failed.is_empty() {
         println!("Failed Cases");
-        print!("{}",failed.join(", "));
+        print!("{}", failed.join(", "));
     }
     assert_eq!(
         failed_count, 0,
