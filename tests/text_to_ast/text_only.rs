@@ -610,21 +610,15 @@ fn link_in_parenthesis2() {
     );
 }
 
-
 #[test]
 fn bot_suggestion_is_no_email() {
     assert_eq!(
         parse_only_text("/command@bot@addr.com"),
-        vec![
-            BotCommandSuggestion("/command@bot@addr.com"),
-        ]
+        vec![BotCommandSuggestion("/command@bot@addr.com"),]
     );
     assert_eq!(
         parse_only_text("\n/command@bot@addr.com"),
-        vec![
-            Linebreak,
-            BotCommandSuggestion("/command@bot@addr.com"),
-        ]
+        vec![Linebreak, BotCommandSuggestion("/command@bot@addr.com"),]
     );
 
     assert_eq!(
