@@ -5,7 +5,7 @@ use nom::{
     bytes::{complete::tag, streaming::take_while_m_n},
     character::complete::{self, satisfy},
     combinator::{opt, recognize},
-    multi::many_m_n,
+    multi::{many1, many_m_n},
     sequence::tuple,
     IResult,
 };
@@ -71,9 +71,16 @@ fn single_char_emoji_core(c: char) -> bool {
 
 fn emoji_core(input: &str) -> IResult<&str, &str> {
     alt((
-        recognize(satisfy(single_char_emoji_core)),
+        // region flags
+        recognize(tuple((
+            complete::char('🏴'),
+            many1(satisfy(|c| matches!(c, '\u{e0061}'..='\u{e007a}'))),
+            complete::char('\u{e007f}'),
+        ))),
         // Regional -> Flags
         take_while_m_n(2, 2, |c| ('🇦'..='🇿').contains(&c)),
+        // standard emoji chars
+        recognize(satisfy(single_char_emoji_core)),
         // SurrPair -> normal emojis?
         // recognize(tuple((
         //     satisfy(|c| ('\u{d800}'..='\u{dbff}').contains(&(c as u32))),
