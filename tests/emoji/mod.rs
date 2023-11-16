@@ -1,4 +1,6 @@
-use deltachat_message_parser::parser::is_emoji::{emoji, get_first_emoji, count_emojis_if_only_contains_emoji};
+use deltachat_message_parser::parser::is_emoji::{
+    count_emojis_if_only_contains_emoji, emoji, get_first_emoji,
+};
 
 #[test]
 fn test_all_desktop_emoji_picker_emojis() {
@@ -29,9 +31,13 @@ fn test_all_desktop_emoji_picker_emojis_are_single_emojis() {
     let mut failed = vec![];
     for case in testcases {
         if count_emojis_if_only_contains_emoji(case) != Some(1) {
-            let result= get_first_emoji(case);
+            let result = get_first_emoji(case);
             if result != Some(case) {
-                print!("{case}:\n{:?}\n{:?}\n", result.map(|r|r.chars()), case.chars());
+                print!(
+                    "{case}:\n{:?}\n{:?}\n",
+                    result.map(|r| r.chars()),
+                    case.chars()
+                );
                 failed.push(case);
             }
         }
