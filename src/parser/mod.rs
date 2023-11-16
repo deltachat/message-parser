@@ -1,6 +1,7 @@
 // mod email;
 pub mod parse_from_text;
 
+pub mod is_emoji;
 mod link_url;
 
 pub use link_url::LinkDestination;
