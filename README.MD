@@ -42,3 +42,16 @@ docs about benchmarking: https://bheisler.github.io/criterion.rs/book/criterion_
 
 - Older discussion on introducing markdown into deltachat: https://github.com/deltachat/interface/pull/20
 - Feature request for message markdown in the forum: https://support.delta.chat/t/markdown-support-in-chat/159
+
+
+## Emoji Helpers
+
+Additionally to message parsing this crate also contains some useful functions for working with emojis.
+
+- `parser::is_emoji::emoji` - nom parser that eats one emoji
+    - idea: could potentially be used by core to filter reactions to only emojis
+- `parser::is_emoji::get_first_emoji(text)` - get first emoji if text begins with an emoji
+    - idea: can be used by UI to get the first emoji of a chat name to display it as text avatar
+- `parser::is_emoji::count_emojis_if_only_contains_emoji(text)` - counts emojis in texts that contain only emojis
+    - useful for jumbomoji logic (if you send a small message with just emojis the emojis get displayed larger).
+    - this function does not fail on too long strings, so to keep good performance check the length beforehand and if it is too long the message would not be big anyway so you don't need to call this function.
