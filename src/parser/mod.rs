@@ -1,7 +1,8 @@
 // mod email;
+pub mod utils;
 pub mod link_url;
 pub mod parse_from_text;
-mod utils;
+pub mod is_emoji;
 
 pub use crate::parser::link_url::LinkDestination;
 
