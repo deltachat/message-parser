@@ -2,7 +2,7 @@
 
 use nom::{
     branch::alt,
-    bytes::{complete::tag, streaming::take_while_m_n},
+    bytes::complete::tag,
     character::complete::{self, satisfy},
     combinator::{opt, recognize},
     multi::{many1, many_m_n},
@@ -78,14 +78,12 @@ fn emoji_core(input: &str) -> IResult<&str, &str> {
             complete::char('\u{e007f}'),
         ))),
         // Regional -> Flags
-        take_while_m_n(2, 2, |c| ('🇦'..='🇿').contains(&c)),
+        recognize(tuple((
+            satisfy(|c| matches!(c, '🇦'..='🇿')),
+            satisfy(|c| matches!(c, '🇦'..='🇿')),
+        ))),
         // standard emoji chars
         recognize(satisfy(single_char_emoji_core)),
-        // SurrPair -> normal emojis?
-        // recognize(tuple((
-        //     satisfy(|c| ('\u{d800}'..='\u{dbff}').contains(&(c as u32))),
-        //     satisfy(|c| ('\u{dc00}'..='\u{dfff}').contains(&(c as u32))),
-        // ))),
         // keycap
         recognize(tuple((
             satisfy(|c| ('\u{0023}'..='\u{0039}').contains(&c)),
@@ -105,7 +103,7 @@ fn emoji_core(input: &str) -> IResult<&str, &str> {
 }
 
 fn emoji_modifier(c: char) -> bool {
-    matches!(c, '🏻'..='🟿')
+    matches!(c, '🏻' | '🏼' | '🏽' | '🏾' | '🏿')
 }
 
 const USIZE_MAX_COMPOSITE_LEN: usize = 10;
