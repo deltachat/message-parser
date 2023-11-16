@@ -36,7 +36,18 @@
         border-radius: 2px;
         padding: 2px;
       }
+
+      table,
+      td,
+      tr {
+        border: 1px solid grey;
+        border-collapse: collapse;
+      }
+      td {
+        padding: 3px;
+      }
     </style>
+    <h1>Message Parser</h1>
     <h3>Input</h3>
     <textarea
       name="content"
@@ -73,6 +84,24 @@
         white-space: pre;
       "
     ></div>
+    <h1>Emoji Helpers</h1>
+
+    <table>
+      <thead>
+        <tr>
+          <td>Input</td>
+          <td>First Emoji</td>
+          <td>Emoji count if only emojis</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="text" id="emoji-test" /></td>
+          <td id="emoji-test-first"></td>
+          <td id="emoji-test-count"></td>
+        </tr>
+      </tbody>
+    </table>
     <script type="module" src="example.js"></script>
   </body>
 </html>
