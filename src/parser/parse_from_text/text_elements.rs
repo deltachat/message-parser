@@ -98,6 +98,11 @@ fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
 }
 
+
+fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
+    let (input, _) = take_while1(link_scheme)(input)?;
+}
+
 /// rough recognition of an link, results gets checked by a real link parser
 fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(not_link_part_char)(input)?;
