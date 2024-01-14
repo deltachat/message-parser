@@ -1,4 +1,3 @@
-use crate::parser::link_url::LinkDestination;
 use crate::parser::parse_from_text::text_elements::email_address;
 
 use super::text_elements::{link, parse_text_element};

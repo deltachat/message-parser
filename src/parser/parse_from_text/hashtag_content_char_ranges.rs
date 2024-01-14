@@ -1,5 +1,3 @@
-use std::ops::RangeInclusive;
-
 const NUMBER_OF_RANGES: usize = 850;
 
 /*
@@ -869,26 +867,6 @@ const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0xe0100..=0xe01ef,
 ];
 
-#[derive(Debug, PartialEq, Eq)]
-enum FindRangeResult<'a> {
-    WasOnRangeStart,
-    Range(&'a RangeInclusive<u32>),
-}
-
-fn find_range_for_char<'a>(code: u32) -> FindRangeResult<'a> {
-    let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
-    match index {
-        Ok(_) => FindRangeResult::WasOnRangeStart,
-        Err(index) => match index {
-            0 => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[0]),
-            // Since `index` can never be 0, `index - 1` will never overflow. Furthermore, the
-            // maximum value which the binary search function returns is `NUMBER_OF_RANGES`.
-            // Therefore, `index - 1` will never panic if we index the array with it.
-            #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
-            index => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[index - 1]),
-        },
-    }
-}
 
 pub(crate) fn hashtag_content_char(c: char) -> bool {
     if matches!(c, '#' | '﹟' | '＃' | ' ') {
@@ -896,11 +874,7 @@ pub(crate) fn hashtag_content_char(c: char) -> bool {
     } else if matches!(c, '+' | '-' | '_') {
         true
     } else {
-        let code: u32 = c as u32;
-        match find_range_for_char(code) {
-            FindRangeResult::WasOnRangeStart => true,
-            FindRangeResult::Range(range) => range.contains(&code),
-        }
+        is_in_one_of_ranges(c, &[HASHTAG_CONTENT_CHAR_RANGES])
     }
 }
 
