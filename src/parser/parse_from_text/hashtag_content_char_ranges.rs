@@ -867,7 +867,6 @@ const HASHTAG_CONTENT_CHAR_RANGES: [RangeInclusive<u32>; NUMBER_OF_RANGES] = [
     0xe0100..=0xe01ef,
 ];
 
-
 pub(crate) fn hashtag_content_char(c: char) -> bool {
     if matches!(c, '#' | '﹟' | '＃' | ' ') {
         false
