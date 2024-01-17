@@ -6,6 +6,21 @@ enum FindRangeResult<'a> {
     Range(&'a RangeInclusive<u32>),
 }
 
+
+/// Find a range which `code` might be in it.
+/// 
+/// # Description 
+/// This function gets a sorted slice of inclusive u32 ranges, performs
+/// binary search on them and returns a FindRangeResult enum telling
+/// which range the `code` might be in. It returns `FindRangeResult::WasOnRangeStart`
+/// if the code was exactly on start of a range. Or a `FindRangeResult::Range(range)`
+/// which indicates `code` is in `range` or in no ranges.
+/// 
+/// # Arguments
+///
+///  - `code` the u32 to look for a range for.
+/// 
+///  - `ranges` a refernce to a slice of `RangeInclusive<u32>`
 fn find_range_for_char<'a>(code: u32, ranges: &[RangeInclusive<u32>]) -> FindRangeResult<'a> {
     let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
     match index {
@@ -21,7 +36,15 @@ fn find_range_for_char<'a>(code: u32, ranges: &[RangeInclusive<u32>]) -> FindRan
     }
 }
 
-pub fn is_in_one_of_ranges(c: char, ranges: &[RangeInclusive<u32>) -> bool {
+
+/// Returns true of `c` is one of the `ranges`, false otherwise.
+///
+/// # Arguments
+///
+///  - `c` A character
+///
+///  - `ranges` A sorted slice of ranges to see if `c` is in anyone of them
+pub fn is_in_one_of_ranges(c: char, ranges: &[RangeInclusive<u32>]) -> bool {
     let c = c as u32;
     match find_range_for_char(c, ranges) {
         FindRangeResult::WasOnRangeStart => true,
