@@ -7,30 +7,14 @@ use nom::{
     bytes::{
         complete::{tag, take, take_while1, take_while},
     },
-    character,
+    character::{is_digit, is_alphabetic as is_alpha, is_hex_digit},
     combinator::{peek, recognize, verify},
     sequence::{tuple, preceded},
     AsChar, IResult,
-    AsChar::is_dec_digit as is_digit
 };
 use super::base_parsers::*;
 
 // Link syntax here is according to RFC 3986 & 3987 --Farooq
-
-
-// In these fucntions checking for ranges, order is important. Remember that 
-// Rust does not check for the second condition in an AND compound boolean
-// expression if the first is already false. Therefore, in is_alpha, I've put 
-// c >= 0x41 before c <= 0x5a as the first has a higher chance of failing.
-// nom's own is_alpha is not used as it detects also chars outside the 
-// ASCII range
-// -- Farooq
-fn is_alpha(c: char) -> bool {
-    let c = c as u64;
-    // basically in inclusive ranges of [0x41, 0x5a] OR
-    // [0x61, 0x7a]
-    (c >= 0x41 && c <= 0x5a) || (c >= 0x61 && c <= 0x7a &&)
-}
 
 
 
@@ -91,7 +75,15 @@ fn is_ipv4(c: char) -> bool {
 }
 
 fn ipv4(input: &str) -> IResult<&str, &str> {
-    let (input, possible_ipv4) = take_while_m_n(7, 15, is_ipv4)(input);
+    let (input, possible_ipv4) = tuple(
+        complete::u8,
+        char('.'),
+        complete::u8,
+        char('.'),
+        complete::u8,
+        char('.'),
+        complete::u8
+    )(input);
     // This might be an IPv4
     let inner_pair = separated_pair(take_while1(is_digit), char('.'), take_while1(is_digit));
     let ((part0, part1), (part2, part3)) = separated_pair(inner_pair, char('.'), inner_pair)(input)?;
@@ -106,8 +98,17 @@ fn is_ireg_name(c: char) -> bool {
     is_iunreserved(c) || is_pct_encoded(c) || is_sub_delims(c)
 }
 
+fn ipv6(input: &str) -> IResult<&str, &str> {
+
+}
+
+fn ipvfuture(input: &str) -> IResult<&str, &str> {
+    tuple(char('v'), take_while_m_n(1, 1, is_hex_digit), char('.'), take_while_m_n(1, 1
+}
+
+
 fn ip_literal(input: &str) -> IResult<&str, &str> {
-    
+    delimited(char('['), alt(ipv6, ipvfuture), char(']'))(input)
 }
 
 /// Parse host
@@ -190,14 +191,14 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
 
 fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, scheme) = scheme(input)?;
-    let (input, (userinfo, hostport, is_ipv6), path) = ihier_part(input)?;
+    let (input, (userinfo, hostport, is_ipvfuture), path) = ihier_part(input)?;
     let (input, query) = opt(preceed(char('?'), take_while(is_query)))(input)?;
     let (input, fragment) = opt(preceed(char('#'), take_while(is_ifragment)))(input)?;
     Element::Link {
         destination: LinkDestination {
             target: input,
             hostname: Some(hostport),
-            punycode: None,
+            punycode: ,
             scheme: scheme
         }
     }
