@@ -2,12 +2,11 @@ use crate::parser::link_url::LinkDestination;
 use std::ops::RangeInclusive;
 use super::Element;
 use crate::nom::{Offset, Slice};
-use nom::character::complete::char;
 use nom::{
     bytes::{
         complete::{tag, take, take_while1, take_while},
     },
-    character::{is_digit, is_alphabetic as is_alpha, is_hex_digit},
+    character::{is_digit, is_alphabetic as is_alpha, is_hex_digit, char},
     combinator::{peek, recognize, verify},
     sequence::{tuple, preceded},
     AsChar, IResult,
@@ -98,12 +97,35 @@ fn is_ireg_name(c: char) -> bool {
     is_iunreserved(c) || is_pct_encoded(c) || is_sub_delims(c)
 }
 
+fn h16(input: &str) -> IResult<&str, &str> {
+    take_while_m_n(1, 4, is_hex_digit)
+}
+
+fn ls32(input: &str) -> IResult<&str, &str> {
+    alt(tuple(h16, char(':'), h16), ipv4)
+}
+
 fn ipv6(input: &str) -> IResult<&str, &str> {
+    let h16_and_period = tuple(h16, char(':'));
+    let double_period = tag("::");
+    tuple(
+        take_while_m_n(6, 6, h16_and_period),
+        alt(ls32, double_period),
+        take_while(5, 5, h16_and_period),
+        alt(ls32, opt(h16)),
+        double_period,
+        take_while(4, 4, h16_and_period),
+        alt(ls32, opt(tuple(take_while_m_n(0, 1, h16_and_period)
 
 }
 
+
+fn is_ipvfuture_last(c: char) -> bool {
+    is_unreserved(c) || is_sub_delims(c) || c == ':'
+}
+
 fn ipvfuture(input: &str) -> IResult<&str, &str> {
-    tuple(char('v'), take_while_m_n(1, 1, is_hex_digit), char('.'), take_while_m_n(1, 1
+    tuple(char('v'), take_while_m_n(1, 1, is_hex_digit), char('.'), take_while_m_n(1, 1, is_ipvfuture_last))
 }
 
 
@@ -131,20 +153,20 @@ fn parse_host(input: &str) -> IResult<&str, &str, bool> {
 
 fn iauthority(input: &str) -> IResult<&str, &str, &str, &str, bool> {
     let (input, userinfo) = opt(take_while(is_userinfo), char('@'))(input);
-    let (input, host, is_ipv6) = parse_host(input);
+    let (input, host, is_ipvfuture) = parse_host(input);
     let (input, port) = preceded(char(':'), take_while(is_digit))(input);
     Ok((input, userinfo, host, port, is_ipv6))
 }
 
-fn ihier_part(input: &str) -> IResult<&str, &str, &str> {
-    let (input, authority) = preceded(tag("//"), iauthoriy)(input);
+fn ihier_part(input: &str) -> IResult<&str, &str, &str, bool> {
+    let (input, authority) = preceded(tag("//"), iauthority)(input);
     let (input, path) = alt(
         take_while(is_ipath_abempty),
         char(''), // ipath-empty
         take_while(is_ipath_absolute),
         take_while(is_ipath_rootless)
     )(input);
-    Ok((input, authority, path))
+    Ok((input, authority, path, is_ipvfuture))
 }
 
 fn is_ipchar(c: char) -> bool {
