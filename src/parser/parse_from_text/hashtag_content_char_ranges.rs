@@ -1,3 +1,6 @@
+use std::ops::RangeInclusive;
+use crate::parser::parse_from_text::find_range::is_in_one_of_ranges;
+
 const NUMBER_OF_RANGES: usize = 850;
 
 /*
@@ -873,7 +876,7 @@ pub(crate) fn hashtag_content_char(c: char) -> bool {
     } else if matches!(c, '+' | '-' | '_') {
         true
     } else {
-        is_in_one_of_ranges(c, &[HASHTAG_CONTENT_CHAR_RANGES])
+        is_in_one_of_ranges(c, &HASHTAG_CONTENT_CHAR_RANGES[..])
     }
 }
 

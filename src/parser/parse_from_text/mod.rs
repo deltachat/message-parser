@@ -5,6 +5,8 @@ mod desktop_subset;
 pub mod hashtag_content_char_ranges;
 mod markdown_elements;
 mod text_elements;
+mod link_element;
+mod find_range;
 
 /// parses text elements such as links and email addresses, excluding markdown
 pub(crate) fn parse_only_text(input: &str) -> std::vec::Vec<Element> {

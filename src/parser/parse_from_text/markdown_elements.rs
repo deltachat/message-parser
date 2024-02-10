@@ -1,6 +1,8 @@
 use crate::parser::parse_from_text::text_elements::email_address;
 
-use super::text_elements::{link, parse_text_element};
+use crate::parser::link_url::LinkDestination;
+use super::text_elements::parse_text_element;
+use crate::parser::parse_from_text::link_element::link;
 use super::Element;
 use super::{base_parsers::*, parse_all};
 ///! nom parsers for markdown elements

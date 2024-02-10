@@ -2,6 +2,7 @@
 use crate::parser::link_url::LinkDestination;
 
 use super::base_parsers::*;
+use super::link_element::link;
 use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use crate::nom::{Offset, Slice};
@@ -98,6 +99,7 @@ fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
 }
 
+/*
 fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(link_scheme)(input)?;
 }
@@ -229,7 +231,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
 }
-
+*/
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
         '@' | '\\' | '_' | '/' | '.' | '-' => true,

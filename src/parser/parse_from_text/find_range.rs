@@ -22,16 +22,16 @@ enum FindRangeResult<'a> {
 /// 
 ///  - `ranges` a refernce to a slice of `RangeInclusive<u32>`
 fn find_range_for_char<'a>(code: u32, ranges: &[RangeInclusive<u32>]) -> FindRangeResult<'a> {
-    let index = HASHTAG_CONTENT_CHAR_RANGES.binary_search_by_key(&code, |range| *range.start());
+    let index = ranges.binary_search_by_key(&code, |range| *range.start());
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
         Err(index) => match index {
-            0 => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[0]),
+            0 => FindRangeResult::Range(&ranges[0]),
             // Since `index` can never be 0, `index - 1` will never overflow. Furthermore, the
             // maximum value which the binary search function returns is `NUMBER_OF_RANGES`.
             // Therefore, `index - 1` will never panic if we index the array with it.
             #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
-            index => FindRangeResult::Range(&HASHTAG_CONTENT_CHAR_RANGES[index - 1]),
+            index => FindRangeResult::Range(&ranges[index - 1]),
         },
     }
 }
