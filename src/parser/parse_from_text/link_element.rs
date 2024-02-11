@@ -1,21 +1,23 @@
-use crate::parser::link_url::LinkDestination;
-use std::ops::RangeInclusive;
+use super::base_parsers::*;
+use super::find_range::is_in_one_of_ranges;
 use super::Element;
 use crate::nom::{Offset, Slice};
+use crate::parser::link_url::LinkDestination;
 use nom::{
-    bytes::{
-        complete::{tag, take, take_while1, take_while},
+    branch::alt,
+    bytes::complete::{tag, take, take_while, take_while1, take_while_m_n},
+    character::{
+        is_alphabetic as is_alpha,
+        complete::{char, u8}
     },
-    character::{is_alphabetic as is_alpha, char},
-    combinator::{peek, recognize, verify},
-    sequence::{tuple, preceded},
-    multi::{many_m_n, count},
+    combinator::{opt, peek, recognize, verify},
+    multi::{count, many0, many_m_n},
+    sequence::{delimited, preceded, tuple},
     AsChar, IResult,
 };
-use super::base_parsers::*;
+use std::ops::RangeInclusive;
 
 // Link syntax here is according to RFC 3986 & 3987 --Farooq
-
 
 fn is_hex_digit(c: char) -> bool {
     c.is_ascii_hexdigit()
@@ -26,7 +28,7 @@ fn is_digit(c: char) -> bool {
 }
 
 // These ranges have been extracted from RFC3987, Page 8.
-const ucschar_ranges: [RangeInclusive<u32>; 17] = [
+const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
     0xa0..=0xd7ff,
     0xF900..=0xFDCF,
     0xFDF0..=0xFFEF,
@@ -47,7 +49,7 @@ const ucschar_ranges: [RangeInclusive<u32>; 17] = [
 ];
 
 fn is_ucschar(c: char) -> bool {
-    is_in_one_of_ranges(c, &ucschar_ranges[..])
+    is_in_one_of_ranges(c, &UCSCHAR_RANGES[..])
 }
 
 fn is_unreserved(c: char) -> bool {
@@ -67,7 +69,10 @@ fn is_pct_encoded(c: [char; 3]) -> bool {
 }
 
 fn is_sub_delim(c: char) -> bool {
-    matches!(c, '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '=')
+    matches!(
+        c,
+        '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '='
+    )
 }
 
 // Here again, order is important. As URLs/IRIs have letters in them
@@ -76,26 +81,18 @@ fn is_scheme(c: char) -> bool {
     is_alpha(c) || is_digit(c) || is_scheme(c)
 }
 
-
 fn is_ipv4(c: char) -> bool {
     is_digit(c) || c == '.'
 }
 
 fn ipv4(input: &str) -> IResult<&str, &str> {
-    let (input, ipv4_) = recognize(tuple((
-        complete::u8,
-        char('.'),
-        complete::u8,
-        char('.'),
-        complete::u8,
-        char('.'),
-        complete::u8
-    )))(input)?;
+    let (input, ipv4_) =
+        recognize(tuple((u8, char('.'), u8, char('.'), u8, char('.'), u8)))(input)?;
     Ok((input, ipv4_))
 }
 
 fn is_ireg_name(c: char) -> bool {
-    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delims(c)
+    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c)
 }
 
 fn h16(input: &str) -> IResult<&str, &str> {
@@ -118,32 +115,68 @@ fn ipv6(input: &str) -> IResult<&str, &str> {
     alt((
         recognize(tuple((count(h16_and_period, 6), ls32))),
         recognize(tuple((double_period, many_m_n(5, 5, h16_and_period), ls32))),
-        recognize(tuple((opt(h16), double_period, many_m_n(4, 4, h16_and_period), ls32))),
-        recognize(tuple((opt(tuple((many_m_n(0, 1, h16_and_period), ))), double_period, count(h16_and_period, 3), ls32))),
-        recognize(tuple((opt(tuple((many_m_n(0, 2, h16_and_period), h16))), double_period, count(h16_and_period, 2), ls32))),
-        recognize(tuple((opt(tuple((many_m_n(0, 3, h16_and_period), h16))), double_period, count(h16_and_period, 1), ls32))),
-        recognize(tuple((opt(tuple((many_m_n(0, 4, h16_and_period), h16))), double_period, ls32))),
-        recognize(tuple((opt(tuple((many_m_n(0, 5, h16_and_period), h16))), double_period, h16))),
-        recognize(tuple((opt(tuple((many_m_n(0, 6, h16_and_period), h16))), double_period)))))(input)
+        recognize(tuple((
+            opt(h16),
+            double_period,
+            many_m_n(4, 4, h16_and_period),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 1, h16_and_period),))),
+            double_period,
+            count(h16_and_period, 3),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 2, h16_and_period), h16))),
+            double_period,
+            count(h16_and_period, 2),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 3, h16_and_period), h16))),
+            double_period,
+            count(h16_and_period, 1),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 4, h16_and_period), h16))),
+            double_period,
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 5, h16_and_period), h16))),
+            double_period,
+            h16,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 6, h16_and_period), h16))),
+            double_period,
+        ))),
+    ))(input)
 }
 
-
 fn is_ipvfuture_last(c: char) -> bool {
-    is_unreserved(c) || is_sub_delims(c) || c == ':'
+    is_unreserved(c) || is_sub_delim(c) || c == ':'
 }
 
 fn ipvfuture(input: &str) -> IResult<&str, &str> {
-    tuple((char('v'), take_while_m_n(1, 1, is_hex_digit), char('.'), take_while_m_n(1, 1, is_ipvfuture_last)))(input)
+    tuple((
+        char('v'),
+        take_while_m_n(1, 1, is_hex_digit),
+        char('.'),
+        take_while_m_n(1, 1, is_ipvfuture_last),
+    ))(input)
 }
 
 fn ip_literal(input: &str) -> IResult<&str, &str> {
-    delimited(char('['), alt(ipv6, ipvfuture), char(']'))(input)
+    delimited(char('['), alt((ipv6, ipvfuture)), char(']'))(input)
 }
 
 /// Parse host
 ///
 /// # Description
-/// 
+///
 /// Parse host. Returns the rest, the host string and a boolean indicating
 /// if it is IPvFuture or IPv6.
 fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
@@ -160,35 +193,46 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
     }
 }
 
+fn is_userinfo(c: char) -> bool {
+    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c)
+}
+
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, &str, bool)> {
-    let (input, userinfo) = opt(take_while(is_userinfo), char('@'))(input)?;
+    let (input, userinfo) = opt(tuple((take_while(is_userinfo), char('@'))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
     let (input, port) = preceded(char(':'), take_while(is_digit))(input)?;
+    let userinfo = userinfo.unwrap_or("");
     Ok((input, (userinfo, host, port, is_ipv6_or_future)))
 }
 
 fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
-    let (input, (userinfo, host, port, is_ipv6_or_future)) = preceded(tag("//"), iauthority)(input)?;
-    let (input, path) = opt(alt(
-        take_while(is_ipath_abempty),
-        take_while(is_ipath_absolute),
-        take_while(is_ipath_rootless)
-    ))(input)?;
+    let (input, (userinfo, host, port, is_ipv6_or_future)) =
+        preceded(tag("//"), iauthority)(input)?;
+    let (input, path) = opt(alt((
+        recognize(tuple((
+            char('/'),
+            opt(tuple((
+                take_while1(is_ipchar),
+                many0(tuple((char('/'), take_while(is_ipchar)))),
+            ))),
+        ))), // ipath-absolute
+        recognize(tuple((
+            take_while1(is_ipchar),
+            many0(tuple((char('/'), take_while(is_ipchar)))),
+        ))), // ipath_rootless
+    )))(input)?;
+    let path = path.unwrap_or(""); // it's ipath_empty
     Ok((input, (userinfo, host, port, path, is_ipv6_or_future)))
 }
 
 fn is_ipchar(c: char) -> bool {
-    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delims(c) || matches!(c, ':' | '@')
+    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c) || matches!(c, ':' | '@')
 }
 
-const IPRIVATE_RANGES: [RangeInclusive<u32>; 3]  = [
-    0xe000..=0xf8ff,
-    0xf0000..=0xffffd,
-    0x100000..=0x10fffd,
-];
+const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
+    [0xe000..=0xf8ff, 0xf0000..=0xffffd, 0x100000..=0x10fffd];
 
 fn is_iprivate(c: char) -> bool {
-    let c = c as u32;
     is_in_one_of_ranges(c, &IPRIVATE_RANGES[..])
 }
 
@@ -205,7 +249,7 @@ fn is_ifragment(c: char) -> bool {
 }
 
 fn ifragment(input: &str) -> IResult<&str, &str> {
-    take_while(is_fragment)(input)
+    take_while(is_ifragment)(input)
 }
 
 fn scheme(input: &str) -> IResult<&str, &str> {
@@ -222,15 +266,18 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
 pub fn link(input: &str) -> IResult<&str, Element> {
     let (input, scheme) = scheme(input)?;
     let (input, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
-    let (input, query) = opt(preceed(char('?'), take_while(is_query)))(input)?;
-    let (input, fragment) = opt(preceed(char('#'), take_while(is_ifragment)))(input)?;
-    let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}{query}{fragment}");
-    Ok((input, Element::Link {
-        destination: LinkDestination {
-            target: &s,
-            hostname: Some(hostport),
-            punycode: None,
-            scheme: scheme
-        }
-    }))
+    let (input, Some(query)) = opt(preceded(char('?'), take_while(is_iquery)))(input)?;
+    let (input, Some(fragment)) = opt(preceded(char('#'), take_while(is_ifragment)))(input)?;
+    let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}?{query}#{fragment}");
+    Ok((
+        input,
+        Element::Link {
+            destination: LinkDestination {
+                target: &s,
+                hostname: Some(host),
+                punycode: None,
+                scheme: scheme,
+            },
+        },
+    ))
 }

@@ -1,5 +1,5 @@
-use std::ops::RangeInclusive;
 use crate::parser::parse_from_text::find_range::is_in_one_of_ranges;
+use std::ops::RangeInclusive;
 
 const NUMBER_OF_RANGES: usize = 850;
 

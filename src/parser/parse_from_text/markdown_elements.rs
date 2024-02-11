@@ -1,10 +1,13 @@
 use crate::parser::parse_from_text::text_elements::email_address;
 
-use crate::parser::link_url::LinkDestination;
+use super::base_parsers::{
+    direct_delimited, is_white_space, is_white_space_but_not_linebreak, CustomError,
+};
 use super::text_elements::parse_text_element;
-use crate::parser::parse_from_text::link_element::link;
 use super::Element;
 use super::{base_parsers::*, parse_all};
+use crate::parser::link_url::LinkDestination;
+use crate::parser::parse_from_text::link_element::link;
 ///! nom parsers for markdown elements
 use nom::{
     bytes::complete::{is_not, tag, take, take_while},

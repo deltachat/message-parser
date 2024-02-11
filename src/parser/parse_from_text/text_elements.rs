@@ -1,9 +1,10 @@
 ///! nom parsers for text elements
 use crate::parser::link_url::LinkDestination;
 
+use super::base_parsers::CustomError;
 use super::base_parsers::*;
-use super::link_element::link;
 use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::link_element::link;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
