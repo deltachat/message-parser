@@ -64,10 +64,6 @@ fn is_other_unreserved(c: char) -> bool {
     matches!(c, '_' | '.' | '_' | '~')
 }
 
-fn is_pct_encoded(c: [char; 3]) -> bool {
-    c[0] == '%' && is_hex_digit(c[1]) && is_hex_digit(c[2])
-}
-
 fn is_sub_delim(c: char) -> bool {
     matches!(
         c,
@@ -198,7 +194,7 @@ fn is_userinfo(c: char) -> bool {
 }
 
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, &str, bool)> {
-    let (input, userinfo) = opt(tuple((take_while(is_userinfo), char('@'))))(input)?;
+    let (input, userinfo) = opt(recognize(tuple((take_while(is_userinfo), char('@')))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
     let (input, port) = preceded(char(':'), take_while(is_digit))(input)?;
     let userinfo = userinfo.unwrap_or("");
@@ -225,8 +221,8 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
     Ok((input, (userinfo, host, port, path, is_ipv6_or_future)))
 }
 
-fn is_ipchar(c: char) -> bool {
-    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c) || matches!(c, ':' | '@')
+fn is_ipchar_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c) || matches!(c, ':' | '@')
 }
 
 const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
@@ -236,12 +232,12 @@ fn is_iprivate(c: char) -> bool {
     is_in_one_of_ranges(c, &IPRIVATE_RANGES[..])
 }
 
-fn is_iquery(c: char) -> bool {
-    is_iprivate(c) || is_ipchar(c) || matches!(c, '/' | '?')
+fn is_iquery_not_pct_encoded(c: char) -> bool {
+    is_iprivate(c) || is_ipchar_not_pct_encoded(c) || matches!(c, '/' | '?')
 }
 
 fn iquery(input: &str) -> IResult<&str, &str> {
-    take_while(is_iquery)(input)
+    recognize(many0(alt((take_while(is_iquery_not_pct_encoded), pct_encoded))))(input)
 }
 
 fn is_ifragment(c: char) -> bool {
@@ -263,10 +259,14 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
     }
 }
 
+fn pct_encoded(input: &str) -> IResult<&str, &str> {
+    recognize(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit))))(input)
+}
+
 pub fn link(input: &str) -> IResult<&str, Element> {
     let (input, scheme) = scheme(input)?;
     let (input, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
-    let (input, Some(query)) = opt(preceded(char('?'), take_while(is_iquery)))(input)?;
+    let (input, Some(query)) = opt(preceded(char('?'), iquery))(input)?;
     let (input, Some(fragment)) = opt(preceded(char('#'), take_while(is_ifragment)))(input)?;
     let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}?{query}#{fragment}");
     Ok((
