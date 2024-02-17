@@ -100,8 +100,8 @@ pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<
     }
     let (rest, link) = match link(content) {
         Ok((rest, link)) => (rest, link),
-        Err(nom::Err(err)) => {
-            return Err(Error(CustomError::Nom(err.input, err.code)));
+        Err(nom::Err::Error(err)) => {
+            return Err(nom::Err::Error(CustomError::Nom(err.input, err.code)));
         }
     }
     if !rest.is_empty() {

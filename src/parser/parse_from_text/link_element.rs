@@ -6,10 +6,7 @@ use crate::parser::link_url::LinkDestination;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_while, take_while1, take_while_m_n},
-    character::{
-        is_alphabetic as is_alpha,
-        complete::{char, u8}
-    },
+    character::complete::{char, u8},
     combinator::{opt, peek, recognize, verify},
     multi::{count, many0, many_m_n},
     sequence::{delimited, preceded, tuple},
@@ -19,12 +16,16 @@ use std::ops::RangeInclusive;
 
 // Link syntax here is according to RFC 3986 & 3987 --Farooq
 
+fn is_alpha(c: char) -> bool{
+    c.is_alphabetic()
+}
+
 fn is_hex_digit(c: char) -> bool {
     c.is_ascii_hexdigit()
 }
 
 fn is_digit(c: char) -> bool {
-    c.is_digit()
+    c.is_digit(10)
 }
 
 // These ranges have been extracted from RFC3987, Page 8.
@@ -96,11 +97,16 @@ fn h16(input: &str) -> IResult<&str, &str> {
 }
 
 fn ls32(input: &str) -> IResult<&str, &str> {
-    alt((tuple((h16, char(':'), h16)), ipv4))(input)
+    let result = recognize(tuple((h16, char(':'), h16)))(input);
+    if result.is_err() {
+        ipv4(input)
+    } else {
+        result
+    }
 }
 
 fn h16_and_period(input: &str) -> IResult<&str, &str> {
-    tuple((h16, char(':')))(input)
+    recognize(tuple((h16, char(':'))))(input)
 }
 
 fn double_period(input: &str) -> IResult<&str, &str> {
@@ -157,12 +163,12 @@ fn is_ipvfuture_last(c: char) -> bool {
 }
 
 fn ipvfuture(input: &str) -> IResult<&str, &str> {
-    tuple((
+    recognize(tuple((
         char('v'),
         take_while_m_n(1, 1, is_hex_digit),
         char('.'),
         take_while_m_n(1, 1, is_ipvfuture_last),
-    ))(input)
+    )))(input)
 }
 
 fn ip_literal(input: &str) -> IResult<&str, &str> {
@@ -213,7 +219,7 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
             ))),
         ))), // ipath-absolute
         recognize(tuple((
-            take_while1(is_ipchar),
+            take_while_ipchar,
             many0(tuple((char('/'), take_while(is_ipchar)))),
         ))), // ipath_rootless
     )))(input)?;
@@ -223,6 +229,14 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
 
 fn is_ipchar_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c) || matches!(c, ':' | '@')
+}
+
+fn take_while_ipchar(input: &str) -> IResult<&str, &str> {
+    many0(alt((take_while(is_ipchar_not_pct_encoded), take_while(is_pct_encoded)))(input)
+}
+
+fn is_pct_encoded(c: [char; 3]) -> bool {
+    c[0] == '%' && is_hex_digit(c[1]) && is_hex_digit(c[2])
 }
 
 const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
