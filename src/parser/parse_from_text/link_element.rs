@@ -88,8 +88,8 @@ fn ipv4(input: &str) -> IResult<&str, &str> {
     Ok((input, ipv4_))
 }
 
-fn is_ireg_name(c: char) -> bool {
-    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c)
+fn is_ireg_name_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c)
 }
 
 fn h16(input: &str) -> IResult<&str, &str> {
@@ -189,18 +189,18 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
             Ok((input, (host, true)))
         }
         Err(..) => {
-            let (input, host) = alt((ipv4, take_while(is_ireg_name)))(input)?;
+            let (input, host) = alt((ipv4, many0(alt((take_while(is_ireg_name_not_pct_encoded)))))(input)?;
             Ok((input, (host, false)))
         }
     }
 }
 
-fn is_userinfo(c: char) -> bool {
-    is_iunreserved(c) || is_pct_encoded(c) || is_sub_delim(c)
+fn is_userinfo_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c)
 }
 
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, &str, bool)> {
-    let (input, userinfo) = opt(recognize(tuple((take_while(is_userinfo), char('@')))))(input)?;
+    let (input, userinfo) = opt(recognize(alt((take_while_pct_encoded, tuple((take_while(is_userinfo), char('@')))))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
     let (input, port) = preceded(char(':'), take_while(is_digit))(input)?;
     let userinfo = userinfo.unwrap_or("");
@@ -215,12 +215,12 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
             char('/'),
             opt(tuple((
                 take_while1(is_ipchar),
-                many0(tuple((char('/'), take_while(is_ipchar)))),
+                many0(tuple((char('/'), take_while_ipchar))),
             ))),
         ))), // ipath-absolute
         recognize(tuple((
             take_while_ipchar,
-            many0(tuple((char('/'), take_while(is_ipchar)))),
+            many0(tuple((char('/'), take_while_ipchar))),
         ))), // ipath_rootless
     )))(input)?;
     let path = path.unwrap_or(""); // it's ipath_empty
@@ -232,11 +232,7 @@ fn is_ipchar_not_pct_encoded(c: char) -> bool {
 }
 
 fn take_while_ipchar(input: &str) -> IResult<&str, &str> {
-    many0(alt((take_while(is_ipchar_not_pct_encoded), take_while(is_pct_encoded)))(input)
-}
-
-fn is_pct_encoded(c: [char; 3]) -> bool {
-    c[0] == '%' && is_hex_digit(c[1]) && is_hex_digit(c[2])
+    recognize(many0(alt((take_while(is_ipchar_not_pct_encoded), take_while_pct_encoded))))(input)
 }
 
 const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
@@ -273,7 +269,7 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
     }
 }
 
-fn pct_encoded(input: &str) -> IResult<&str, &str> {
+fn take_while_pct_encoded(input: &str) -> IResult<&str, &str> {
     recognize(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit))))(input)
 }
 
