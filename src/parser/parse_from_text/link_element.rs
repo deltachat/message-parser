@@ -8,7 +8,7 @@ use nom::{
     bytes::complete::{tag, take, take_while, take_while1, take_while_m_n},
     character::complete::{char, u8},
     combinator::{opt, peek, recognize, verify},
-    multi::{count, many0, many_m_n},
+    multi::{count, many0, many1, many_m_n},
     sequence::{delimited, preceded, tuple},
     AsChar, IResult,
 };
@@ -189,10 +189,14 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
             Ok((input, (host, true)))
         }
         Err(..) => {
-            let (input, host) = alt((ipv4, many0(alt((take_while(is_ireg_name_not_pct_encoded)))))(input)?;
+            let (input, host) = alt((ipv4, take_while_ireg))(input)?;
             Ok((input, (host, false)))
         }
     }
+}
+
+fn take_while_ireg(input: &str) -> IResult<&str, &str> {
+    alt((recognize(many0(take_while_pct_encoded)), take_while(is_ireg_name_not_pct_encoded)))(input) 
 }
 
 fn is_userinfo_not_pct_encoded(c: char) -> bool {
@@ -200,11 +204,19 @@ fn is_userinfo_not_pct_encoded(c: char) -> bool {
 }
 
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, &str, bool)> {
-    let (input, userinfo) = opt(recognize(alt((take_while_pct_encoded, tuple((take_while(is_userinfo), char('@')))))))(input)?;
+    let (input, userinfo) = opt(recognize(tuple((take_while_iuserinfo, char('@')))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
     let (input, port) = preceded(char(':'), take_while(is_digit))(input)?;
     let userinfo = userinfo.unwrap_or("");
     Ok((input, (userinfo, host, port, is_ipv6_or_future)))
+}
+
+fn take_while_iuserinfo(input: &str) -> IResult<&str, &str> {
+    alt((recognize(many0(take_while_pct_encoded)), take_while(is_iuserinfo_not_pct_encoded)))(input)
+}
+
+fn is_iuserinfo_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c) || c == ':'
 }
 
 fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
@@ -214,7 +226,7 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
         recognize(tuple((
             char('/'),
             opt(tuple((
-                take_while1(is_ipchar),
+                take_while_ipchar1,
                 many0(tuple((char('/'), take_while_ipchar))),
             ))),
         ))), // ipath-absolute
@@ -235,6 +247,10 @@ fn take_while_ipchar(input: &str) -> IResult<&str, &str> {
     recognize(many0(alt((take_while(is_ipchar_not_pct_encoded), take_while_pct_encoded))))(input)
 }
 
+fn take_while_ipchar1(input: &str) -> IResult<&str, &str> {
+    recognize(many1(alt((take_while(is_ipchar_not_pct_encoded), take_while_pct_encoded))))(input)
+}
+
 const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
     [0xe000..=0xf8ff, 0xf0000..=0xffffd, 0x100000..=0x10fffd];
 
@@ -247,15 +263,11 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
 }
 
 fn iquery(input: &str) -> IResult<&str, &str> {
-    recognize(many0(alt((take_while(is_iquery_not_pct_encoded), pct_encoded))))(input)
+    recognize(many0(alt((take_while(is_iquery_not_pct_encoded), take_while_pct_encoded))))(input)
 }
 
-fn is_ifragment(c: char) -> bool {
-    is_ipchar(c) || matches!(c, '/' | '?')
-}
-
-fn ifragment(input: &str) -> IResult<&str, &str> {
-    take_while(is_ifragment)(input)
+fn take_while_ifragment(input: &str) -> IResult<&str, &str> {
+    recognize(many0(alt((take_while_ipchar, take_while_pct_encoded, tag("/"), tag("?")))))(input)
 }
 
 fn scheme(input: &str) -> IResult<&str, &str> {
@@ -277,7 +289,7 @@ pub fn link(input: &str) -> IResult<&str, Element> {
     let (input, scheme) = scheme(input)?;
     let (input, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
     let (input, Some(query)) = opt(preceded(char('?'), iquery))(input)?;
-    let (input, Some(fragment)) = opt(preceded(char('#'), take_while(is_ifragment)))(input)?;
+    let (input, Some(fragment)) = opt(preceded(char('#'), take_while_ifragment))(input)?;
     let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}?{query}#{fragment}");
     Ok((
         input,
