@@ -286,16 +286,17 @@ fn take_while_pct_encoded(input: &str) -> IResult<&str, &str> {
 }
 
 pub fn link(input: &str) -> IResult<&str, Element> {
-    let (input, scheme) = scheme(input)?;
-    let (input, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
-    let (input, Some(query)) = opt(preceded(char('?'), iquery))(input)?;
-    let (input, Some(fragment)) = opt(preceded(char('#'), take_while_ifragment))(input)?;
+    let input_ = <&str>::clone(input);
+    let (input_, scheme) = scheme(input)?;
+    let (input_, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
+    let (input_, Some(query)) = opt(preceded(char('?'), iquery))(input)?;
+    let (input_, Some(fragment)) = opt(preceded(char('#'), take_while_ifragment))(input)?;
     let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}?{query}#{fragment}");
     Ok((
-        input,
+        input[0..s.len()],
         Element::Link {
             destination: LinkDestination {
-                target: &s,
+                target: ,
                 hostname: Some(host),
                 punycode: None,
                 scheme: scheme,
