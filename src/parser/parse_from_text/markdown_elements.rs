@@ -103,7 +103,7 @@ pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<
         Err(nom::Err::Error(err)) => {
             return Err(nom::Err::Error(CustomError::Nom(err.input, err.code)));
         }
-    }
+    };
     if !rest.is_empty() {
         return Err(nom::Err::Error(CustomError::UnexpectedContent));
     }
