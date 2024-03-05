@@ -38,9 +38,9 @@ pub struct LinkDestination<'a> {
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct PunycodeWarning {
-    original_hostname: String,
-    ascii_hostname: String,
-    punycode_encoded_url: String,
+    pub original_hostname: String,
+    pub ascii_hostname: String,
+    pub punycode_encoded_url: String,
 }
 
 /// determines which generic schemes (without '://') get linkifyed
@@ -320,22 +320,11 @@ fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<
 fn punycode_encode(host: &str) -> String {
     host.split('.')
         .map(|sub| {
-            let mut has_non_ascii_char = false;
-            for char in sub.chars() {
-                if !is_alphanum_or_hyphen_minus(char) {
-                    has_non_ascii_char = true;
-                    break;
-                }
-            }
-            if has_non_ascii_char {
-                format!(
-                    "xn--{}",
-                    unic_idna_punycode::encode_str(sub)
-                        .unwrap_or_else(|| "[punycode encode failed]".to_owned())
-                )
-            } else {
-                sub.to_owned()
-            }
+            format!(
+                "xn--{}",
+                unic_idna_punycode::encode_str(sub)
+                    .unwrap_or_else(|| "[punycode encode failed]".to_owned())
+            )
         })
         .collect::<Vec<String>>()
         .join(".")

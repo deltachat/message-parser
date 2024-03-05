@@ -3,7 +3,7 @@ use std::fmt::Debug;
 ///! Base utility parsers, used by both text and markdown parsers
 use nom::{
     bytes::complete::tag,
-    error::{Error, ErrorKind, ParseError},
+    error::{ErrorKind, ParseError},
     sequence::delimited,
     IResult,
 };

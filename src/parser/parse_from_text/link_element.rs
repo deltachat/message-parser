@@ -1,22 +1,22 @@
-use super::base_parsers::*;
-use super::find_range::is_in_one_of_ranges;
-use super::Element;
-use crate::nom::{Offset, Slice};
-use crate::parser::link_url::LinkDestination;
+use std::ops::RangeInclusive;
+
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_while, take_while1, take_while_m_n},
+    bytes::complete::{tag, take_while, take_while_m_n},
     character::complete::{char, u8},
-    combinator::{opt, peek, recognize, verify},
+    combinator::{opt, recognize},
     multi::{count, many0, many1, many_m_n},
-    sequence::{delimited, preceded, tuple},
+    sequence::{delimited, tuple},
     AsChar, IResult,
 };
-use std::ops::RangeInclusive;
+
+use super::find_range::is_in_one_of_ranges;
+use super::Element;
+use crate::parser::link_url::{LinkDestination, PunycodeWarning};
 
 // Link syntax here is according to RFC 3986 & 3987 --Farooq
 
-fn is_alpha(c: char) -> bool{
+fn is_alpha(c: char) -> bool {
     c.is_alphabetic()
 }
 
@@ -196,32 +196,42 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
 }
 
 fn take_while_ireg(input: &str) -> IResult<&str, &str> {
-    alt((recognize(many0(take_while_pct_encoded)), take_while(is_ireg_name_not_pct_encoded)))(input) 
+    alt((
+        recognize(many0(take_while_pct_encoded)),
+        take_while(is_ireg_name_not_pct_encoded),
+    ))(input)
 }
 
 fn is_userinfo_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c)
 }
 
-fn iauthority(input: &str) -> IResult<&str, (&str, &str, &str, bool)> {
+fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool)> /* (iauthority, host, bool) */ {
+    let i = <&str>::clone(&input);
     let (input, userinfo) = opt(recognize(tuple((take_while_iuserinfo, char('@')))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
-    let (input, port) = preceded(char(':'), take_while(is_digit))(input)?;
+    let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
     let userinfo = userinfo.unwrap_or("");
-    Ok((input, (userinfo, host, port, is_ipv6_or_future)))
+    let port = port.unwrap_or("");
+    let len = userinfo.len() + host.len() + port.len();
+    Ok((input, (&i[0..len], host, is_ipv6_or_future)))
 }
 
 fn take_while_iuserinfo(input: &str) -> IResult<&str, &str> {
-    alt((recognize(many0(take_while_pct_encoded)), take_while(is_iuserinfo_not_pct_encoded)))(input)
+    alt((
+        recognize(many0(take_while_pct_encoded)),
+        take_while(is_iuserinfo_not_pct_encoded),
+    ))(input)
 }
 
 fn is_iuserinfo_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c) || c == ':'
 }
 
-fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
-    let (input, (userinfo, host, port, is_ipv6_or_future)) =
-        preceded(tag("//"), iauthority)(input)?;
+fn ihier_part(input: &str) -> IResult<&str, (&str, &str, bool)> {
+    let i = <&str>::clone(&input);
+    let (input, _double_slash) = tag("//")(input)?;
+    let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
     let (input, path) = opt(alt((
         recognize(tuple((
             char('/'),
@@ -236,7 +246,9 @@ fn ihier_part(input: &str) -> IResult<&str, (&str, &str, &str, &str, bool)> {
         ))), // ipath_rootless
     )))(input)?;
     let path = path.unwrap_or(""); // it's ipath_empty
-    Ok((input, (userinfo, host, port, path, is_ipv6_or_future)))
+    let len = 2 + authority.len() + path.len();
+    // 2 is for double_slash
+    Ok((input, (&i[0..len], host, is_ipv6_or_future)))
 }
 
 fn is_ipchar_not_pct_encoded(c: char) -> bool {
@@ -244,11 +256,17 @@ fn is_ipchar_not_pct_encoded(c: char) -> bool {
 }
 
 fn take_while_ipchar(input: &str) -> IResult<&str, &str> {
-    recognize(many0(alt((take_while(is_ipchar_not_pct_encoded), take_while_pct_encoded))))(input)
+    recognize(many0(alt((
+        take_while(is_ipchar_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
 }
 
 fn take_while_ipchar1(input: &str) -> IResult<&str, &str> {
-    recognize(many1(alt((take_while(is_ipchar_not_pct_encoded), take_while_pct_encoded))))(input)
+    recognize(many1(alt((
+        take_while(is_ipchar_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
 }
 
 const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
@@ -263,11 +281,19 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
 }
 
 fn iquery(input: &str) -> IResult<&str, &str> {
-    recognize(many0(alt((take_while(is_iquery_not_pct_encoded), take_while_pct_encoded))))(input)
+    recognize(many0(alt((
+        take_while(is_iquery_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
 }
 
 fn take_while_ifragment(input: &str) -> IResult<&str, &str> {
-    recognize(many0(alt((take_while_ipchar, take_while_pct_encoded, tag("/"), tag("?")))))(input)
+    recognize(many0(alt((
+        take_while_ipchar,
+        take_while_pct_encoded,
+        tag("/"),
+        tag("?"),
+    ))))(input)
 }
 
 fn scheme(input: &str) -> IResult<&str, &str> {
@@ -285,21 +311,59 @@ fn take_while_pct_encoded(input: &str) -> IResult<&str, &str> {
     recognize(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit))))(input)
 }
 
+fn punycode_encode(host: &str) -> String {
+    host.split('.')
+        .map(|sub| {
+            format!(
+                "xn--{}",
+                unic_idna_punycode::encode_str(sub)
+                    .unwrap_or_else(|| "[punycode encode failed]".to_owned())
+            )
+        })
+        .collect::<Vec<String>>()
+        .join(".")
+}
+
+fn is_puny(host: &str) -> bool {
+    for ch in host.chars() {
+        if !(is_alphanum_or_hyphen_minus(ch) || ch == '.') {
+            return true;
+        }
+    }
+    false
+}
+
+fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
+    if is_puny(host) {
+        let ascii_hostname = punycode_encode(host);
+        Some(PunycodeWarning {
+            original_hostname: host.to_owned(),
+            ascii_hostname: ascii_hostname.to_owned(),
+            punycode_encoded_url: link.replacen(host, &ascii_hostname, 1)
+        })
+    } else {
+        None
+    }
+}
+
 pub fn link(input: &str) -> IResult<&str, Element> {
     let input_ = <&str>::clone(&input);
-    let (input_, scheme) = scheme(input)?;
-    let (input_, (userinfo, host, port, path, is_ipv6_or_future)) = ihier_part(input)?;
-    let (input_, Some(query)) = opt(preceded(char('?'), iquery))(input)?;
-    let (input_, Some(fragment)) = opt(preceded(char('#'), take_while_ifragment))(input)?;
-    let mut s = format!("{scheme}://{userinfo}@{host}:{port}{path}?{query}#{fragment}");
+    let (input, scheme) = scheme(input)?;
+    let (input, (ihier, host, is_ipv6_or_future)) = ihier_part(input)?;
+    let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
+    let (input_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
+    let query = query.unwrap_or("");
+    let fragment = fragment.unwrap_or("");
+    let len = scheme.len() + ihier.len() + query.len() + fragment.len();
+    let link = &input_[0..len];
     Ok((
-        &input[0..s.len()],
+        input,
         Element::Link {
             destination: LinkDestination {
-                target: &input[(scheme.len() + 3)..(userinfo.len() + 2 + host.len() + port.len())],
-                hostname: Some(host),
-                punycode: None,
-                scheme: scheme,
+                target: link,
+                hostname: if host.len() == 0 { None } else { Some(host) },
+                punycode: if is_ipv6_or_future { None } else { get_puny_code_warning(link, host) } ,
+                scheme,
             },
         },
     ))

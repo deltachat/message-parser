@@ -20,7 +20,7 @@ enum FindRangeResult<'a> {
 ///  - `code` the u32 to look for a range for.
 ///
 ///  - `ranges` a refernce to a slice of `RangeInclusive<u32>`
-fn find_range_for_char<'a>(code: u32, ranges: &[RangeInclusive<u32>]) -> FindRangeResult<'a> {
+fn find_range_for_char<'a>(code: u32, ranges: &'a [RangeInclusive<u32>]) -> FindRangeResult<'a> {
     let index = ranges.binary_search_by_key(&code, |range| *range.start());
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
