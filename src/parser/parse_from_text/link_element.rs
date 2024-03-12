@@ -53,7 +53,7 @@ const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
 ];
 
 fn is_ucschar(c: char) -> bool {
-    is_in_one_of_ranges(c, &UCSCHAR_RANGES[..])
+    is_in_one_of_ranges(c as u32, &UCSCHAR_RANGES[..])
 }
 
 fn is_unreserved(c: char) -> bool {
@@ -276,7 +276,7 @@ const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
     [0xe000..=0xf8ff, 0xf0000..=0xffffd, 0x100000..=0x10fffd];
 
 fn is_iprivate(c: char) -> bool {
-    is_in_one_of_ranges(c, &IPRIVATE_RANGES[..])
+    is_in_one_of_ranges(c as u32, &IPRIVATE_RANGES[..])
 }
 
 fn is_iquery_not_pct_encoded(c: char) -> bool {
@@ -349,7 +349,7 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
     }
 }
 
-pub fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+fn parse_iri(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
     let (input, (ihier, host, is_ipv6_or_future)) = ihier_part(input)?;
@@ -370,4 +370,17 @@ pub fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
             },
         },
     ))
+}
+
+fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    todo!()
+}
+
+pub fn parse_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    /*
+    match parse_iri(input) {
+        Ok((input, iri)) => Ok((input, iri)),
+        Err(..) => parse_irelative_ref(input),
+    }*/
+    parse_iri(input)
 }

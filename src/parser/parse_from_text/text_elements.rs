@@ -4,7 +4,7 @@ use crate::parser::link_url::LinkDestination;
 use super::base_parsers::CustomError;
 use super::base_parsers::*;
 use super::hashtag_content_char_ranges::hashtag_content_char;
-use super::link_element::link;
+use super::link_element::parse_link;
 use super::Element;
 use crate::nom::{Offset, Slice};
 use nom::bytes::complete::take_while;
@@ -280,7 +280,7 @@ pub(crate) fn parse_text_element(
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = link(input) {
+    } else if let Ok((i, elm)) = parse_link(input) {
         Ok((i, elm))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))

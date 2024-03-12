@@ -39,11 +39,10 @@ fn find_range_for_char<'a>(code: u32, ranges: &'a [RangeInclusive<u32>]) -> Find
 ///
 /// # Arguments
 ///
-///  - `c` A character
+///  - `c` A number(u32)
 ///
 ///  - `ranges` A sorted slice of ranges to see if `c` is in anyone of them
-pub fn is_in_one_of_ranges(c: char, ranges: &[RangeInclusive<u32>]) -> bool {
-    let c = c as u32;
+pub fn is_in_one_of_ranges(c: u32, ranges: &[RangeInclusive<u32>]) -> bool {
     match find_range_for_char(c, ranges) {
         FindRangeResult::WasOnRangeStart => true,
         FindRangeResult::Range(range) => range.contains(&c),
