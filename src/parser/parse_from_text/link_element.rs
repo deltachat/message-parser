@@ -85,7 +85,7 @@ fn is_ipv4(c: char) -> bool {
     is_digit(c) || c == '.'
 }
 
-fn ipv4(input: &str) -> IResult<&str, &str> {
+fn ipv4(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     let (input, ipv4_) =
         recognize(tuple((u8, char('.'), u8, char('.'), u8, char('.'), u8)))(input)?;
     Ok((input, ipv4_))
@@ -95,11 +95,11 @@ fn is_ireg_name_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c)
 }
 
-fn h16(input: &str) -> IResult<&str, &str> {
+fn h16(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     take_while_m_n(1, 4, is_hex_digit)(input)
 }
 
-fn ls32(input: &str) -> IResult<&str, &str> {
+fn ls32(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     let result = recognize(tuple((h16, char(':'), h16)))(input);
     if result.is_err() {
         ipv4(input)
@@ -108,15 +108,15 @@ fn ls32(input: &str) -> IResult<&str, &str> {
     }
 }
 
-fn h16_and_period(input: &str) -> IResult<&str, &str> {
+fn h16_and_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((h16, char(':'))))(input)
 }
 
-fn double_period(input: &str) -> IResult<&str, &str> {
+fn double_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     tag("::")(input)
 }
 
-fn ipv6(input: &str) -> IResult<&str, &str> {
+fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     alt((
         recognize(tuple((count(h16_and_period, 6), ls32))),
         recognize(tuple((double_period, many_m_n(5, 5, h16_and_period), ls32))),
@@ -165,7 +165,7 @@ fn is_ipvfuture_last(c: char) -> bool {
     is_unreserved(c) || is_sub_delim(c) || c == ':'
 }
 
-fn ipvfuture(input: &str) -> IResult<&str, &str> {
+fn ipvfuture(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((
         char('v'),
         take_while_m_n(1, 1, is_hex_digit),
@@ -174,7 +174,7 @@ fn ipvfuture(input: &str) -> IResult<&str, &str> {
     )))(input)
 }
 
-fn ip_literal(input: &str) -> IResult<&str, &str> {
+fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     delimited(char('['), alt((ipv6, ipvfuture)), char(']'))(input)
 }
 
@@ -198,7 +198,7 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
     }
 }
 
-fn take_while_ireg(input: &str) -> IResult<&str, &str> {
+fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     alt((
         recognize(many0(take_while_pct_encoded)),
         take_while(is_ireg_name_not_pct_encoded),
@@ -220,7 +220,7 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     Ok((input, (&i[0..len], host, is_ipv6_or_future)))
 }
 
-fn take_while_iuserinfo(input: &str) -> IResult<&str, &str> {
+fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     alt((
         recognize(many0(take_while_pct_encoded)),
         take_while(is_iuserinfo_not_pct_encoded),
@@ -258,14 +258,14 @@ fn is_ipchar_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c) || matches!(c, ':' | '@')
 }
 
-fn take_while_ipchar(input: &str) -> IResult<&str, &str> {
+fn take_while_ipchar(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
         take_while(is_ipchar_not_pct_encoded),
         take_while_pct_encoded,
     ))))(input)
 }
 
-fn take_while_ipchar1(input: &str) -> IResult<&str, &str> {
+fn take_while_ipchar1(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many1(alt((
         take_while(is_ipchar_not_pct_encoded),
         take_while_pct_encoded,
@@ -283,14 +283,14 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
     is_iprivate(c) || is_ipchar_not_pct_encoded(c) || matches!(c, '/' | '?')
 }
 
-fn iquery(input: &str) -> IResult<&str, &str> {
+fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
         take_while(is_iquery_not_pct_encoded),
         take_while_pct_encoded,
     ))))(input)
 }
 
-fn take_while_ifragment(input: &str) -> IResult<&str, &str> {
+fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
         take_while_ipchar,
         take_while_pct_encoded,
@@ -310,7 +310,7 @@ fn is_alphanum_or_hyphen_minus(char: char) -> bool {
     }
 }
 
-fn take_while_pct_encoded(input: &str) -> IResult<&str, &str> {
+fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit))))(input)
 }
 
