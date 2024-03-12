@@ -882,13 +882,13 @@ pub(crate) fn hashtag_content_char(c: char) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::parse_from_text::hashtag_content_char_ranges::hashtag_content_char;
     use crate::parser::parse_from_text::find_range::is_in_one_of_ranges;
+    use crate::parser::parse_from_text::hashtag_content_char_ranges::hashtag_content_char;
     use std::ops::RangeInclusive;
 
     #[test]
     fn test_range_function() {
-        let ranges: [RangeInclusive<u32>; 5]  = [
+        let ranges: [RangeInclusive<u32>; 5] = [
             0x0..=0x30,
             0x99..=0x99,
             0x1f..=0x2f,
@@ -904,7 +904,7 @@ mod test {
             (0x176e, false),
             (0x10fb0, true),
             (0x0, true),
-            (0xf1, false)
+            (0xf1, false),
         ];
         for (code, result) in codes.iter() {
             assert_eq!(is_in_one_of_ranges(*code, &ranges[..]), *result);
