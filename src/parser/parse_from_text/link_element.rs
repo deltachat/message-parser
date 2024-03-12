@@ -10,7 +10,10 @@ use nom::{
     AsChar, IResult,
 };
 
-use super::find_range::is_in_one_of_ranges;
+use super::{
+    find_range::is_in_one_of_ranges,
+    base_parsers::CustomError,
+};
 use super::Element;
 use crate::parser::link_url::{LinkDestination, PunycodeWarning};
 
@@ -181,7 +184,7 @@ fn ip_literal(input: &str) -> IResult<&str, &str> {
 ///
 /// Parse host. Returns the rest, the host string and a boolean indicating
 /// if it is IPvFuture or IPv6.
-fn parse_host(input: &str) -> IResult<&str, (&str, bool)> {
+fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
     match ip_literal(input) {
         Ok((input, host)) => {
             // It got parsed, then it's an IP Literal meaning
@@ -206,7 +209,7 @@ fn is_userinfo_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c)
 }
 
-fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool)> /* (iauthority, host, bool) */ {
+fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */ {
     let i = <&str>::clone(&input);
     let (input, userinfo) = opt(recognize(tuple((take_while_iuserinfo, char('@')))))(input)?;
     let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
@@ -228,7 +231,7 @@ fn is_iuserinfo_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c) || c == ':'
 }
 
-fn ihier_part(input: &str) -> IResult<&str, (&str, &str, bool)> {
+fn ihier_part(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> {
     let i = <&str>::clone(&input);
     let (input, _double_slash) = tag("//")(input)?;
     let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
@@ -296,7 +299,7 @@ fn take_while_ifragment(input: &str) -> IResult<&str, &str> {
     ))))(input)
 }
 
-fn scheme(input: &str) -> IResult<&str, &str> {
+fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     take_while(is_scheme)(input)
 }
 
@@ -346,7 +349,7 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
     }
 }
 
-pub fn link(input: &str) -> IResult<&str, Element> {
+pub fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
     let (input, (ihier, host, is_ipv6_or_future)) = ihier_part(input)?;
