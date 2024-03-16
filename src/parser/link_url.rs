@@ -192,10 +192,6 @@ fn is_scheme(c: char) -> bool {
     is_alpha(c) || is_digit(c) || is_scheme(c)
 }
 
-fn is_ipv4(c: char) -> bool {
-    is_digit(c) || c == '.'
-}
-
 fn ipv4(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     let (input, ipv4_) =
         recognize(tuple((u8, char('.'), u8, char('.'), u8, char('.'), u8)))(input)?;
@@ -316,10 +312,6 @@ fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     ))(input)
 }
 
-fn is_userinfo_not_pct_encoded(c: char) -> bool {
-    is_iunreserved(c) || is_sub_delim(c)
-}
-
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */
 {
     let i = <&str>::clone(&input);
@@ -341,29 +333,6 @@ fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 
 fn is_iuserinfo_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c) || c == ':'
-}
-
-fn ihier_part(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> {
-    let i = <&str>::clone(&input);
-    let (input, _double_slash) = tag("//")(input)?;
-    let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
-    let (input, path) = opt(alt((
-        recognize(tuple((
-            char('/'),
-            opt(tuple((
-                take_while_ipchar1,
-                many0(tuple((char('/'), take_while_ipchar))),
-            ))),
-        ))), // ipath-absolute
-        recognize(tuple((
-            take_while_ipchar,
-            many0(tuple((char('/'), take_while_ipchar))),
-        ))), // ipath_rootless
-    )))(input)?;
-    let path = path.unwrap_or(""); // it's ipath_empty
-    let len = 2 + authority.len() + path.len();
-    // 2 is for double_slash
-    Ok((input, (&i[0..len], host, is_ipv6_or_future)))
 }
 
 fn is_ipchar_not_pct_encoded(c: char) -> bool {
@@ -466,12 +435,28 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
-    let (input, (ihier, host, is_ipv6_or_future)) = ihier_part(input)?;
+    let (input, _double_slash) = tag("//")(input)?;
+    let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
+    let (input, path) = opt(alt((
+        recognize(tuple((
+            char('/'),
+            opt(tuple((
+                take_while_ipchar1,
+                many0(tuple((char('/'), take_while_ipchar))),
+            ))),
+        ))), // ipath-absolute
+        recognize(tuple((
+            take_while_ipchar,
+            many0(tuple((char('/'), take_while_ipchar))),
+        ))), // ipath-rootless
+    )))(input)?;
+    let path = path.unwrap_or(""); // it's ipath-empty
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
     let (input_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
-    let len = scheme.len() + ihier.len() + query.len() + fragment.len();
+    let ihier_len = 2 + authority.len() + host.len() + path.len();
+    let len = scheme.len() + ihier_len + query.len() + fragment.len();
     let link = &input_[0..len];
     Ok((
         input,
@@ -488,16 +473,17 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     ))
 }
 
-
+/*
 // For future
 fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     todo!()
 }
-
+*/
 
 // White listed links in this format: scheme:some_char like tel:+989164364485
 fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, scheme) = scheme(input)?;
+
     let (input, target) = take_while(is_not_white_space)(input)?;
 
     Ok((input, LinkDestination {
