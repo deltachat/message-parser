@@ -483,7 +483,9 @@ fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>>
 // White listed links in this format: scheme:some_char like tel:+989164364485
 fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, scheme) = scheme(input)?;
-
+    if !is_allowed_generic_scheme(scheme) {
+        return Err(nom::Err::Error(CustomError::InvalidLink));
+    }
     let (input, target) = take_while(is_not_white_space)(input)?;
 
     Ok((input, LinkDestination {
@@ -544,7 +546,7 @@ mod test {
         ];
 
         for input in &test_cases_no_puny {
-            // println!("testing {}", input);
+            println!("testing {input}");
 
             let (rest, link_destination) = parse_link(input).unwrap();
 
@@ -554,6 +556,7 @@ mod test {
         }
 
         for input in &test_cases_with_puny {
+            println!("testing {input}");
             let (rest, link_destination) = parse_link(input).unwrap();
 
             assert!(link_destination.punycode.is_some());
@@ -567,7 +570,7 @@ mod test {
         let test_cases = vec![";?:/hi", "##://thing"];
 
         for input in &test_cases {
-            // println!("testing {}", input);
+            println!("testing {input}");
             assert!(parse_link(input).is_err());
         }
     }
