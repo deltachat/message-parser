@@ -74,19 +74,18 @@ impl LinkDestination<'_> {
     pub(crate) fn parse_standalone_with_whitelist(
         input: &str,
     ) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, link)) = parse_link(input) {
-            if link.destination.hostname == "" {
-                // if it's a generic url like tel:+989164364485
-                if !is_allowed_generic_scheme(scheme) {
+        if let Ok((rest, link_destination)) = parse_link(input) {
+            if link_destination.hostname.is_none() {
+                // if it's a generic url like geo:-15.5,41.1
+                if !is_allowed_generic_scheme(link_destination.scheme) {
                     Err(nom::Err::Error(CustomError::InvalidLink))
                 } else {
-                    Ok((rest, link.destination))
+                    Ok((rest, link_destination))
                 }
             } else {
                 Ok((
-                    Some(link.destination.hostname),
-                    Some(link.destination.punycode),
-                    link.destination.scheme
+                    rest,
+                    link_destination
                 ))
             }
         } else {
@@ -95,10 +94,10 @@ impl LinkDestination<'_> {
     }
 
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, link_element))) = parse_link(input) {
+        if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((
                 rest,
-                link_element.destination 
+                link_destination 
             ))
         } else {
             Err(nom::Err::Error(CustomError::InvalidLink))
@@ -106,19 +105,6 @@ impl LinkDestination<'_> {
     }
 }
 
-#[derive(Debug, PartialEq)]
-enum UrlInfo<'a> {
-    /// wether url is an Common Internet Scheme URL (if it has `://`)
-    CommonInternetSchemeURL {
-        has_puny_code_in_host_name: bool,
-        hostname: &'a str,
-        ascii_hostname: String,
-        scheme: &'a str,
-    },
-    GenericUrl {
-        scheme: &'a str,
-    },
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum LinkParseError<I> {
@@ -477,7 +463,7 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
 }
 
 // IRI links per RFC3987 and RFC3986
-fn parse_iri(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
     let (input, (ihier, host, is_ipv6_or_future)) = ihier_part(input)?;
@@ -489,17 +475,15 @@ fn parse_iri(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let link = &input_[0..len];
     Ok((
         input,
-        Element::Link {
-            destination: LinkDestination {
-                target: link,
-                hostname: if host.len() == 0 { None } else { Some(host) },
-                punycode: if is_ipv6_or_future {
-                    None
-                } else {
-                    get_puny_code_warning(link, host)
-                },
-                scheme,
+        LinkDestination {
+            target: link,
+            hostname: if host.len() == 0 { None } else { Some(host) },
+            punycode: if is_ipv6_or_future {
+                None
+            } else {
+                get_puny_code_warning(link, host)
             },
+            scheme,
         },
     ))
 }
@@ -512,22 +496,20 @@ fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>>
 
 
 // White listed links in this format: scheme:some_char like tel:+989164364485
-fn parse_generic(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, scheme) = scheme(input)?;
     let (input, target) = take_while(is_not_white_space)(input)?;
 
-    Ok((input, Element::Link {
-        destination: LinkDestination {
-            scheme,
-            target,
-            hostname: None,
-            punycode: None,
-        }
+    Ok((input, LinkDestination {
+        scheme,
+        target,
+        hostname: None,
+        punycode: None,
     }))
 }
 
 
-pub fn parse_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+pub fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     /*
     match parse_iri(input) {
         Ok((input, iri)) => Ok((input, iri)),
@@ -544,11 +526,11 @@ pub fn parse_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
 #[cfg(test)]
 mod test {
     #![allow(clippy::unwrap_used)]
-    use crate::parser::link_url::{parse_url, punycode_encode, UrlInfo};
+    use crate::parser::link_url::{parse_link, punycode_encode, PunycodeWarning, LinkDestination};
 
     #[test]
     fn basic_parsing() {
-        let test_cases = vec![
+        let test_cases_no_puny = vec![
             "http://delta.chat",
             "http://delta.chat:8080",
             "http://localhost",
@@ -567,18 +549,30 @@ mod test {
             "mailto:delta@example.com",
             "mailto:delta@example.com?subject=hi&body=hello%20world",
             "mailto:foö@ü.chat",
-            "https://ü.app#help",
             "ftp://test-test",
+        ];
+
+        let test_cases_with_puny = vec![
+            "https://ü.app#help",
             "http://münchen.de",
         ];
 
-        for input in &test_cases {
+        for input in &test_cases_no_puny {
             // println!("testing {}", input);
 
-            let (rest, (url, _)) = parse_url(input).unwrap();
+            let (rest, link_destination) = parse_link(input).unwrap();
 
-            assert_eq!(input, &url);
+            assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
+            assert!(link_destination.punycode.is_none());
+        }
+
+        for input in &test_cases_with_puny {
+            let (rest, link_destination) = parse_link(input).unwrap();
+
+            assert!(link_destination.punycode.is_some());
+            assert_eq!(rest.len(), 0);
+            assert_eq!(input, &link_destination.target);
         }
     }
 
@@ -588,7 +582,7 @@ mod test {
 
         for input in &test_cases {
             // println!("testing {}", input);
-            assert!(parse_url(input).is_err());
+            assert!(parse_link(input).is_err());
         }
     }
     #[test]
@@ -599,55 +593,53 @@ mod test {
     #[test]
     fn punycode_detection() {
         assert_eq!(
-            parse_url("http://münchen.de").unwrap().1,
-            (
-                "http://münchen.de",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "münchen.de",
-                    has_puny_code_in_host_name: true,
-                    ascii_hostname: "xn--mnchen-3ya.de".to_owned(),
-                    scheme: "http"
-                }
-            )
+            parse_link("http://münchen.de").unwrap().1,
+            LinkDestination {
+                hostname: Some("münchen.de"),
+                target: "http://münchen.de",
+                scheme: "http",
+                punycode: Some(PunycodeWarning {
+                    original_hostname: "münchen.de".to_owned(),
+                    punycode_encoded_url: "xn--mnchen-3ya.de".to_owned(),
+                    ascii_hostname: "muenchen.de".to_owned(),
+                }),
+            }
         );
 
         assert_eq!(
-            parse_url("http://muenchen.de").unwrap().1,
-            (
-                "http://muenchen.de",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "muenchen.de",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "muenchen.de".to_owned(),
-                    scheme: "http"
-                }
-            )
+            parse_link("http://muenchen.de").unwrap().1,
+            LinkDestination {
+                hostname: Some("muenchen.de"),
+                target: "http://muenchen.de",
+                scheme: "http",
+                punycode: None,
+            }
         );
     }
 
     #[test]
     fn common_schemes() {
         assert_eq!(
-            parse_url("http://delta.chat").unwrap().1,
+            parse_link("http://delta.chat").unwrap(),
             (
-                "http://delta.chat",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "delta.chat",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "delta.chat".to_owned(),
-                    scheme: "http"
+                "",
+                LinkDestination {
+                    hostname: Some("delta.chat"),
+                    target: "http://delta.chat",
+                    scheme: "http",
+                    punycode: None,
                 }
             )
         );
         assert_eq!(
-            parse_url("https://delta.chat").unwrap().1,
+            parse_link("https://far.chickenkiller.com").unwrap(),
             (
-                "https://delta.chat",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "delta.chat",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "delta.chat".to_owned(),
-                    scheme: "https"
+                "",
+                LinkDestination {
+                    hostname: Some("far.chickenkiller.com"),
+                    target: "https://far.chickenkiller.com",
+                    scheme: "https",
+                    punycode: None,
                 }
             )
         );
@@ -655,27 +647,37 @@ mod test {
     #[test]
     fn generic_schemes() {
         assert_eq!(
-            parse_url("mailto:someone@example.com").unwrap().1,
+            parse_link("mailto:someone@example.com").unwrap(),
             (
-                "mailto:someone@example.com",
-                UrlInfo::GenericUrl { scheme: "mailto" }
+                "",
+                LinkDestination {
+                    hostname: None,
+                    scheme: "mailto",
+                    punycode: None,
+                    target: "mailto:someone@example.com"
+                }
+                        
             )
         );
         assert_eq!(
-            parse_url("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
+            parse_link("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
                 .unwrap()
                 .1,
-            (
-                "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
-                UrlInfo::GenericUrl { scheme: "bitcoin" }
-            )
-        );
+                LinkDestination {
+                    hostname: None,
+                    scheme: "bitcoin",
+                    target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
+                    punycode: None,
+                }
+            );
         assert_eq!(
-            parse_url("geo:37.786971,-122.399677").unwrap().1,
-            (
-                "geo:37.786971,-122.399677",
-                UrlInfo::GenericUrl { scheme: "geo" }
-            )
+            parse_link("geo:37.786971,-122.399677").unwrap().1,
+            LinkDestination {
+                scheme: "geo",
+                punycode: None,
+                target: "geo:37.786971,-122.399677",
+                hostname: None
+            }
         );
     }
 }

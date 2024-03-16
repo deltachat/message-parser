@@ -6,8 +6,7 @@ use super::base_parsers::{
 use super::text_elements::parse_text_element;
 use super::Element;
 use super::{base_parsers::*, parse_all};
-use crate::parser::link_url::LinkDestination;
-use crate::parser::parse_from_text::link_element::parse_link;
+use crate::parser::link_url::{LinkDestination, parse_link};
 ///! nom parsers for markdown elements
 use nom::{
     bytes::complete::{is_not, tag, take, take_while},
@@ -111,11 +110,11 @@ pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<
             return Err(nom::Err::Failure(CustomError::));
         }
     };*/
-    let (rest, link) = parse_link(input)?;
+    let (rest, destination) = parse_link(input)?;
     if !rest.is_empty() {
         return Err(nom::Err::Error(CustomError::UnexpectedContent));
     }
-    Ok((input, link))
+    Ok((input, Element::Link { destination }))
 }
 
 // [labeled](https://link)
