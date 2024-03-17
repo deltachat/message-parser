@@ -385,7 +385,7 @@ fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit))))(input)
+    recognize(many0(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
 }
 
 fn punycode_encode(host: &str) -> String {
