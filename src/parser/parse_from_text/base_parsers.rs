@@ -97,3 +97,9 @@ impl From<PropertiesError> for Err<CustomError<I>> {
     }
 }
 */
+/*
+impl From<nom::Err<nom::err::Error<I>> for nom::Err<CustomError<I>> {
+    fn from(input: I, code: ErrorKind) -> nom::Err<CustomError<I>> {
+        nom::Err(CustomError::Nom(input, code)
+    }
+}*/

@@ -1,17 +1,23 @@
+use std::ops::RangeInclusive;
+
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take, take_till1, take_while, take_while1},
-    character::complete::char,
-    character::complete::digit1,
-    combinator::{consumed, opt, recognize},
+    bytes::complete::{tag, take_while, take_while_m_n},
+    character::complete::{char, u8},
+    combinator::{opt, recognize},
     error::{ErrorKind, ParseError},
-    multi::many0,
-    sequence::delimited,
-    sequence::tuple,
+    multi::{count, many0, many1, many_m_n},
+    sequence::{tuple, delimited},
     AsChar, IResult,
 };
 
-use super::parse_from_text::base_parsers::{is_not_white_space, CustomError};
+use super::Element;
+use super::parse_from_text::{
+    base_parsers::{is_not_white_space, CustomError},
+    find_range::is_in_one_of_ranges,
+};
+
+// Link syntax here is according to RFC 3986 & 3987 --Farooq
 
 ///! Parsing / Validation of URLs
 ///
@@ -38,9 +44,9 @@ pub struct LinkDestination<'a> {
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
 pub struct PunycodeWarning {
-    original_hostname: String,
-    ascii_hostname: String,
-    punycode_encoded_url: String,
+    pub original_hostname: String,
+    pub ascii_hostname: String,
+    pub punycode_encoded_url: String,
 }
 
 /// determines which generic schemes (without '://') get linkifyed
@@ -68,84 +74,30 @@ impl LinkDestination<'_> {
     pub(crate) fn parse_standalone_with_whitelist(
         input: &str,
     ) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode, scheme) = match info {
-                UrlInfo::CommonInternetSchemeURL {
-                    has_puny_code_in_host_name,
-                    hostname,
-                    ascii_hostname,
-                    scheme,
-                } => {
-                    if has_puny_code_in_host_name {
-                        (
-                            Some(hostname),
-                            Some(PunycodeWarning {
-                                original_hostname: hostname.to_owned(),
-                                punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
-                                ascii_hostname,
-                            }),
-                            scheme,
-                        )
-                    } else {
-                        (Some(hostname), None, scheme)
-                    }
+        if let Ok((rest, link_destination)) = parse_link(input) {
+            if link_destination.hostname.is_none() {
+                // if it's a generic url like geo:-15.5,41.1
+                if !is_allowed_generic_scheme(link_destination.scheme) {
+                    Err(nom::Err::Error(CustomError::InvalidLink))
+                } else {
+                    Ok((rest, link_destination))
                 }
-                UrlInfo::GenericUrl { scheme } => {
-                    if !is_allowed_generic_scheme(scheme) {
-                        return Err(nom::Err::Error(CustomError::InvalidLink));
-                    }
-                    (None, None, scheme)
-                }
-            };
-
-            Ok((
-                rest,
-                LinkDestination {
-                    target: link,
-                    hostname,
-                    punycode,
-                    scheme,
-                },
-            ))
+            } else {
+                Ok((
+                    rest,
+                    link_destination
+                ))
+            }
         } else {
             Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
 
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, (link, info))) = parse_url(input) {
-            let (hostname, punycode, scheme) = match info {
-                UrlInfo::CommonInternetSchemeURL {
-                    has_puny_code_in_host_name,
-                    hostname,
-                    ascii_hostname,
-                    scheme,
-                } => {
-                    if has_puny_code_in_host_name {
-                        (
-                            Some(hostname),
-                            Some(PunycodeWarning {
-                                original_hostname: hostname.to_owned(),
-                                punycode_encoded_url: link.replacen(hostname, &ascii_hostname, 1),
-                                ascii_hostname,
-                            }),
-                            scheme,
-                        )
-                    } else {
-                        (Some(hostname), None, scheme)
-                    }
-                }
-                UrlInfo::GenericUrl { scheme, .. } => (None, None, scheme),
-            };
-
+        if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((
                 rest,
-                LinkDestination {
-                    target: link,
-                    hostname,
-                    punycode,
-                    scheme,
-                },
+                link_destination 
             ))
         } else {
             Err(nom::Err::Error(CustomError::InvalidLink))
@@ -153,19 +105,6 @@ impl LinkDestination<'_> {
     }
 }
 
-#[derive(Debug, PartialEq)]
-enum UrlInfo<'a> {
-    /// wether url is an Common Internet Scheme URL (if it has `://`)
-    CommonInternetSchemeURL {
-        has_puny_code_in_host_name: bool,
-        hostname: &'a str,
-        ascii_hostname: String,
-        scheme: &'a str,
-    },
-    GenericUrl {
-        scheme: &'a str,
-    },
-}
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum LinkParseError<I> {
@@ -183,150 +122,284 @@ impl<I> ParseError<I> for LinkParseError<I> {
     }
 }
 
-fn is_reserved(char: char) -> bool {
-    matches!(char, ';' | '/' | '?' | ':' | '@' | '&' | '=')
-}
-
-fn is_hex_digit(c: char) -> bool {
-    c.is_ascii_hexdigit()
-}
-
-fn escaped_char(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
-    let (input, content) = take(3usize)(input)?;
-    let mut content_chars = content.chars();
-
-    if content_chars.next() == Some('%')
-        && content_chars.next().map(is_hex_digit) == Some(true)
-        && content_chars.next().map(is_hex_digit) == Some(true)
-    {
-        Ok((input, content))
-    } else {
-        Err(nom::Err::Error(LinkParseError::ThisIsNotPercentEncoding))
-    }
-}
-
-fn is_safe(char: char) -> bool {
-    matches!(char, '$' | '-' | '_' | '.' | '+')
-}
-
-fn is_extra(char: char) -> bool {
-    matches!(
-        char,
-        '!' | '*' | '\'' | '(' | ')' | ',' | '{' | '}' | '[' | ']' | '<' | '>'
-    )
-}
-
-fn is_unreserved(char: char) -> bool {
-    char.is_alphanum() || is_safe(char) || is_extra(char)
-}
-
-fn x_char_sequence(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
-    //xchar          = unreserved | reserved | escape
-    recognize(many0(alt((
-        take_while1(is_unreserved),
-        take_while1(is_reserved),
-        escaped_char,
-        tag("#"),
-    ))))(input)
-}
-
-fn scheme_char(char: char) -> bool {
-    //; the scheme is in lower case; interpreters should use case-ignore
-    //scheme         = 1*[ lowalpha | digit | "+" | "-" | "." ]
-    match char {
-        '+' | '-' | '.' => true,
-        _ => char.is_alphanum(),
-    }
-}
-
-fn is_user_or_password_char(char: char) -> bool {
-    match char {
-        ';' | '?' | '&' | '=' => true,
-        _ => is_unreserved(char),
-    }
-}
-
-fn user_or_password(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
-    recognize(many0(alt((
-        take_while(is_user_or_password_char),
-        escaped_char,
-    ))))(input)
-}
-
-fn login(input: &str) -> IResult<&str, (), LinkParseError<&str>> {
-    // login          = user [ ":" password ] "@"
-    let (input, _) = user_or_password(input)?;
-    let (input, _) = opt(tuple((char(':'), user_or_password)))(input)?;
-    let (input, _) = char('@')(input)?;
-    Ok((input, ()))
-}
-
-fn is_ipv6_char(char: char) -> bool {
-    match char {
-        ':' => true,
-        _ => is_hex_digit(char),
-    }
-}
-
 fn is_alphanum_or_hyphen_minus(char: char) -> bool {
     match char {
         '-' => true,
         _ => char.is_alphanum(),
     }
 }
-fn is_forbidden_in_idnalabel(char: char) -> bool {
-    is_reserved(char) || is_extra(char) || char == '>'
+
+
+fn is_alpha(c: char) -> bool {
+    c.is_alphabetic()
 }
 
-/// creates possibility for punycodedecoded/unicode/internationalized domains
-/// takes everything until reserved, extra or '>'
-fn idnalabel(input: &str) -> IResult<&str, &str, LinkParseError<&str>> {
-    let (input, label) = take_till1(is_forbidden_in_idnalabel)(input)?;
-    Ok((input, label))
+fn is_hex_digit(c: char) -> bool {
+    c.is_ascii_hexdigit()
 }
 
-fn host<'a>(input: &'a str) -> IResult<&'a str, (&'a str, bool), LinkParseError<&'a str>> {
-    if let Ok((input, host)) = recognize::<_, _, LinkParseError<&'a str>, _>(delimited(
-        char('['),
-        take_while1(is_ipv6_char),
-        char(']'),
-    ))(input)
-    {
-        // ipv6 hostnumber
-        // sure the parsing here could be more specific and correct -> TODO
-        Ok((input, (host, true)))
-    } else if let Ok((input, host)) = recognize::<_, _, LinkParseError<&'a str>, _>(tuple((
-        digit1,
-        char('.'),
-        digit1,
-        char('.'),
-        digit1,
-        char('.'),
-        digit1,
-    )))(input)
-    {
-        // ipv4 hostnumber
-        // sure the parsing here could be more specific and correct -> TODO
-        Ok((input, (host, false)))
+fn is_digit(c: char) -> bool {
+    c.is_digit(10)
+}
+
+// These ranges have been extracted from RFC3987, Page 8.
+const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
+    0xa0..=0xd7ff,
+    0xF900..=0xFDCF,
+    0xFDF0..=0xFFEF,
+    0x10000..=0x1FFFD,
+    0x20000..=0x2FFFD,
+    0x30000..=0x3FFFD,
+    0x40000..=0x4FFFD,
+    0x50000..=0x5FFFD,
+    0x60000..=0x6FFFD,
+    0x70000..=0x7FFFD,
+    0x80000..=0x8FFFD,
+    0x90000..=0x9FFFD,
+    0xA0000..=0xAFFFD,
+    0xB0000..=0xBFFFD,
+    0xC0000..=0xCFFFD,
+    0xD0000..=0xDFFFD,
+    0xE1000..=0xEFFFD,
+];
+
+fn is_ucschar(c: char) -> bool {
+    is_in_one_of_ranges(c as u32, &UCSCHAR_RANGES[..])
+}
+
+fn is_unreserved(c: char) -> bool {
+    is_alpha(c) || is_digit(c) || is_other_unreserved(c)
+}
+
+fn is_iunreserved(c: char) -> bool {
+    is_ucschar(c) || is_unreserved(c)
+}
+
+fn is_other_unreserved(c: char) -> bool {
+    matches!(c, '_' | '.' | '_' | '~')
+}
+
+fn is_sub_delim(c: char) -> bool {
+    matches!(
+        c,
+        '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '='
+    )
+}
+
+// Here again, order is important. As URLs/IRIs have letters in them
+// most of the time and less digits or other characters. --Farooq
+fn is_scheme(c: char) -> bool {
+    is_alpha(c) || is_digit(c) || is_other_scheme(c)
+}
+
+fn is_other_scheme(c: char) -> bool {
+    matches!(c, '+' | '-' | '.')
+}
+
+fn ipv4(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    let (input, ipv4_) =
+        recognize(tuple((u8, char('.'), u8, char('.'), u8, char('.'), u8)))(input)?;
+    Ok((input, ipv4_))
+}
+
+fn is_ireg_name_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c)
+}
+
+fn h16(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    take_while_m_n(1, 4, is_hex_digit)(input)
+}
+
+fn ls32(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    let result = recognize(tuple((h16, char(':'), h16)))(input);
+    if result.is_err() {
+        ipv4(input)
     } else {
-        // idna hostname (valid chars until ':' or '/')
-        // sure the parsing here could be more specific and correct -> TODO
-        let (input, host) =
-            recognize(tuple((many0(tuple((idnalabel, char('.')))), idnalabel)))(input)?;
-        Ok((input, (host, false)))
+        result
     }
+}
+
+fn h16_and_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(tuple((h16, char(':'))))(input)
+}
+
+fn double_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    tag("::")(input)
+}
+
+fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    alt((
+        recognize(tuple((count(h16_and_period, 6), ls32))),
+        recognize(tuple((double_period, many_m_n(5, 5, h16_and_period), ls32))),
+        recognize(tuple((
+            opt(h16),
+            double_period,
+            many_m_n(4, 4, h16_and_period),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 1, h16_and_period),))),
+            double_period,
+            count(h16_and_period, 3),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 2, h16_and_period), h16))),
+            double_period,
+            count(h16_and_period, 2),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 3, h16_and_period), h16))),
+            double_period,
+            count(h16_and_period, 1),
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 4, h16_and_period), h16))),
+            double_period,
+            ls32,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 5, h16_and_period), h16))),
+            double_period,
+            h16,
+        ))),
+        recognize(tuple((
+            opt(tuple((many_m_n(0, 6, h16_and_period), h16))),
+            double_period,
+        ))),
+    ))(input)
+}
+
+fn is_ipvfuture_last(c: char) -> bool {
+    is_unreserved(c) || is_sub_delim(c) || c == ':'
+}
+
+fn ipvfuture(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(tuple((
+        char('v'),
+        take_while_m_n(1, 1, is_hex_digit),
+        char('.'),
+        take_while_m_n(1, 1, is_ipvfuture_last),
+    )))(input)
+}
+
+fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    delimited(char('['), alt((ipv6, ipvfuture)), char(']'))(input)
+}
+
+/// Parse host
+///
+/// # Description
+///
+/// Parse host. Returns the rest, the host string and a boolean indicating
+/// if it is IPvFuture or IPv6.
+fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
+    match ip_literal(input) {
+        Ok((input, host)) => {
+            // It got parsed, then it's an IP Literal meaning
+            // it's either IPv6 or IPvFuture
+            Ok((input, (host, true)))
+        }
+        Err(..) => {
+            let (input, host) = alt((ipv4, take_while_ireg))(input)?;
+            Ok((input, (host, false)))
+        }
+    }
+}
+
+fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    alt((
+        recognize(many0(take_while_pct_encoded)),
+        take_while(is_ireg_name_not_pct_encoded),
+    ))(input)
+}
+
+fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */
+{
+    let i = <&str>::clone(&input);
+    let (input, userinfo) = opt(recognize(tuple((take_while_iuserinfo, char('@')))))(input)?;
+    let (input, (host, is_ipv6_or_future)) = parse_host(input)?;
+    let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
+    let userinfo = userinfo.unwrap_or("");
+    let port = port.unwrap_or("");
+    let len = userinfo.len() + host.len() + port.len();
+    Ok((input, (&i[0..len], host, is_ipv6_or_future)))
+}
+
+fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    alt((
+        recognize(many0(take_while_pct_encoded)),
+        take_while(is_iuserinfo_not_pct_encoded),
+    ))(input)
+}
+
+fn is_iuserinfo_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c) || c == ':'
+}
+
+fn is_ipchar_not_pct_encoded(c: char) -> bool {
+    is_iunreserved(c) || is_sub_delim(c) || matches!(c, ':' | '@')
+}
+
+fn take_while_ipchar(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many0(alt((
+        take_while(is_ipchar_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
+}
+
+fn take_while_ipchar1(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many1(alt((
+        take_while(is_ipchar_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
+}
+
+const IPRIVATE_RANGES: [RangeInclusive<u32>; 3] =
+    [0xe000..=0xf8ff, 0xf0000..=0xffffd, 0x100000..=0x10fffd];
+
+fn is_iprivate(c: char) -> bool {
+    is_in_one_of_ranges(c as u32, &IPRIVATE_RANGES[..])
+}
+
+fn is_iquery_not_pct_encoded(c: char) -> bool {
+    is_iprivate(c) || is_ipchar_not_pct_encoded(c) || matches!(c, '/' | '?')
+}
+
+fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many0(alt((
+        take_while(is_iquery_not_pct_encoded),
+        take_while_pct_encoded,
+    ))))(input)
+}
+
+fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many0(alt((
+        take_while_ipchar,
+        take_while_pct_encoded,
+        tag("/"),
+        tag("?"),
+    ))))(input)
+}
+
+fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(tuple((take_while_m_n(1, 1, is_alpha), take_while(is_scheme)))(input)
+}
+
+fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many0(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
 }
 
 fn punycode_encode(host: &str) -> String {
     host.split('.')
         .map(|sub| {
-            let mut has_non_ascii_char = false;
-            for char in sub.chars() {
-                if !is_alphanum_or_hyphen_minus(char) {
-                    has_non_ascii_char = true;
-                    break;
-                }
-            }
+            let has_non_ascii_char: bool = sub
+                .chars()
+                .map(|ch| is_alphanum_or_hyphen_minus(ch))
+                .reduce(|acc, e| e && acc)
+                .unwrap_or(false);
             if has_non_ascii_char {
                 format!(
                     "xn--{}",
@@ -340,63 +413,102 @@ fn punycode_encode(host: &str) -> String {
         .collect::<Vec<String>>()
         .join(".")
 }
+fn is_puny(host: &str) -> bool {
+    for ch in host.chars() {
+        if !(is_alphanum_or_hyphen_minus(ch) || ch == '.') {
+            return true;
+        }
+    }
+    false
+}
 
-fn url_intern<'a>(input: &'a str) -> IResult<&'a str, UrlInfo<'a>, LinkParseError<&'a str>> {
-    let (input, scheme) = take_while1(scheme_char)(input)?;
-    let (input, _) = tag(":")(input)?;
-
-    if let Ok((input, _)) = tag::<&'a str, &'a str, LinkParseError<&'a str>>("//")(input) {
-        // ip-schemepart
-        // parse login
-        let (input, _) = opt(login)(input)?;
-        // parse host
-        let (input, (host, is_ipv6)) = host(input)?;
-        // parse port
-        let (input, _) = opt(tuple((char(':'), digit1)))(input)?;
-        // parse urlpath
-        let (input, _) = opt(tuple((
-            alt((char('/'), char('?'), char('#'))),
-            x_char_sequence,
-        )))(input)?;
-
-        let is_puny = if is_ipv6 {
-            false
-        } else {
-            let mut is_puny = false;
-            for char in host.chars() {
-                if !(is_alphanum_or_hyphen_minus(char) || char == '.') {
-                    is_puny = true;
-                    break;
-                }
-            }
-            is_puny
-        };
-
-        Ok((
-            input,
-            UrlInfo::CommonInternetSchemeURL {
-                scheme,
-                hostname: host,
-                has_puny_code_in_host_name: is_puny,
-                ascii_hostname: if is_puny {
-                    punycode_encode(host)
-                } else {
-                    host.to_string()
-                },
-            },
-        ))
+fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
+    if is_puny(host) {
+        let ascii_hostname = punycode_encode(host);
+        Some(PunycodeWarning {
+            original_hostname: host.to_owned(),
+            ascii_hostname: ascii_hostname.to_owned(),
+            punycode_encoded_url: link.replacen(host, &ascii_hostname, 1),
+        })
     } else {
-        // schemepart
-        let (input, _) = take_while(is_not_white_space)(input)?;
-
-        Ok((input, UrlInfo::GenericUrl { scheme }))
+        None
     }
 }
 
-fn parse_url(input: &str) -> IResult<&str, (&str, UrlInfo), LinkParseError<&str>> {
-    consumed(url_intern)(input)
+// IRI links per RFC3987 and RFC3986
+fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    let input_ = <&str>::clone(&input);
+    let (input, scheme) = scheme(input)?;
+    let (input, _double_slash) = tag("//")(input)?;
+    let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
+    let (input, path) = opt(alt((
+        recognize(tuple((
+            char('/'),
+            opt(tuple((
+                take_while_ipchar1,
+                many0(tuple((char('/'), take_while_ipchar))),
+            ))),
+        ))), // ipath-absolute
+        recognize(tuple((
+            take_while_ipchar,
+            many0(tuple((char('/'), take_while_ipchar))),
+        ))), // ipath-rootless
+    )))(input)?;
+    let path = path.unwrap_or(""); // it's ipath-empty
+    let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
+    let (input_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
+    let query = query.unwrap_or("");
+    let fragment = fragment.unwrap_or("");
+    let ihier_len = 2 + authority.len() + host.len() + path.len();
+    let len = scheme.len() + ihier_len + query.len() + fragment.len();
+    let link = &input_[0..len];
+    Ok((
+        input,
+        LinkDestination {
+            target: link,
+            hostname: if host.len() == 0 { None } else { Some(host) },
+            punycode: if is_ipv6_or_future {
+                None
+            } else {
+                get_puny_code_warning(link, host)
+            },
+            scheme,
+        },
+    ))
 }
 
+/*
+// For future
+fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    todo!()
+}
+*/
+
+// White listed links in this format: scheme:some_char like tel:+989164364485
+fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    let (input, scheme) = scheme(input)?;
+    if !is_allowed_generic_scheme(scheme) {
+        return Err(nom::Err::Error(CustomError::InvalidLink));
+    }
+    let (input, target) = take_while(is_not_white_space)(input)?;
+
+    Ok((input, LinkDestination {
+        scheme,
+        target,
+        hostname: None,
+        punycode: None,
+    }))
+}
+
+
+pub fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    /*
+    match parse_iri(input) {
+        Ok((input, iri)) => Ok((input, iri)),
+        Err(..) => parse_irelative_ref(input),
+    }*/
+    alt((parse_iri, parse_generic))(input)
+}
 // TODO testcases
 
 // ipv6 https://[::1]/
@@ -406,11 +518,11 @@ fn parse_url(input: &str) -> IResult<&str, (&str, UrlInfo), LinkParseError<&str>
 #[cfg(test)]
 mod test {
     #![allow(clippy::unwrap_used)]
-    use crate::parser::link_url::{parse_url, punycode_encode, UrlInfo};
+    use crate::parser::link_url::{parse_link, punycode_encode, PunycodeWarning, LinkDestination};
 
     #[test]
     fn basic_parsing() {
-        let test_cases = vec![
+        let test_cases_no_puny = vec![
             "http://delta.chat",
             "http://delta.chat:8080",
             "http://localhost",
@@ -429,18 +541,31 @@ mod test {
             "mailto:delta@example.com",
             "mailto:delta@example.com?subject=hi&body=hello%20world",
             "mailto:foö@ü.chat",
-            "https://ü.app#help",
             "ftp://test-test",
+        ];
+
+        let test_cases_with_puny = vec![
+            "https://ü.app#help",
             "http://münchen.de",
         ];
 
-        for input in &test_cases {
-            // println!("testing {}", input);
+        for input in &test_cases_no_puny {
+            println!("testing {input}");
 
-            let (rest, (url, _)) = parse_url(input).unwrap();
+            let (rest, link_destination) = parse_link(input).unwrap();
 
-            assert_eq!(input, &url);
+            assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
+            assert!(link_destination.punycode.is_none());
+        }
+
+        for input in &test_cases_with_puny {
+            println!("testing {input}");
+            let (rest, link_destination) = parse_link(input).unwrap();
+
+            assert!(link_destination.punycode.is_some());
+            assert_eq!(rest.len(), 0);
+            assert_eq!(input, &link_destination.target);
         }
     }
 
@@ -449,8 +574,8 @@ mod test {
         let test_cases = vec![";?:/hi", "##://thing"];
 
         for input in &test_cases {
-            // println!("testing {}", input);
-            assert!(parse_url(input).is_err());
+            println!("testing {input}");
+            assert!(parse_link(input).is_err());
         }
     }
     #[test]
@@ -461,55 +586,53 @@ mod test {
     #[test]
     fn punycode_detection() {
         assert_eq!(
-            parse_url("http://münchen.de").unwrap().1,
-            (
-                "http://münchen.de",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "münchen.de",
-                    has_puny_code_in_host_name: true,
-                    ascii_hostname: "xn--mnchen-3ya.de".to_owned(),
-                    scheme: "http"
-                }
-            )
+            parse_link("http://münchen.de").unwrap().1,
+            LinkDestination {
+                hostname: Some("münchen.de"),
+                target: "http://münchen.de",
+                scheme: "http",
+                punycode: Some(PunycodeWarning {
+                    original_hostname: "münchen.de".to_owned(),
+                    punycode_encoded_url: "xn--mnchen-3ya.de".to_owned(),
+                    ascii_hostname: "muenchen.de".to_owned(),
+                }),
+            }
         );
 
         assert_eq!(
-            parse_url("http://muenchen.de").unwrap().1,
-            (
-                "http://muenchen.de",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "muenchen.de",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "muenchen.de".to_owned(),
-                    scheme: "http"
-                }
-            )
+            parse_link("http://muenchen.de").unwrap().1,
+            LinkDestination {
+                hostname: Some("muenchen.de"),
+                target: "http://muenchen.de",
+                scheme: "http",
+                punycode: None,
+            }
         );
     }
 
     #[test]
     fn common_schemes() {
         assert_eq!(
-            parse_url("http://delta.chat").unwrap().1,
+            parse_link("http://delta.chat").unwrap(),
             (
-                "http://delta.chat",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "delta.chat",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "delta.chat".to_owned(),
-                    scheme: "http"
+                "",
+                LinkDestination {
+                    hostname: Some("delta.chat"),
+                    target: "http://delta.chat",
+                    scheme: "http",
+                    punycode: None,
                 }
             )
         );
         assert_eq!(
-            parse_url("https://delta.chat").unwrap().1,
+            parse_link("https://far.chickenkiller.com").unwrap(),
             (
-                "https://delta.chat",
-                UrlInfo::CommonInternetSchemeURL {
-                    hostname: "delta.chat",
-                    has_puny_code_in_host_name: false,
-                    ascii_hostname: "delta.chat".to_owned(),
-                    scheme: "https"
+                "",
+                LinkDestination {
+                    hostname: Some("far.chickenkiller.com"),
+                    target: "https://far.chickenkiller.com",
+                    scheme: "https",
+                    punycode: None,
                 }
             )
         );
@@ -517,27 +640,37 @@ mod test {
     #[test]
     fn generic_schemes() {
         assert_eq!(
-            parse_url("mailto:someone@example.com").unwrap().1,
+            parse_link("mailto:someone@example.com").unwrap(),
             (
-                "mailto:someone@example.com",
-                UrlInfo::GenericUrl { scheme: "mailto" }
+                "",
+                LinkDestination {
+                    hostname: None,
+                    scheme: "mailto",
+                    punycode: None,
+                    target: "mailto:someone@example.com"
+                }
+                        
             )
         );
         assert_eq!(
-            parse_url("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
+            parse_link("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
                 .unwrap()
                 .1,
-            (
-                "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
-                UrlInfo::GenericUrl { scheme: "bitcoin" }
-            )
-        );
+                LinkDestination {
+                    hostname: None,
+                    scheme: "bitcoin",
+                    target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
+                    punycode: None,
+                }
+            );
         assert_eq!(
-            parse_url("geo:37.786971,-122.399677").unwrap().1,
-            (
-                "geo:37.786971,-122.399677",
-                UrlInfo::GenericUrl { scheme: "geo" }
-            )
+            parse_link("geo:37.786971,-122.399677").unwrap().1,
+            LinkDestination {
+                scheme: "geo",
+                punycode: None,
+                target: "geo:37.786971,-122.399677",
+                hostname: None
+            }
         );
     }
 }

@@ -1,6 +1,7 @@
 ///! nom parsers for text elements
-use crate::parser::link_url::LinkDestination;
+use crate::parser::link_url::{LinkDestination, parse_link};
 
+use super::base_parsers::CustomError;
 use super::base_parsers::*;
 use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
@@ -96,6 +97,11 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
 
 fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
+}
+
+/*
+fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
+    let (input, _) = take_while1(link_scheme)(input)?;
 }
 
 /// rough recognition of an link, results gets checked by a real link parser
@@ -225,7 +231,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
 }
-
+*/
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
         '@' | '\\' | '_' | '/' | '.' | '-' => true,
@@ -273,8 +279,8 @@ pub(crate) fn parse_text_element(
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = link(input) {
-        Ok((i, elm))
+    } else if let Ok((i, destination)) = parse_link(input) {
+        Ok((i, Element::Link { destination }))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))
     } else {
