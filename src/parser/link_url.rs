@@ -189,7 +189,11 @@ fn is_sub_delim(c: char) -> bool {
 // Here again, order is important. As URLs/IRIs have letters in them
 // most of the time and less digits or other characters. --Farooq
 fn is_scheme(c: char) -> bool {
-    is_alpha(c) || is_digit(c) || is_scheme(c)
+    is_alpha(c) || is_digit(c) || is_other_scheme(c)
+}
+
+fn is_other_scheme(c: char) -> bool {
+    matches!(c, '+' | '-' | '.')
 }
 
 fn ipv4(input: &str) -> IResult<&str, &str, CustomError<&str>> {
@@ -381,7 +385,7 @@ fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    take_while(is_scheme)(input)
+    recognize(tuple((take_while_m_n(1, 1, is_alpha), take_while(is_scheme)))(input)
 }
 
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
