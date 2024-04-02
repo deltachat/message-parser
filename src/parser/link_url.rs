@@ -164,7 +164,7 @@ fn is_unreserved(c: char) -> bool {
 }
 
 fn is_iunreserved(c: char) -> bool {
-    is_ucschar(c) || is_unreserved(c)
+    is_unreserved(c) || is_ucschar(c)
 }
 
 fn is_other_unreserved(c: char) -> bool {
@@ -226,7 +226,7 @@ fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
         recognize(tuple((
             opt(h16),
             double_period,
-            many_m_n(4, 4, h16_and_period),
+            count(h16_and_period, 4),
             ls32,
         ))),
         recognize(tuple((
@@ -278,7 +278,7 @@ fn ipvfuture(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    delimited(char('['), alt((ipv6, ipvfuture)), char(']'))(input)
+    recognize(tuple(((char('['), alt((ipv6, ipvfuture)), char(']')))))(input)
 }
 
 /// Parse host
@@ -459,6 +459,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
+    println!("SCH: {}, AUTH: {}, P: {}, Q: {}, F: {}", scheme.len(), authority.len(), path.len(), query.len(), fragment.len());
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
     let len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
     if let Some(link) = input_.get(0..len) {
@@ -595,8 +596,8 @@ mod test {
                 scheme: "http",
                 punycode: Some(PunycodeWarning {
                     original_hostname: "münchen.de".to_owned(),
-                    punycode_encoded_url: "xn--mnchen-3ya.de".to_owned(),
-                    ascii_hostname: "muenchen.de".to_owned(),
+                    ascii_hostname: "xn--mnchen-3ya.de".to_owned(),
+                    punycode_encoded_url: "http://xn--mnchen-3ya.de".to_owned(),
                 }),
             }
         );
