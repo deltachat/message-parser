@@ -20,11 +20,12 @@ enum FindRangeResult<'a> {
 ///  - `code` the u32 to look for a range for.
 ///
 ///  - `ranges` a refernce to a slice of `RangeInclusive<u32>`
-fn find_range_for_char<'a>(code: u32, ranges: &'a [RangeInclusive<u32>]) -> FindRangeResult<'a> {
+fn find_range_for_char(code: u32, ranges: &'_ [RangeInclusive<u32>]) -> FindRangeResult<'_> {
     let index = ranges.binary_search_by_key(&code, |range| *range.start());
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
         Err(index) => match index {
+            #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
             0 => FindRangeResult::Range(&ranges[0]),
             // Since `index` can never be 0, `index - 1` will never overflow. Furthermore, the
             // maximum value which the binary search function returns is `NUMBER_OF_RANGES`.

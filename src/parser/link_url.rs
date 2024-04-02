@@ -8,10 +8,9 @@ use nom::{
     error::{ErrorKind, ParseError},
     multi::{count, many0, many1, many_m_n},
     sequence::{tuple, delimited},
-    AsChar, IResult,
+    IResult,
 };
 
-use super::Element;
 use super::parse_from_text::{
     base_parsers::{is_not_white_space, CustomError},
     find_range::is_in_one_of_ranges,
@@ -71,6 +70,7 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
 impl LinkDestination<'_> {
     /// parse a link that is not in a delimited link or a labled link, just a part of normal text
     /// it has a whitelist of schemes, because otherwise
+    /*
     pub(crate) fn parse_standalone_with_whitelist(
         input: &str,
     ) -> IResult<&str, LinkDestination, CustomError<&str>> {
@@ -92,7 +92,7 @@ impl LinkDestination<'_> {
             Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
-
+*/
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((
@@ -122,14 +122,6 @@ impl<I> ParseError<I> for LinkParseError<I> {
     }
 }
 
-fn is_alphanum_or_hyphen_minus(char: char) -> bool {
-    match char {
-        '-' => true,
-        _ => char.is_alphanum(),
-    }
-}
-
-
 fn is_alpha(c: char) -> bool {
     c.is_alphabetic()
 }
@@ -139,7 +131,7 @@ fn is_hex_digit(c: char) -> bool {
 }
 
 fn is_digit(c: char) -> bool {
-    c.is_digit(10)
+    c.is_ascii_digit()
 }
 
 // These ranges have been extracted from RFC3987, Page 8.
@@ -176,7 +168,7 @@ fn is_iunreserved(c: char) -> bool {
 }
 
 fn is_other_unreserved(c: char) -> bool {
-    matches!(c, '_' | '.' | '_' | '~')
+    matches!(c, '_' | '.' | '-' | '~')
 }
 
 fn is_sub_delim(c: char) -> bool {
@@ -324,8 +316,12 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
     let userinfo = userinfo.unwrap_or("");
     let port = port.unwrap_or("");
-    let len = userinfo.len() + host.len() + port.len();
-    Ok((input, (&i[0..len], host, is_ipv6_or_future)))
+    let len = userinfo.len().saturating_add(host.len()).saturating_add(port.len());
+    if let Some(out) = i.get(0..len) {
+        Ok((input, (out, host, is_ipv6_or_future)))
+    } else {
+        Err(nom::Err::Failure(CustomError::NoContent))
+    }
 }
 
 fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
@@ -385,7 +381,16 @@ fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((take_while_m_n(1, 1, is_alpha), take_while(is_scheme)))(input)
+    let i = <&str>::clone(&input);
+    let (input, _first) = take_while_m_n(1, 1, is_alpha)(input)?;
+    let (input, second) = take_while(is_scheme)(input)?;
+    let len = 1usize.saturating_add(second.len());
+    // "1" is for the first, its length is always 1
+    if let Some(out) = i.get(0..len) {
+        Ok((input, out))
+    } else {
+        Err(nom::Err::Failure(CustomError::NoContent))
+    }
 }
 
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
@@ -395,12 +400,7 @@ fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>>
 fn punycode_encode(host: &str) -> String {
     host.split('.')
         .map(|sub| {
-            let has_non_ascii_char: bool = sub
-                .chars()
-                .map(|ch| is_alphanum_or_hyphen_minus(ch))
-                .reduce(|acc, e| e && acc)
-                .unwrap_or(false);
-            if has_non_ascii_char {
+            if is_puny(sub) {
                 format!(
                     "xn--{}",
                     unic_idna_punycode::encode_str(sub)
@@ -415,7 +415,7 @@ fn punycode_encode(host: &str) -> String {
 }
 fn is_puny(host: &str) -> bool {
     for ch in host.chars() {
-        if !(is_alphanum_or_hyphen_minus(ch) || ch == '.') {
+        if !(ch.is_ascii_alphanumeric() || ch == '.') {
             return true;
         }
     }
@@ -459,22 +459,24 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
-    let ihier_len = 2 + authority.len() + host.len() + path.len();
-    let len = scheme.len() + ihier_len + query.len() + fragment.len();
-    let link = &input_[0..len];
-    Ok((
-        input,
-        LinkDestination {
-            target: link,
-            hostname: if host.len() == 0 { None } else { Some(host) },
-            punycode: if is_ipv6_or_future {
-                None
-            } else {
-                get_puny_code_warning(link, host)
+    let ihier_len = 2usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
+    let len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
+    if let Some(link) = input_.get(0..len) {
+        return Ok((
+            input,
+            LinkDestination {
+                target: link,
+                hostname: if host.is_empty() { None } else { Some(host) },
+                punycode: if is_ipv6_or_future {
+                    None
+                } else {
+                    get_puny_code_warning(link, host)
+                },
+                scheme,
             },
-            scheme,
-        },
-    ))
+        ));
+    }
+    Err(nom::Err::Failure(CustomError::NoContent))
 }
 
 /*
@@ -486,20 +488,23 @@ fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>>
 
 // White listed links in this format: scheme:some_char like tel:+989164364485
 fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    let i = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
     if !is_allowed_generic_scheme(scheme) {
         return Err(nom::Err::Error(CustomError::InvalidLink));
     }
-    let (input, target) = take_while(is_not_white_space)(input)?;
-
-    Ok((input, LinkDestination {
-        scheme,
-        target,
-        hostname: None,
-        punycode: None,
-    }))
+    let (input, rest) = take_while(is_not_white_space)(input)?;
+    let len = scheme.len().saturating_add(rest.len());
+    if let Some(target) = i.get(0..len) {
+        return Ok((input, LinkDestination {
+            scheme,
+            target,
+            hostname: None,
+            punycode: None,
+        }));
+    }
+    Err(nom::Err::Failure(CustomError::NoContent))
 }
-
 
 pub fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     /*
@@ -550,9 +555,7 @@ mod test {
         ];
 
         for input in &test_cases_no_puny {
-            println!("testing {input}");
-
-            let (rest, link_destination) = parse_link(input).unwrap();
+            let (rest, link_destination) = parse_link(input).expect("Test failed: {input}");
 
             assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
@@ -560,8 +563,7 @@ mod test {
         }
 
         for input in &test_cases_with_puny {
-            println!("testing {input}");
-            let (rest, link_destination) = parse_link(input).unwrap();
+            let (rest, link_destination) = parse_link(input).expect("Test failed: {input}");
 
             assert!(link_destination.punycode.is_some());
             assert_eq!(rest.len(), 0);

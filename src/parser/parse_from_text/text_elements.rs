@@ -1,8 +1,7 @@
 ///! nom parsers for text elements
-use crate::parser::link_url::{LinkDestination, parse_link};
+use crate::parser::link_url::parse_link;
 
 use super::base_parsers::CustomError;
-use super::base_parsers::*;
 use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use crate::nom::{Offset, Slice};
