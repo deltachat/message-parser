@@ -95,11 +95,11 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     }
 }
 
+/*
 fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
 }
 
-/*
 fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let (input, _) = take_while1(link_scheme)(input)?;
 }
