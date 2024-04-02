@@ -439,7 +439,7 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
-    let (input, _double_slash) = tag("//")(input)?;
+    let (input, _period_double_slash) = tag("://")(input)?;
     let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
     let (input, path) = opt(alt((
         recognize(tuple((
@@ -456,10 +456,10 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     )))(input)?;
     let path = path.unwrap_or(""); // it's ipath-empty
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
-    let (input_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
+    let (input, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
-    let ihier_len = 2usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
+    let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
     let len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
     if let Some(link) = input_.get(0..len) {
         return Ok((
