@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use nom::{
     branch::alt,
-    bytes::complete::{tag, take_while, take_while_m_n},
+    bytes::complete::{tag, take_while, take_while1, take_while_m_n},
     character::complete::{char, u8},
     combinator::{opt, recognize},
     error::{ErrorKind, ParseError},
@@ -302,10 +302,10 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
 }
 
 fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    alt((
-        recognize(many0(take_while_pct_encoded)),
-        take_while(is_ireg_name_not_pct_encoded),
-    ))(input)
+    recognize(many0(alt((
+        recognize(many1(take_while_pct_encoded)),
+        take_while1(is_ireg_name_not_pct_encoded),
+    ))))(input)
 }
 
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */
@@ -348,7 +348,7 @@ fn take_while_ipchar(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 
 fn take_while_ipchar1(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many1(alt((
-        take_while(is_ipchar_not_pct_encoded),
+        take_while1(is_ipchar_not_pct_encoded),
         take_while_pct_encoded,
     ))))(input)
 }
@@ -366,15 +366,14 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
 
 fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
-        take_while(is_iquery_not_pct_encoded),
+        take_while1(is_iquery_not_pct_encoded),
         take_while_pct_encoded,
     ))))(input)
 }
 
 fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
-        take_while_ipchar,
-        take_while_pct_encoded,
+        take_while_ipchar1,
         tag("/"),
         tag("?"),
     ))))(input)
@@ -394,7 +393,7 @@ fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(many0(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
+    recognize(many1(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
 }
 
 fn punycode_encode(host: &str) -> String {
@@ -446,7 +445,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
             char('/'),
             opt(tuple((
                 take_while_ipchar1,
-                many0(tuple((char('/'), take_while_ipchar))),
+                many0(tuple((char('/'), take_while_ipchar1))),
             ))),
         ))), // ipath-absolute
         recognize(tuple((
@@ -556,7 +555,7 @@ mod test {
         ];
 
         for input in &test_cases_no_puny {
-            let (rest, link_destination) = parse_link(input).expect("Test failed: {input}");
+            let (rest, link_destination) = parse_link(input).expect(&format!("Test failed: {input}"));
 
             assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
