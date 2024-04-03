@@ -414,7 +414,8 @@ fn punycode_encode(host: &str) -> String {
 }
 fn is_puny(host: &str) -> bool {
     for ch in host.chars() {
-        if !(ch.is_ascii_alphanumeric() || ch == '.') {
+        if !(ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-')) {
+            println!("IT IS! {host}");
             return true;
         }
     }
