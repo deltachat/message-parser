@@ -2,6 +2,7 @@ use std::ops::RangeInclusive;
 
 use nom::{
     branch::alt,
+    Slice,
     bytes::complete::{tag, take_while, take_while1, take_while_m_n},
     character::complete::{char, u8},
     combinator::{opt, recognize},
@@ -278,7 +279,7 @@ fn ipvfuture(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple(((char('['), alt((ipv6, ipvfuture)), char(']')))))(input)
+    recognize(tuple((char('['), alt((ipv6, ipvfuture)), char(']'))))(input)
 }
 
 /// Parse host
@@ -462,7 +463,56 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     println!("SCH: {}, AUTH: {}, P: {}, Q: {}, F: {}", scheme.len(), authority.len(), path.len(), query.len(), fragment.len());
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
     let len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
-    if let Some(link) = input_.get(0..len) {
+    if let Some(mut link) = input_.get(0..len) {
+        if link.ends_with([':', ';', '.', ',']) {
+            link = link.slice(..len-1);
+        }
+        type Stack = Vec<bool>;
+        let mut parenthes: Stack = vec![]; // ()
+        let mut curly_bracket: Stack = vec![]; // {}
+        let mut bracket: Stack = vec![]; // []
+        let mut angle: Stack = vec![]; // <>
+        let mut alternative_offset: Option<usize> = None;
+        for (i, ch) in link.chars().enumerate() {
+            match ch {
+                '(' => {
+                    parenthes.push(true);
+                }
+                ')' => {
+                    if parenthes.pop().is_none() {
+                        alternative_offset = Some(i);
+                    }
+                }
+                '[' => {
+                    bracket.push(true);
+                }
+                ']' => {
+                    if bracket.pop().is_none() {
+                        alternative_offset = Some(i);
+                    }
+                }
+                '{' => {
+                    curly_bracket.push(true);
+                }
+                '}' => {
+                    if curly_bracket.pop().is_none() {
+                        alternative_offset = Some(i);
+                    }
+                }
+                '<' => {
+                    angle.push(true);
+                }
+                '>' => {
+                    if angle.pop().is_none() {
+                        alternative_offset = Some(i);
+                    }
+                }
+                _ => {}
+            }
+        }
+        if let Some(offset) = alternative_offset {
+            link = link.slice(offset..);
+        }
         return Ok((
             input,
             LinkDestination {
