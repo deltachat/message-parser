@@ -460,59 +460,85 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
-    println!("SCH: {}, AUTH: {}, P: {}, Q: {}, F: {}", scheme.len(), authority.len(), path.len(), query.len(), fragment.len());
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
-    let len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
-    if let Some(mut link) = input_.get(0..len) {
+    let mut len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
+    if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',']) {
-            link = link.slice(..len-1);
+            len -= 1;
         }
-        type Stack = Vec<bool>;
-        let mut parenthes: Stack = vec![]; // ()
-        let mut curly_bracket: Stack = vec![]; // {}
-        let mut bracket: Stack = vec![]; // []
-        let mut angle: Stack = vec![]; // <>
-        let mut alternative_offset: Option<usize> = None;
+
+        let mut parenthes = 0usize; // ()
+        let mut curly_bracket = 0usize; // {}
+        let mut bracket = 0usize; // []
+        let mut angle = 0usize; // <>
+
         for (i, ch) in link.chars().enumerate() {
             match ch {
                 '(' => {
-                    parenthes.push(true);
-                }
-                ')' => {
-                    if parenthes.pop().is_none() {
-                        alternative_offset = Some(i);
-                    }
-                }
-                '[' => {
-                    bracket.push(true);
-                }
-                ']' => {
-                    if bracket.pop().is_none() {
-                        alternative_offset = Some(i);
+                    parenthes = parenthes.saturating_add(1);
+                    if link.slice(i..).find(')').is_none() {
+                        len = i;
+                        break;
                     }
                 }
                 '{' => {
-                    curly_bracket.push(true);
+                    curly_bracket = curly_bracket.saturating_add(1);
+                    if link.slice(i..).find('}').is_none() {
+                        len = i;
+                        break;
+                    }
                 }
-                '}' => {
-                    if curly_bracket.pop().is_none() {
-                        alternative_offset = Some(i);
+                '[' => {
+                    bracket = bracket.saturating_add(1);
+                    if link.slice(i..).find(']').is_none() {
+                        len = i;
+                        break;
                     }
                 }
                 '<' => {
-                    angle.push(true);
-                }
-                '>' => {
-                    if angle.pop().is_none() {
-                        alternative_offset = Some(i);
+                    angle = angle.saturating_add(1);
+                    if link.slice(i..).find('>').is_none() {
+                        len = i;
+                        break;
                     }
                 }
-                _ => {}
+                ')' => {
+                    if parenthes == 0 {
+                        len = i;
+                        break;
+                    } else {
+                        parenthes = parenthes.saturating_sub(1);
+                    }
+                }
+                ']' => {
+                    if bracket == 0 {
+                        len = i;
+                        break;
+                    } else {
+                        bracket = bracket.saturating_sub(1);
+                    }
+                }
+                '}' => {
+                    if curly_bracket == 0 {
+                        len = i;
+                        break;
+                    } else {
+                        curly_bracket = curly_bracket.saturating_sub(1);
+                    }
+                }
+                '>' => {
+                    if angle == 0 {
+                        len = i;
+                        break;
+                    } else {
+                        angle = angle.saturating_sub(1);
+                    }
+                }
+                _ => continue,
             }
         }
-        if let Some(offset) = alternative_offset {
-            link = link.slice(offset..);
-        }
+        let link = input_.slice(0..len);
+        let input = input_.slice(len..);
         return Ok((
             input,
             LinkDestination {
