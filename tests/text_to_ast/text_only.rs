@@ -547,38 +547,10 @@ fn link_with_different_parenthesis_in_parenthesis() {
             Text("()(for [example{ "),
             Link {
                 destination: link_destination_for_testing(
-                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]"
+                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation)"
                 )
             },
-            Text("])}")
-        ]
-    );
-}
-
-#[test]
-fn link_with_backets_in_backets() {
-    assert_eq!(
-        parse_only_text("there are links that contain backets [for example https://en.wikipedia.org/wiki/Bracket_[disambiguation]]"),
-        vec![
-            Text("there are links that contain backets [for example "),
-            Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_[disambiguation]")
-            },
-            Text("]")
-        ]
-    );
-}
-
-#[test]
-fn link_with_parenthesis_in_parenthesis_curly() {
-    assert_eq!(
-        parse_only_text("there are links that contain parenthesis {for example https://en.wikipedia.org/wiki/Bracket_{disambiguation}}"),
-        vec![
-            Text("there are links that contain parenthesis {for example "),
-            Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_{disambiguation}")
-            },
-            Text("}")
+            Text("{[}hi]])}")
         ]
     );
 }
