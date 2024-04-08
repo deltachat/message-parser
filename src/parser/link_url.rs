@@ -245,7 +245,6 @@ fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
         recognize(tuple((
             opt(tuple((many_m_n(0, 3, h16_and_period), h16))),
             double_period,
-            count(h16_and_period, 1),
             ls32,
         ))),
         recognize(tuple((
@@ -413,10 +412,10 @@ fn punycode_encode(host: &str) -> String {
         .collect::<Vec<String>>()
         .join(".")
 }
+
 fn is_puny(host: &str) -> bool {
     for ch in host.chars() {
         if !(ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-')) {
-            println!("IT IS! {host}");
             return true;
         }
     }
@@ -447,12 +446,12 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
             char('/'),
             opt(tuple((
                 take_while_ipchar1,
-                many0(tuple((char('/'), take_while_ipchar1))),
+                many0(tuple((char('/'), opt(take_while_ipchar1)))),
             ))),
         ))), // ipath-absolute
         recognize(tuple((
             take_while_ipchar,
-            many0(tuple((char('/'), take_while_ipchar))),
+            many0(tuple((char('/'), opt(take_while_ipchar1)))),
         ))), // ipath-rootless
     )))(input)?;
     let path = path.unwrap_or(""); // it's ipath-empty
@@ -463,6 +462,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
     let mut len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
     if let Some(link) = input_.get(0..len) {
+        println!("{link}");
         if link.ends_with([':', ';', '.', ',']) {
             len -= 1;
         }
@@ -539,6 +539,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         }
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
+        println!("{link}, {input}");
         return Ok((
             input,
             LinkDestination {
