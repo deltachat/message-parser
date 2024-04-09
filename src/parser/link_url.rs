@@ -104,6 +104,19 @@ impl LinkDestination<'_> {
             Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
+    
+    pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+        let (mut remaining, mut link) = Self::parse(input)?;
+        println!("BEFORE {remaining} {link:?}");
+        if let Some(first) = remaining.chars().nth(0) {
+            if matches!(first, ';' | '.' | ',' | ':') {
+                let point = link.target.len() + 1;
+                link.target = input.slice(..point);
+                remaining = input.slice(point..);
+            }
+        }
+        Ok((remaining, link))
+    }
 }
 
 
@@ -316,7 +329,7 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
     let userinfo = userinfo.unwrap_or("");
     let port = port.unwrap_or("");
-    let len = userinfo.len().saturating_add(host.len()).saturating_add(port.len());
+    let len = userinfo.len().saturating_add(port.len());
     if let Some(out) = i.get(0..len) {
         Ok((input, (out, host, is_ipv6_or_future)))
     } else {
@@ -440,7 +453,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
     let (input, _period_double_slash) = tag("://")(input)?;
-    let (input, (authority, host, is_ipv6_or_future)) = iauthority(input)?;
+    let (input, (authority, mut host, is_ipv6_or_future)) = iauthority(input)?;
     let (input, path) = opt(alt((
         recognize(tuple((
             char('/'),
@@ -459,12 +472,14 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (input, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
-    let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(path.len());
+    let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
     let mut len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
     if let Some(link) = input_.get(0..len) {
-        println!("{link}");
         if link.ends_with([':', ';', '.', ',']) {
             len -= 1;
+            if path.len() == 0 && query.len() == 0 && fragment.len() == 0 {
+                host = input_.slice(scheme.len()+3..input_.len()-1);
+            }
         }
 
         let mut parenthes = 0usize; // ()
@@ -507,7 +522,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                         len = i;
                         break;
                     } else {
-                        parenthes = parenthes.saturating_sub(1);
+                        parenthes -= 1;
                     }
                 }
                 ']' => {
@@ -515,7 +530,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                         len = i;
                         break;
                     } else {
-                        bracket = bracket.saturating_sub(1);
+                        bracket -= 1;
                     }
                 }
                 '}' => {
@@ -523,7 +538,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                         len = i;
                         break;
                     } else {
-                        curly_bracket = curly_bracket.saturating_sub(1);
+                        curly_bracket -= 1;
                     }
                 }
                 '>' => {
@@ -531,15 +546,17 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                         len = i;
                         break;
                     } else {
-                        angle = angle.saturating_sub(1);
+                        angle -= 1;
                     }
                 }
                 _ => continue,
             }
         }
+
+
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
-        println!("{link}, {input}");
+
         return Ok((
             input,
             LinkDestination {
@@ -590,7 +607,7 @@ pub fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&st
         Ok((input, iri)) => Ok((input, iri)),
         Err(..) => parse_irelative_ref(input),
     }*/
-    alt((parse_iri, parse_generic))(input)
+    alt((parse_generic, parse_iri))(input)
 }
 // TODO testcases
 

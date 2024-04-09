@@ -97,19 +97,6 @@ pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<
     if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    /*
-    let (rest, link) = match link(content)?; {
-        Ok((rest, link)) => (rest, link),
-        Err(nom::Err::Error(err)) => {
-            return Err(nom::Err::Error(CustomError::Nom(err.input, err.code)));
-        },
-        Err(nom::Err::Incomplete(err)) => {
-            return Err(nom::Err::Incomplete(err));
-        },
-        Err(nom::Err::Failure(err)) => {
-            return Err(nom::Err::Failure(CustomError::));
-        }
-    };*/
     let (rest, destination) = parse_link(input)?;
     if !rest.is_empty() {
         return Err(nom::Err::Error(CustomError::UnexpectedContent));
@@ -130,8 +117,7 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
         return Err(nom::Err::Error(CustomError::NoContent));
     }
     // check if result is valid link
-    let (remainder, destination) = LinkDestination::parse(raw_link)?;
-
+    let (remainder, destination) = LinkDestination::parse_labelled(raw_link)?;
     if remainder.is_empty() {
         Ok((input, Element::LabeledLink { label, destination }))
     } else {
