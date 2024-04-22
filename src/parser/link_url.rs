@@ -110,9 +110,11 @@ impl LinkDestination<'_> {
         println!("BEFORE {remaining} {link:?}");
         if let Some(first) = remaining.chars().nth(0) {
             if matches!(first, ';' | '.' | ',' | ':') {
+                println!("Matches!");
                 let point = link.target.len() + 1;
                 link.target = input.slice(..point);
                 remaining = input.slice(point..);
+                println!("{link:?} ======= {remaining}");
             }
         }
         Ok((remaining, link))
