@@ -8,7 +8,7 @@ use nom::{
     combinator::{opt, recognize},
     error::{ErrorKind, ParseError},
     multi::{count, many0, many1, many_m_n},
-    sequence::{tuple, delimited},
+    sequence::tuple,
     IResult,
 };
 
@@ -107,16 +107,15 @@ impl LinkDestination<'_> {
     
     pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         let (mut remaining, mut link) = Self::parse(input)?;
-        println!("BEFORE {remaining} {link:?}");
-        if let Some(first) = remaining.chars().nth(0) {
+        if let Some(first) = remaining.chars().next() {
             if matches!(first, ';' | '.' | ',' | ':') {
-                println!("Matches!");
+                #[allow(clippy::integer_arithmetic)]
                 let point = link.target.len() + 1;
                 link.target = input.slice(..point);
                 remaining = input.slice(point..);
-                println!("{link:?} ======= {remaining}");
             }
         }
+        println!("BEFORE {remaining} {link:?}");
         Ok((remaining, link))
     }
 }
@@ -125,7 +124,6 @@ impl LinkDestination<'_> {
 #[derive(Debug, PartialEq, Eq)]
 pub enum LinkParseError<I> {
     Nom(I, ErrorKind),
-    ThisIsNotPercentEncoding,
 }
 
 impl<I> ParseError<I> for LinkParseError<I> {
@@ -451,6 +449,7 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
 }
 
 // IRI links per RFC3987 and RFC3986
+#[allow(clippy::integer_arithmetic)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     let (input, scheme) = scheme(input)?;
@@ -471,7 +470,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     )))(input)?;
     let path = path.unwrap_or(""); // it's ipath-empty
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
-    let (input, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
+    let (_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or("");
     let fragment = fragment.unwrap_or("");
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
@@ -479,7 +478,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',']) {
             len -= 1;
-            if path.len() == 0 && query.len() == 0 && fragment.len() == 0 {
+            if path.is_empty() && query.is_empty() && fragment.is_empty() {
                 host = input_.slice(scheme.len()+3..input_.len()-1);
             }
         }
