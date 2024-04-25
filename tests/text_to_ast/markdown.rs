@@ -1,5 +1,6 @@
 use super::*;
 use deltachat_message_parser::parser::parse_markdown_text;
+use deltachat_message_parser::parser::LinkDestination;
 
 #[test]
 fn bold_capitalized_command_suggestion() {
@@ -493,43 +494,105 @@ fn email_address_example() {
 
 #[test]
 fn link() {
-    let test_cases = vec![
-        "http://delta.chat",
-        "http://delta.chat:8080",
-        "http://localhost",
-        "http://127.0.0.0",
-        "https://delta.chat",
-        "ftp://delta.chat",
-        "https://delta.chat/en/help",
-        "https://delta.chat/en/help?hi=5&e=4",
-        "https://delta.chat?hi=5&e=4",
-        "https://delta.chat/en/help?hi=5&e=4#section2.0",
-        "https://delta#section2.0",
-        "http://delta.chat:8080?hi=5&e=4#section2.0",
-        "http://delta.chat:8080#section2.0",
-        "mailto:delta@example.com",
-        "mailto:delta@example.com?subject=hi&body=hello%20world",
-        "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more url test cases
+    let test_cases_no_puny = vec![
+        (
+            "http://delta.chat",
+            http_link_no_puny("http://delta.chat", "delta.chat"),
+        ),
+        (
+            "http://delta.chat:8080",
+            http_link_no_puny("http://delta.chat:8080", "delta.chat"),
+        ),
+        (
+            "http://localhost",
+            http_link_no_puny("http://localhost", "localhost"),
+        ),
+        (
+            "http://127.0.0.1",
+            http_link_no_puny("http://127.0.0.1", "127.0.0.1"),
+        ),
+        (
+            "https://delta.chat",
+            https_link_no_puny("http://delta.chat", "delta.chat"),
+        ),
+        (
+            "ftp://delta.chat",
+            ftp_link_no_puny("ftp://delta.chat", "delta.chat"),
+        ),
+        (
+            "https://delta.chat/en/help",
+            https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+        ),
+        (
+            "https://delta.chat?hi=5&e=4",
+            https_link_no_puny("https://delta.chat?hi=5&e=4", "delta.chat"),
+        ),
+        (
+            "https://delta.chat/en/help?hi=5&e=4#section2.0",
+            https_link_no_puny("https://delta.chat/en/help?hi=5&e=4#section2.0", "delta.chat"),
+        ),
+        (
+            "https://delta#section2.0",
+            https_link_no_puny("https://delta#section2.0", "delta"),
+        ),
+        (
+            "http://delta.chat:8080?hi=5&e=4#section2.0",
+            http_link_no_puny("http://delta.chat:8080?hi=5&e=4#section2.0", "delta.chat"),
+        ),
+        (
+            "http://delta.chat:8080#section2.0",
+            http_link_no_puny("http://delta.chat:8080#section2.0", "delta.chat"),
+        ),
+        (
+            "mailto:delta@example.com",
+            mailto_link_no_puny("mailto:delta@example.com", "example.com"),
+        ),
+        (
+            "mailto:delta@example.com?subject=hi&body=hello%20world",
+            mailto_link_no_puny("mailto:delta@example.com?subject=hi&body=hello%20world", "example.com"),
+        ),
     ];
 
-    for input in &test_cases {
+    let test_cases_with_puny = [
+        (
+            "mailto:foö@ü.chat",
+            mailto_link_no_puny("mailto:foö@ü.chat", "ü.chat"),
+        ),
+        (
+            "https://ü.app#help",
+            https_link_no_puny("https://ü.app#help", "ü.app")
+        )
+    ];
+
+
+    for (input, destination) in &test_cases_no_puny {
         println!("testing {}", input);
         assert_eq!(
             parse_markdown_text(input),
             vec![Link {
-                destination: link_destination_for_testing(input)
+                destination: *destination
             }]
         );
     }
 
-    for input in &test_cases {
+    for (input, destination) in &test_cases_with_puny {
         println!("testing <{}>", input);
+        let result = parse_markdown_text(input)[0].destination;
         assert_eq!(
-            parse_markdown_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
+            result.target,
+            destination.target
+        );
+        assert_eq!(
+            result.scheme,
+            destination.scheme
+        );
+        assert_eq!(
+            result.hostname,
+            destination.hostname,
+        );
+        assert_eq!(
+            result.punycode.is_some(),
+            true
         );
     }
 }
