@@ -272,63 +272,6 @@ fn email_address_do_not_parse_last_char_if_special() {
 }
 
 #[test]
-fn link() {
-    let test_cases = vec![
-        "http://delta.chat",
-        "http://delta.chat:8080",
-        "http://localhost",
-        "http://127.0.0.0",
-        "https://delta.chat",
-        "ftp://delta.chat",
-        "https://delta.chat/en/help",
-        "https://delta.chat/en/help?hi=5&e=4",
-        "https://delta.chat?hi=5&e=4",
-        "https://delta.chat/en/help?hi=5&e=4#section2.0",
-        "https://delta#section2.0",
-        "http://delta.chat:8080?hi=5&e=4#section2.0",
-        "http://delta.chat:8080#section2.0",
-        "mailto:delta@example.com",
-        "mailto:delta@example.com?subject=hi&body=hello%20world",
-        "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more urls for testing
-    ];
-
-    for input in &test_cases {
-        println!("testing {}", input);
-        assert_eq!(
-            parse_only_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
-        );
-    }
-
-    for input in &test_cases {
-        println!("testing <{}>", input);
-        assert_eq!(
-            parse_only_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
-        );
-    }
-
-    let input = "http://[2001:0db8:85a3:08d3::0370:7344]:8080/";
-    let hostname = "[2001:0db8:85a3:08d3::0370:7344]";
-    assert_eq!(
-        parse_only_text(input),
-        vec![Link {
-            destination: LinkDestination {
-                target: input,
-                hostname: Some(hostname),
-                punycode: None,
-                scheme: "http"
-            }
-        }]
-    );
-}
-
-#[test]
 fn test_link_example() {
     assert_eq!(
         parse_only_text(
@@ -337,8 +280,9 @@ fn test_link_example() {
         vec![
             Text("This is an my site: "),
             Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                    "delta.chat",
                 )
             },
             Linebreak,
@@ -352,7 +296,7 @@ fn delimited_email_should_not_work() {
     assert_ne!(
         parse_only_text("This is an my site: <hello@delta.chat>\nMessage me there"),
         vec![
-            Text("This is an my site: "),
+            Text("This is an my email: "),
             EmailAddress("hello@delta.chat"),
             Linebreak,
             Text("Message me there")

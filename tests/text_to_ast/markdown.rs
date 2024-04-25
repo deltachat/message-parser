@@ -605,11 +605,10 @@ fn test_link_example() {
         ),
         vec![
             Text("This is an my site: "),
-            Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
-                )
-            },
+            http_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
             Linebreak,
             Text("Visit me there")
         ]
@@ -637,11 +636,10 @@ fn test_delimited_link_example() {
         ),
         vec![
             Text("This is an my site: "),
-            Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
-                )
-            },
+            https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
             Linebreak,
             Text("Visit me there")
         ]
@@ -654,9 +652,10 @@ fn labeled_link() {
         parse_markdown_text("[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("a link")],
-            destination: link_destination_for_testing(
-                "https://delta.chat/en/help?hi=5&e=4#section2.0"
-            )
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
         }]
     );
     assert_eq!(
@@ -665,9 +664,10 @@ fn labeled_link() {
         ),
         vec![LabeledLink {
             label: vec![Text("rich content "), Bold(vec![Text("bold")])],
-            destination: link_destination_for_testing(
-                "https://delta.chat/en/help?hi=5&e=4#section2.0"
-            )
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
         }]
     );
 }
@@ -680,7 +680,10 @@ fn labeled_link_example() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                    "delta.chat"
+                ),
             },
             Text(".")
         ]
@@ -695,7 +698,10 @@ fn labeled_link_can_have_comma_or_dot_at_end() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help.")
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help.",
+                    "delta.chat"
+                ),
             },
             Text(".")
         ]
@@ -706,7 +712,10 @@ fn labeled_link_can_have_comma_or_dot_at_end() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help,")
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help,",
+                    "delta.chat"
+                ),
             },
             Text(".")
         ]
@@ -717,7 +726,10 @@ fn labeled_link_can_have_comma_or_dot_at_end() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help:")
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help:",
+                    "delta.chat"
+                ),
             },
             Text(".")
         ]
@@ -728,7 +740,10 @@ fn labeled_link_can_have_comma_or_dot_at_end() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help;")
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help;",
+                    "delta.chat"
+                ),
             },
             Text(".")
         ]
