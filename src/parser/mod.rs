@@ -1,7 +1,7 @@
 // mod email;
 pub mod parse_from_text;
-
-mod link_url;
+pub mod link_url;
+mod utils;
 
 pub use link_url::LinkDestination;
 

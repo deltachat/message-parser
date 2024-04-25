@@ -12,42 +12,15 @@ use nom::{
     IResult,
 };
 
-use super::parse_from_text::{
-    base_parsers::{is_not_white_space, CustomError},
-    find_range::is_in_one_of_ranges,
+use crate::parser::{
+    parse_from_text::{
+        base_parsers::{is_not_white_space, CustomError},
+        find_range::is_in_one_of_ranges,
+    },
+    utils::{is_alpha, is_hex_digit, is_digit, find_range},
 };
 
-// Link syntax here is according to RFC 3986 & 3987 --Farooq
-
-///! Parsing / Validation of URLs
-///
-/// - hyperlinks (:// scheme)
-/// - whitelisted scheme (: scheme)
-///
-/// for hyperlinks it also checks whether the domain contains punycode
-
-// There are two kinds of Urls
-// - Common Internet Scheme https://datatracker.ietf.org/doc/html/rfc1738#section-3.1
-// - Every other url (like mailto)
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct LinkDestination<'a> {
-    pub target: &'a str,
-    /// hostname if it was found
-    pub hostname: Option<&'a str>,
-    /// contains data for the punycode warning if punycode was detected
-    /// (the host part contains non ascii unicode characters)
-    pub punycode: Option<PunycodeWarning>,
-    /// scheme
-    pub scheme: &'a str,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct PunycodeWarning {
-    pub original_hostname: String,
-    pub ascii_hostname: String,
-    pub punycode_encoded_url: String,
-}
+use super::{ipv4::ipv4, ipv6::ipv6};
 
 /// determines which generic schemes (without '://') get linkifyed
 fn is_allowed_generic_scheme(scheme: &str) -> bool {
@@ -68,85 +41,6 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
     )
 }
 
-impl LinkDestination<'_> {
-    /// parse a link that is not in a delimited link or a labled link, just a part of normal text
-    /// it has a whitelist of schemes, because otherwise
-    /*
-    pub(crate) fn parse_standalone_with_whitelist(
-        input: &str,
-    ) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, link_destination)) = parse_link(input) {
-            if link_destination.hostname.is_none() {
-                // if it's a generic url like geo:-15.5,41.1
-                if !is_allowed_generic_scheme(link_destination.scheme) {
-                    Err(nom::Err::Error(CustomError::InvalidLink))
-                } else {
-                    Ok((rest, link_destination))
-                }
-            } else {
-                Ok((
-                    rest,
-                    link_destination
-                ))
-            }
-        } else {
-            Err(nom::Err::Error(CustomError::InvalidLink))
-        }
-    }
-*/
-    pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, link_destination)) = parse_link(input) {
-            Ok((
-                rest,
-                link_destination 
-            ))
-        } else {
-            Err(nom::Err::Error(CustomError::InvalidLink))
-        }
-    }
-    
-    pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        let (mut remaining, mut link) = Self::parse(input)?;
-        if let Some(first) = remaining.chars().next() {
-            if matches!(first, ';' | '.' | ',' | ':') {
-                #[allow(clippy::integer_arithmetic)]
-                let point = link.target.len() + 1;
-                link.target = input.slice(..point);
-                remaining = input.slice(point..);
-            }
-        }
-        println!("BEFORE {remaining} {link:?}");
-        Ok((remaining, link))
-    }
-}
-
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum LinkParseError<I> {
-    Nom(I, ErrorKind),
-}
-
-impl<I> ParseError<I> for LinkParseError<I> {
-    fn from_error_kind(input: I, kind: ErrorKind) -> Self {
-        LinkParseError::Nom(input, kind)
-    }
-
-    fn append(_: I, _: ErrorKind, other: Self) -> Self {
-        other
-    }
-}
-
-fn is_alpha(c: char) -> bool {
-    c.is_alphabetic()
-}
-
-fn is_hex_digit(c: char) -> bool {
-    c.is_ascii_hexdigit()
-}
-
-fn is_digit(c: char) -> bool {
-    c.is_ascii_digit()
-}
 
 // These ranges have been extracted from RFC3987, Page 8.
 const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
@@ -202,93 +96,11 @@ fn is_other_scheme(c: char) -> bool {
     matches!(c, '+' | '-' | '.')
 }
 
-fn ipv4(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    let (input, ipv4_) =
-        recognize(tuple((u8, char('.'), u8, char('.'), u8, char('.'), u8)))(input)?;
-    Ok((input, ipv4_))
-}
-
 fn is_ireg_name_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c)
 }
 
-fn h16(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    take_while_m_n(1, 4, is_hex_digit)(input)
-}
 
-fn ls32(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    let result = recognize(tuple((h16, char(':'), h16)))(input);
-    if result.is_err() {
-        ipv4(input)
-    } else {
-        result
-    }
-}
-
-fn h16_and_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((h16, char(':'))))(input)
-}
-
-fn double_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    tag("::")(input)
-}
-
-fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    alt((
-        recognize(tuple((count(h16_and_period, 6), ls32))),
-        recognize(tuple((double_period, many_m_n(5, 5, h16_and_period), ls32))),
-        recognize(tuple((
-            opt(h16),
-            double_period,
-            count(h16_and_period, 4),
-            ls32,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 1, h16_and_period),))),
-            double_period,
-            count(h16_and_period, 3),
-            ls32,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 2, h16_and_period), h16))),
-            double_period,
-            count(h16_and_period, 2),
-            ls32,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 3, h16_and_period), h16))),
-            double_period,
-            ls32,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 4, h16_and_period), h16))),
-            double_period,
-            ls32,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 5, h16_and_period), h16))),
-            double_period,
-            h16,
-        ))),
-        recognize(tuple((
-            opt(tuple((many_m_n(0, 6, h16_and_period), h16))),
-            double_period,
-        ))),
-    ))(input)
-}
-
-fn is_ipvfuture_last(c: char) -> bool {
-    is_unreserved(c) || is_sub_delim(c) || c == ':'
-}
-
-fn ipvfuture(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((
-        char('v'),
-        take_while_m_n(1, 1, is_hex_digit),
-        char('.'),
-        take_while_m_n(1, 1, is_ipvfuture_last),
-    )))(input)
-}
 
 fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((char('['), alt((ipv6, ipvfuture)), char(']'))))(input)
@@ -300,6 +112,13 @@ fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 ///
 /// Parse host. Returns the rest, the host string and a boolean indicating
 /// if it is IPvFuture or IPv6.
+///
+/// A host is either an IP-Literal(IPv6 or vFuture) or an
+/// IPv4 or an Ireg name(e.g. far.chickenkiller.com :)
+///
+/// # Return value
+///  - `(host, true)` if host is IP-Literal
+///  - `(host, false)` if it's ipv4 or ireg-name
 fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
     match ip_literal(input) {
         Ok((input, host)) => {
@@ -321,6 +140,13 @@ fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     ))))(input)
 }
 
+
+/// Parse the iauthority block
+/// # Description
+///  An iauthority is...
+///  [iuserinfo] <host> [:port]
+/// # Return value
+///  unconsumed string AND `(iauthority, host, is_ipliteral)` where `ipliteral` is a boolean
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */
 {
     let i = <&str>::clone(&input);
@@ -337,6 +163,7 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     }
 }
 
+/// Consume an iuserinfo
 fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     alt((
         recognize(many0(take_while_pct_encoded)),
@@ -377,6 +204,8 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
     is_iprivate(c) || is_ipchar_not_pct_encoded(c) || matches!(c, '/' | '?')
 }
 
+
+/// Consume an iquery block
 fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
         take_while1(is_iquery_not_pct_encoded),
@@ -392,6 +221,19 @@ fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     ))))(input)
 }
 
+
+/// Consume scheme characters from input
+///
+/// # Description
+/// This function as it can be seen, consumes exactly an alpha and as many 
+/// scheme characters as there are. then it gets a slice of input(as cloned to i)
+///
+/// # Arguments
+///
+///  - `input` the input string
+///
+/// # Return value
+///  (unconsumed input AND the scheme string in order) OR Error
 fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     let i = <&str>::clone(&input);
     let (input, _first) = take_while_m_n(1, 1, is_alpha)(input)?;
@@ -405,10 +247,14 @@ fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     }
 }
 
+
+/// Take as many pct encoded blocks as there are. a block is %XX where X is a hex digit
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many1(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
 }
 
+
+/// encode a host to punycode encoded string
 fn punycode_encode(host: &str) -> String {
     host.split('.')
         .map(|sub| {
@@ -426,6 +272,8 @@ fn punycode_encode(host: &str) -> String {
         .join(".")
 }
 
+
+/// Returns true if host string contains non ASCII characters
 fn is_puny(host: &str) -> bool {
     for ch in host.chars() {
         if !(ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-')) {
@@ -435,6 +283,7 @@ fn is_puny(host: &str) -> bool {
     false
 }
 
+/// Return a PunycodeWarning struct if host need punycode encoding else None
 fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
     if is_puny(host) {
         let ascii_hostname = punycode_encode(host);
@@ -452,9 +301,14 @@ fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
 #[allow(clippy::integer_arithmetic)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
+    // a link is <scheme> :// <iauthority> [ipath] [iquery] [ifragment]
     let (input, scheme) = scheme(input)?;
+    // ^ parse scheme
     let (input, _period_double_slash) = tag("://")(input)?;
+    // ^ hey do I need to explain this, too?
     let (input, (authority, mut host, is_ipv6_or_future)) = iauthority(input)?;
+    // host is actually part of authority but we need it separately
+    // see iauthority function description for more information
     let (input, path) = opt(alt((
         recognize(tuple((
             char('/'),
@@ -468,13 +322,17 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
             many0(tuple((char('/'), opt(take_while_ipchar1)))),
         ))), // ipath-rootless
     )))(input)?;
+    // ^ parse one of ipath-absolute or ipath-rootless or none
+    // which in the third case it's down to ipath-empty(see below)
     let path = path.unwrap_or(""); // it's ipath-empty
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
     let (_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
-    let query = query.unwrap_or("");
-    let fragment = fragment.unwrap_or("");
+    let query = query.unwrap_or(""); // in the case of no iquery
+    let fragment = fragment.unwrap_or(""); // in the case of no ifragment
     let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
+    // compute length of authority + host + path
     let mut len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
+    // compute length of link which is ihier_len + scheme + query + fragment
     if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',']) {
             len -= 1;
