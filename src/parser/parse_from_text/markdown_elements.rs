@@ -1,13 +1,3 @@
-use crate::parser::parse_from_text::text_elements::email_address;
-
-use super::base_parsers::{
-    direct_delimited, is_white_space, is_white_space_but_not_linebreak, CustomError,
-};
-use super::text_elements::parse_text_element;
-use super::Element;
-use super::{base_parsers::*, parse_all};
-use crate::parser::link_url::{LinkDestination, parse_link};
-///! nom parsers for markdown elements
 use nom::{
     bytes::complete::{is_not, tag, take, take_while},
     character::complete::alphanumeric1,
@@ -15,6 +5,23 @@ use nom::{
     sequence::delimited,
     IResult,
 };
+
+use crate::parser::{
+    link_url::LinkDestination,
+    parse_from_text::{
+        text_elements::{
+            email_address,
+            parse_text_element,
+        },
+        base_parsers::direct_delimited,
+        Element,
+    }
+    utils::{
+        is_white_space,
+        is_white_space_but_not_linebreak,
+    },
+};
+use super::{base_parsers::*, parse_all};
 
 fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     delimited(tag("`"), is_not("`"), tag("`"))(input)
@@ -97,7 +104,7 @@ pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<
     if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    let (rest, destination) = parse_link(input)?;
+    let (rest, destination) = LinkDestination::parse(input)?;
     if !rest.is_empty() {
         return Err(nom::Err::Error(CustomError::UnexpectedContent));
     }

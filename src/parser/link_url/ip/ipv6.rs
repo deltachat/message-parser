@@ -1,13 +1,16 @@
 use nom::{
     branch::alt,
-    Slice,
-    bytes::complete::{tag, take_while, take_while1, take_while_m_n},
-    character::complete::{char, u8},
+    bytes::complete::{tag, take_while_m_n},
+    character::complete::char,
     combinator::{opt, recognize},
-    error::{ErrorKind, ParseError},
-    multi::{count, many0, many1, many_m_n},
+    multi::{count, many_m_n},
     sequence::tuple,
     IResult,
+};
+
+use crate::parser::{
+    parse_from_text::base_parsers::CustomError,
+    utils::is_hex_digit,
 };
 
 use super::ipv4::ipv4;
@@ -38,7 +41,7 @@ fn double_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     tag("::")(input)
 }
 
-fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+pub fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     // an IPv6 is one of these:
     alt((
         // <6 h16_and_period> <ls32>

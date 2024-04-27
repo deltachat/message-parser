@@ -1,22 +1,22 @@
 ///! nom parsers for text elements
-use crate::parser::link_url::parse_link;
-
-use super::base_parsers::CustomError;
-use super::hashtag_content_char_ranges::hashtag_content_char;
-use super::Element;
-use crate::nom::{Offset, Slice};
-use nom::bytes::complete::take_while;
-use nom::character::complete::char;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while1},
+        complete::{tag, take, take_while1, take_while},
         streaming::take_till1,
     },
+    character::complete::char,
     character,
     combinator::{peek, recognize, verify},
     sequence::tuple,
-    AsChar, IResult,
+    AsChar, IResult, Offset, Slice
 };
+
+
+use crate::parser::link_url::LinkDestination;
+use super::base_parsers::CustomError;
+use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::Element;
+
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -278,7 +278,7 @@ pub(crate) fn parse_text_element(
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
-    } else if let Ok((i, destination)) = parse_link(input) {
+    } else if let Ok((i, destination)) = LinkDestination::parse(input) {
         Ok((i, Element::Link { destination }))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))

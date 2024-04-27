@@ -1,4 +1,4 @@
-use crate::parser::parse_from_text::find_range::is_in_one_of_ranges;
+use crate::parser::utils::is_in_one_of_ranges;
 use std::ops::RangeInclusive;
 
 const NUMBER_OF_RANGES: usize = 850;
@@ -882,7 +882,7 @@ pub(crate) fn hashtag_content_char(c: char) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::parser::parse_from_text::find_range::is_in_one_of_ranges;
+    use crate::parser::utils::is_in_one_of_ranges;
     use crate::parser::parse_from_text::hashtag_content_char_ranges::hashtag_content_char;
     use std::ops::RangeInclusive;
 

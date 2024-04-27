@@ -8,6 +8,8 @@ use nom::{
     IResult,
 };
 
+use crate::parser::utils::is_white_space;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum CustomError<I> {
     NoContent,
@@ -55,18 +57,6 @@ impl<I, T, E: Debug> IntoCustomError<I, T> for Result<T, E> {
             )))),
         }
     }
-}
-
-pub(crate) fn is_white_space(c: char) -> bool {
-    matches!(c, '\n' | '\r' | '\t' | ' ')
-}
-
-pub(crate) fn is_not_white_space(c: char) -> bool {
-    !is_white_space(c)
-}
-
-pub(crate) fn is_white_space_but_not_linebreak(c: char) -> bool {
-    matches!(c, '\t' | ' ')
 }
 
 /// delimited no whitespace start or end

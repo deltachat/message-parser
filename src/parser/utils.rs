@@ -50,16 +50,40 @@ pub fn is_in_one_of_ranges(c: u32, ranges: &[RangeInclusive<u32>]) -> bool {
     }
 }
 
-
-// TODO: Convert these to macros
-pub fn is_alpha(c: char) -> bool {
+// TODO: Convert these(is_alpha, is_hex_digit, is_digit) to macros OR inline
+pub(crate) fn is_alpha(c: char) -> bool {
     c.is_alphabetic()
 }
 
-pub fn is_hex_digit(c: char) -> bool {
+pub(crate) fn is_hex_digit(c: char) -> bool {
     c.is_ascii_hexdigit()
 }
 
-pub fn is_digit(c: char) -> bool {
+pub(crate) fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
+
+pub(crate) fn is_sub_delim(c: char) -> bool {
+    matches!(
+        c,
+        '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '='
+    )
+}
+
+pub(crate) fn is_unreserved(c: char) -> bool {
+    is_alpha(c) || is_digit(c) || matches!(c, '_' | '.' | '-' | '~')
+}
+
+pub(crate) fn is_white_space(c: char) -> bool {
+    matches!(c, '\n' | '\r' | '\t' | ' ')
+}
+
+pub(crate) fn is_not_white_space(c: char) -> bool {
+    !is_white_space(c)
+}
+
+pub(crate) fn is_white_space_but_not_linebreak(c: char) -> bool {
+    matches!(c, '\t' | ' ')
+}
+
+

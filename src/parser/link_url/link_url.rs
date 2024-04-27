@@ -4,23 +4,22 @@ use nom::{
     branch::alt,
     Slice,
     bytes::complete::{tag, take_while, take_while1, take_while_m_n},
-    character::complete::{char, u8},
+    character::complete::char,
     combinator::{opt, recognize},
-    error::{ErrorKind, ParseError},
-    multi::{count, many0, many1, many_m_n},
+    multi::{many0, many1},
     sequence::tuple,
     IResult,
 };
 
 use crate::parser::{
-    parse_from_text::{
-        base_parsers::{is_not_white_space, CustomError},
-        find_range::is_in_one_of_ranges,
+    parse_from_text::base_parsers::CustomError,
+    link_url::{
+        PunycodeWarning,
+        LinkDestination,
+        ip::{ipv4, ipliteral},
     },
-    utils::{is_alpha, is_hex_digit, is_digit, find_range},
+    utils::{is_not_white_space, is_alpha, is_hex_digit, is_digit, is_in_one_of_ranges, is_sub_delim, is_unreserved},
 };
-
-use super::{ipv4::ipv4, ipv6::ipv6};
 
 /// determines which generic schemes (without '://') get linkifyed
 fn is_allowed_generic_scheme(scheme: &str) -> bool {
@@ -67,24 +66,10 @@ fn is_ucschar(c: char) -> bool {
     is_in_one_of_ranges(c as u32, &UCSCHAR_RANGES[..])
 }
 
-fn is_unreserved(c: char) -> bool {
-    is_alpha(c) || is_digit(c) || is_other_unreserved(c)
-}
-
 fn is_iunreserved(c: char) -> bool {
     is_unreserved(c) || is_ucschar(c)
 }
 
-fn is_other_unreserved(c: char) -> bool {
-    matches!(c, '_' | '.' | '-' | '~')
-}
-
-fn is_sub_delim(c: char) -> bool {
-    matches!(
-        c,
-        '!' | '$' | '&' | '\'' | '(' | ')' | '*' | '+' | ',' | ';' | '='
-    )
-}
 
 // Here again, order is important. As URLs/IRIs have letters in them
 // most of the time and less digits or other characters. --Farooq
@@ -98,12 +83,6 @@ fn is_other_scheme(c: char) -> bool {
 
 fn is_ireg_name_not_pct_encoded(c: char) -> bool {
     is_iunreserved(c) || is_sub_delim(c)
-}
-
-
-
-fn ip_literal(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((char('['), alt((ipv6, ipvfuture)), char(']'))))(input)
 }
 
 /// Parse host
@@ -284,7 +263,7 @@ fn is_puny(host: &str) -> bool {
 }
 
 /// Return a PunycodeWarning struct if host need punycode encoding else None
-fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
+pub fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
     if is_puny(host) {
         let ascii_hostname = punycode_encode(host);
         Some(PunycodeWarning {
@@ -460,27 +439,18 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
     Err(nom::Err::Failure(CustomError::NoContent))
 }
 
-pub fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-    /*
-    match parse_iri(input) {
-        Ok((input, iri)) => Ok((input, iri)),
-        Err(..) => parse_irelative_ref(input),
-    }*/
+pub(super) fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     alt((parse_generic, parse_iri))(input)
 }
-// TODO testcases
-
-// ipv6 https://[::1]/
-
-// invalid ascii domain (without non ascii char: https://-test-/hi )
 
 #[cfg(test)]
 mod test {
     #![allow(clippy::unwrap_used)]
-    use crate::parser::link_url::{parse_link, punycode_encode, PunycodeWarning, LinkDestination};
+    use crate::parser::{LinkDestination, link_url::link_url::{punycode_encode, PunycodeWarning}};
 
     #[test]
     fn basic_parsing() {
+        let x: LinkDestination;
         let test_cases_no_puny = vec![
             "http://delta.chat",
             "http://delta.chat:8080",
@@ -509,7 +479,7 @@ mod test {
         ];
 
         for input in &test_cases_no_puny {
-            let (rest, link_destination) = parse_link(input).expect(&format!("Test failed: {input}"));
+            let (rest, link_destination) = LinkDestination::parse(input).expect(&format!("Test failed: {input}"));
 
             assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
@@ -517,7 +487,7 @@ mod test {
         }
 
         for input in &test_cases_with_puny {
-            let (rest, link_destination) = parse_link(input).expect("Test failed: {input}");
+            let (rest, link_destination) = LinkDestination::parse(input).expect("Test failed: {input}");
 
             assert!(link_destination.punycode.is_some());
             assert_eq!(rest.len(), 0);
@@ -531,7 +501,7 @@ mod test {
 
         for input in &test_cases {
             println!("testing {input}");
-            assert!(parse_link(input).is_err());
+            assert!(LinkDestination::parse(input).is_err());
         }
     }
     #[test]
@@ -542,7 +512,7 @@ mod test {
     #[test]
     fn punycode_detection() {
         assert_eq!(
-            parse_link("http://münchen.de").unwrap().1,
+            LinkDestination::parse("http://münchen.de").unwrap().1,
             LinkDestination {
                 hostname: Some("münchen.de"),
                 target: "http://münchen.de",
@@ -556,7 +526,7 @@ mod test {
         );
 
         assert_eq!(
-            parse_link("http://muenchen.de").unwrap().1,
+            LinkDestination::parse("http://muenchen.de").unwrap().1,
             LinkDestination {
                 hostname: Some("muenchen.de"),
                 target: "http://muenchen.de",
@@ -569,7 +539,7 @@ mod test {
     #[test]
     fn common_schemes() {
         assert_eq!(
-            parse_link("http://delta.chat").unwrap(),
+            LinkDestination::parse("http://delta.chat").unwrap(),
             (
                 "",
                 LinkDestination {
@@ -581,7 +551,7 @@ mod test {
             )
         );
         assert_eq!(
-            parse_link("https://far.chickenkiller.com").unwrap(),
+            LinkDestination::parse("https://far.chickenkiller.com").unwrap(),
             (
                 "",
                 LinkDestination {
@@ -596,7 +566,7 @@ mod test {
     #[test]
     fn generic_schemes() {
         assert_eq!(
-            parse_link("mailto:someone@example.com").unwrap(),
+            LinkDestination::parse("mailto:someone@example.com").unwrap(),
             (
                 "",
                 LinkDestination {
@@ -609,7 +579,7 @@ mod test {
             )
         );
         assert_eq!(
-            parse_link("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
+            LinkDestination::parse("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
                 .unwrap()
                 .1,
                 LinkDestination {
@@ -620,7 +590,7 @@ mod test {
                 }
             );
         assert_eq!(
-            parse_link("geo:37.786971,-122.399677").unwrap().1,
+            LinkDestination::parse("geo:37.786971,-122.399677").unwrap().1,
             LinkDestination {
                 scheme: "geo",
                 punycode: None,

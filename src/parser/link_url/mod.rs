@@ -1,8 +1,16 @@
 mod link_url;
-mod ipv6;
-mod ipv4;
+mod ip;
 
-use super::link_url::parse_link;
+use nom::{
+    Slice,
+    IResult,
+    error::{ParseError, ErrorKind},
+};
+
+use crate::parser::{
+    parse_from_text::base_parsers::CustomError,
+    link_url::link_url::parse_link,
+};
 
 
 ///! Parsing / Validation of URLs
@@ -30,7 +38,7 @@ pub struct LinkDestination<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct PunycodeWarning {
+pub(crate) struct PunycodeWarning {
     pub original_hostname: String,
     pub ascii_hostname: String,
     pub punycode_encoded_url: String,
@@ -62,7 +70,7 @@ impl LinkDestination<'_> {
         }
     }
 */
-    pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    pub(crate) fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((
                 rest,
@@ -73,7 +81,7 @@ impl LinkDestination<'_> {
         }
     }
     
-    pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    pub(crate) fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         let (mut remaining, mut link) = Self::parse(input)?;
         if let Some(first) = remaining.chars().next() {
             if matches!(first, ';' | '.' | ',' | ':') {
