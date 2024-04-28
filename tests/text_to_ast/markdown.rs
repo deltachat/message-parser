@@ -574,13 +574,13 @@ fn link() {
         assert_eq!(
             result[0],
             Link {
-                destination: *expected_destination.clone()
+                destination: expected_destination.clone()
             }
         );
     }
 
     for (input, expected_destination) in &test_cases_with_puny {
-        println!("testing <{}>", input);
+        println!("testing {}", input);
         match &parse_markdown_text(input)[0] {
             Link { destination } => {
                 assert_eq!(

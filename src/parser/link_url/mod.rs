@@ -25,7 +25,7 @@ use crate::parser::{
 // - Every other url (like mailto)
 // [1] RFC1738(Section 3.1), RFC3987, RFC3988 --Farooq
 
-#[derive(Debug, PartialEq, Eq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Clone)]
 pub struct LinkDestination<'a> {
     pub target: &'a str,
     /// hostname if it was found
@@ -37,12 +37,13 @@ pub struct LinkDestination<'a> {
     pub scheme: &'a str,
 }
 
-#[derive(Debug, PartialEq, Eq, Serialize)]
+#[derive(Debug, PartialEq, Eq, Serialize, Clone)]
 pub struct PunycodeWarning {
     pub original_hostname: String,
     pub ascii_hostname: String,
     pub punycode_encoded_url: String,
 }
+
 
 impl LinkDestination<'_> {
     /// parse a link that is not in a delimited link or a labled link, just a part of normal text

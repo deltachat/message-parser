@@ -248,7 +248,7 @@ fn link() {
         assert_eq!(
             parse_desktop_set(input),
             vec![Link {
-                destination: *destination
+                destination: destination.clone()
             }]
         );
     }
