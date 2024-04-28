@@ -1,6 +1,6 @@
 // mod email;
-pub mod parse_from_text;
 pub mod link_url;
+pub mod parse_from_text;
 mod utils;
 
 pub use crate::parser::link_url::{LinkDestination, PunycodeWarning};

@@ -207,7 +207,10 @@ fn link() {
         ),
         (
             "https://delta.chat/en/help?hi=5&e=4#section2.0",
-            https_link_no_puny("https://delta.chat/en/help?hi=5&e=4#section2.0", "delta.chat"),
+            https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat",
+            ),
         ),
         (
             "https://delta#section2.0",
@@ -235,13 +238,10 @@ fn link() {
         ),
     ];
 
-    let test_cases_with_puny = [
-        (
-            "https://ü.app#help",
-            https_link_no_puny("https://ü.app#help", "ü.app")
-        )
-    ];
-
+    let test_cases_with_puny = [(
+        "https://ü.app#help",
+        https_link_no_puny("https://ü.app#help", "ü.app"),
+    )];
 
     for (input, destination) in &test_cases_no_puny {
         println!("testing {input}");
@@ -257,22 +257,10 @@ fn link() {
         println!("testing {input}");
         match &parse_desktop_set(input)[0] {
             Link { destination } => {
-                assert_eq!(
-                    expected_destination.target,
-                    destination.target
-                );
-                assert_eq!(
-                    expected_destination.scheme,
-                    destination.scheme
-                );
-                assert_eq!(
-                    expected_destination.hostname,
-                    destination.hostname,
-                );
-                assert_eq!(
-                    destination.punycode.is_some(),
-                    true
-                );
+                assert_eq!(expected_destination.target, destination.target);
+                assert_eq!(expected_destination.scheme, destination.scheme);
+                assert_eq!(expected_destination.hostname, destination.hostname,);
+                assert_eq!(destination.punycode.is_some(), true);
             }
             _ => {
                 panic!();

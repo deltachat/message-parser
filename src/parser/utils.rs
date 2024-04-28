@@ -85,5 +85,3 @@ pub(crate) fn is_not_white_space(c: char) -> bool {
 pub(crate) fn is_white_space_but_not_linebreak(c: char) -> bool {
     matches!(c, '\t' | ' ')
 }
-
-

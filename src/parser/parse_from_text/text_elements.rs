@@ -1,22 +1,20 @@
 ///! nom parsers for text elements
 use nom::{
     bytes::{
-        complete::{tag, take, take_while1, take_while},
+        complete::{tag, take, take_while, take_while1},
         streaming::take_till1,
     },
-    character::complete::char,
     character,
+    character::complete::char,
     combinator::{peek, recognize, verify},
     sequence::tuple,
-    AsChar, IResult, Offset, Slice
+    AsChar, IResult, Offset, Slice,
 };
 
-
-use crate::parser::link_url::LinkDestination;
 use super::base_parsers::CustomError;
 use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
-
+use crate::parser::link_url::LinkDestination;
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)

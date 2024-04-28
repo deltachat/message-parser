@@ -8,10 +8,7 @@ use nom::{
     IResult,
 };
 
-use crate::parser::{
-    parse_from_text::base_parsers::CustomError,
-    utils::is_hex_digit,
-};
+use crate::parser::{parse_from_text::base_parsers::CustomError, utils::is_hex_digit};
 
 use super::ipv4::ipv4;
 
@@ -35,7 +32,6 @@ fn ls32(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 fn h16_and_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((h16, char(':'))))(input)
 }
-
 
 fn double_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     tag("::")(input)
@@ -62,7 +58,7 @@ pub fn ipv6(input: &str) -> IResult<&str, &str, CustomError<&str>> {
             count(h16_and_period, 3),
             ls32,
         ))),
-        // [<0 to 2 h16_and_period> <h16>] :: <2*h16_and_period> <ls32> 
+        // [<0 to 2 h16_and_period> <h16>] :: <2*h16_and_period> <ls32>
         recognize(tuple((
             opt(tuple((many_m_n(0, 2, h16_and_period), h16))),
             double_period,

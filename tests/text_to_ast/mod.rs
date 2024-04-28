@@ -6,7 +6,7 @@ fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<
         target,
         hostname: Some(hostname),
         scheme: "http",
-        punycode: None
+        punycode: None,
     }
 }
 
@@ -15,7 +15,7 @@ fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'
         target,
         hostname: Some(hostname),
         scheme: "ftp",
-        punycode: None
+        punycode: None,
     }
 }
 
@@ -24,7 +24,7 @@ fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination
         target,
         hostname: Some(hostname),
         scheme: "https",
-        punycode: None
+        punycode: None,
     }
 }
 

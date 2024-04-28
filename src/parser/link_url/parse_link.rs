@@ -2,26 +2,24 @@ use std::ops::RangeInclusive;
 
 use nom::{
     branch::alt,
-    Slice,
     bytes::complete::{tag, take_while, take_while1, take_while_m_n},
     character::complete::char,
     combinator::{opt, recognize},
     multi::{many0, many1},
     sequence::tuple,
-    IResult,
+    IResult, Slice,
 };
 
 use crate::parser::{
-    parse_from_text::base_parsers::CustomError,
     link_url::{
-        PunycodeWarning,
-        LinkDestination,
-        ip::{
-            ipv4::ipv4,
-            ip_literal::ip_literal,
-        },
+        ip::{ip_literal::ip_literal, ipv4::ipv4},
+        LinkDestination, PunycodeWarning,
     },
-    utils::{is_not_white_space, is_alpha, is_hex_digit, is_digit, is_in_one_of_ranges, is_sub_delim, is_unreserved},
+    parse_from_text::base_parsers::CustomError,
+    utils::{
+        is_alpha, is_digit, is_hex_digit, is_in_one_of_ranges, is_not_white_space, is_sub_delim,
+        is_unreserved,
+    },
 };
 
 /// determines which generic schemes (without '://') get linkifyed
@@ -42,7 +40,6 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
             | "magnet"
     )
 }
-
 
 // These ranges have been extracted from RFC3987, Page 8.
 const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
@@ -72,7 +69,6 @@ fn is_ucschar(c: char) -> bool {
 fn is_iunreserved(c: char) -> bool {
     is_unreserved(c) || is_ucschar(c)
 }
-
 
 // Here again, order is important. As URLs/IRIs have letters in them
 // most of the time and less digits or other characters. --Farooq
@@ -121,7 +117,6 @@ fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
         take_while1(is_ireg_name_not_pct_encoded),
     ))))(input)
 }
-
 
 /// Parse the iauthority block
 /// # Description
@@ -186,7 +181,6 @@ fn is_iquery_not_pct_encoded(c: char) -> bool {
     is_iprivate(c) || is_ipchar_not_pct_encoded(c) || matches!(c, '/' | '?')
 }
 
-
 /// Consume an iquery block
 fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((
@@ -196,18 +190,13 @@ fn iquery(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(many0(alt((
-        take_while_ipchar1,
-        tag("/"),
-        tag("?"),
-    ))))(input)
+    recognize(many0(alt((take_while_ipchar1, tag("/"), tag("?")))))(input)
 }
-
 
 /// Consume scheme characters from input
 ///
 /// # Description
-/// This function as it can be seen, consumes exactly an alpha and as many 
+/// This function as it can be seen, consumes exactly an alpha and as many
 /// scheme characters as there are. then it gets a slice of input(as cloned to i)
 ///
 /// # Arguments
@@ -229,12 +218,13 @@ fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     }
 }
 
-
 /// Take as many pct encoded blocks as there are. a block is %XX where X is a hex digit
 fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(many1(tuple((char('%'), take_while_m_n(2, 2, is_hex_digit)))))(input)
+    recognize(many1(tuple((
+        char('%'),
+        take_while_m_n(2, 2, is_hex_digit),
+    ))))(input)
 }
-
 
 /// encode a host to punycode encoded string
 fn punycode_encode(host: &str) -> String {
@@ -253,7 +243,6 @@ fn punycode_encode(host: &str) -> String {
         .collect::<Vec<String>>()
         .join(".")
 }
-
 
 /// Returns true if host string contains non ASCII characters
 fn is_puny(host: &str) -> bool {
@@ -311,15 +300,22 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let (_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
     let query = query.unwrap_or(""); // in the case of no iquery
     let fragment = fragment.unwrap_or(""); // in the case of no ifragment
-    let ihier_len = 3usize.saturating_add(authority.len()).saturating_add(host.len()).saturating_add(path.len());
+    let ihier_len = 3usize
+        .saturating_add(authority.len())
+        .saturating_add(host.len())
+        .saturating_add(path.len());
     // compute length of authority + host + path
-    let mut len = scheme.len().saturating_add(ihier_len).saturating_add(query.len()).saturating_add(fragment.len());
+    let mut len = scheme
+        .len()
+        .saturating_add(ihier_len)
+        .saturating_add(query.len())
+        .saturating_add(fragment.len());
     // compute length of link which is ihier_len + scheme + query + fragment
     if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',']) {
             len -= 1;
             if path.is_empty() && query.is_empty() && fragment.is_empty() {
-                host = input_.slice(scheme.len()+3..input_.len()-1);
+                host = input_.slice(scheme.len() + 3..input_.len() - 1);
             }
         }
 
@@ -394,7 +390,6 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
             }
         }
 
-
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
 
@@ -432,12 +427,15 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
     let (input, rest) = take_while(is_not_white_space)(input)?;
     let len = scheme.len().saturating_add(rest.len());
     if let Some(target) = i.get(0..len) {
-        return Ok((input, LinkDestination {
-            scheme,
-            target,
-            hostname: None,
-            punycode: None,
-        }));
+        return Ok((
+            input,
+            LinkDestination {
+                scheme,
+                target,
+                hostname: None,
+                punycode: None,
+            },
+        ));
     }
     Err(nom::Err::Failure(CustomError::NoContent))
 }
@@ -449,7 +447,10 @@ pub(super) fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomEr
 #[cfg(test)]
 mod test {
     #![allow(clippy::unwrap_used)]
-    use crate::parser::{LinkDestination, link_url::parse_link::{punycode_encode, PunycodeWarning}};
+    use crate::parser::{
+        link_url::parse_link::{punycode_encode, PunycodeWarning},
+        LinkDestination,
+    };
 
     #[test]
     fn basic_parsing() {
@@ -475,13 +476,11 @@ mod test {
             "ftp://test-test",
         ];
 
-        let test_cases_with_puny = vec![
-            "https://ü.app#help",
-            "http://münchen.de",
-        ];
+        let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];
 
         for input in &test_cases_no_puny {
-            let (rest, link_destination) = LinkDestination::parse(input).expect(&format!("Test failed: {input}"));
+            let (rest, link_destination) =
+                LinkDestination::parse(input).expect(&format!("Test failed: {input}"));
 
             assert_eq!(input, &link_destination.target);
             assert_eq!(rest.len(), 0);
@@ -489,7 +488,8 @@ mod test {
         }
 
         for input in &test_cases_with_puny {
-            let (rest, link_destination) = LinkDestination::parse(input).expect("Test failed: {input}");
+            let (rest, link_destination) =
+                LinkDestination::parse(input).expect("Test failed: {input}");
 
             assert!(link_destination.punycode.is_some());
             assert_eq!(rest.len(), 0);
@@ -577,22 +577,23 @@ mod test {
                     punycode: None,
                     target: "mailto:someone@example.com"
                 }
-                        
             )
         );
         assert_eq!(
             LinkDestination::parse("bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka")
                 .unwrap()
                 .1,
-                LinkDestination {
-                    hostname: None,
-                    scheme: "bitcoin",
-                    target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
-                    punycode: None,
-                }
-            );
+            LinkDestination {
+                hostname: None,
+                scheme: "bitcoin",
+                target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
+                punycode: None,
+            }
+        );
         assert_eq!(
-            LinkDestination::parse("geo:37.786971,-122.399677").unwrap().1,
+            LinkDestination::parse("geo:37.786971,-122.399677")
+                .unwrap()
+                .1,
             LinkDestination {
                 scheme: "geo",
                 punycode: None,

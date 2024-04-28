@@ -1,5 +1,5 @@
 use nom::{
-    character::complete::{u8, char},
+    character::complete::{char, u8},
     combinator::recognize,
     sequence::tuple,
     IResult,

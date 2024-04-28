@@ -1,17 +1,12 @@
-mod parse_link;
 mod ip;
+mod parse_link;
 
 use nom::{
-    Slice,
-    IResult,
-    error::{ParseError, ErrorKind},
+    error::{ErrorKind, ParseError},
+    IResult, Slice,
 };
 
-use crate::parser::{
-    parse_from_text::base_parsers::CustomError,
-    link_url::parse_link::parse_link,
-};
-
+use crate::parser::{link_url::parse_link::parse_link, parse_from_text::base_parsers::CustomError};
 
 ///! Parsing / Validation of URLs
 ///
@@ -44,44 +39,40 @@ pub struct PunycodeWarning {
     pub punycode_encoded_url: String,
 }
 
-
 impl LinkDestination<'_> {
     /// parse a link that is not in a delimited link or a labled link, just a part of normal text
     /// it has a whitelist of schemes, because otherwise
     /*
-    pub(crate) fn parse_standalone_with_whitelist(
-        input: &str,
-    ) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        if let Ok((rest, link_destination)) = parse_link(input) {
-            if link_destination.hostname.is_none() {
-                // if it's a generic url like geo:-15.5,41.1
-                if !is_allowed_generic_scheme(link_destination.scheme) {
-                    Err(nom::Err::Error(CustomError::InvalidLink))
+        pub(crate) fn parse_standalone_with_whitelist(
+            input: &str,
+        ) -> IResult<&str, LinkDestination, CustomError<&str>> {
+            if let Ok((rest, link_destination)) = parse_link(input) {
+                if link_destination.hostname.is_none() {
+                    // if it's a generic url like geo:-15.5,41.1
+                    if !is_allowed_generic_scheme(link_destination.scheme) {
+                        Err(nom::Err::Error(CustomError::InvalidLink))
+                    } else {
+                        Ok((rest, link_destination))
+                    }
                 } else {
-                    Ok((rest, link_destination))
+                    Ok((
+                        rest,
+                        link_destination
+                    ))
                 }
             } else {
-                Ok((
-                    rest,
-                    link_destination
-                ))
+                Err(nom::Err::Error(CustomError::InvalidLink))
             }
-        } else {
-            Err(nom::Err::Error(CustomError::InvalidLink))
         }
-    }
-*/
+    */
     pub(crate) fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, link_destination)) = parse_link(input) {
-            Ok((
-                rest,
-                link_destination 
-            ))
+            Ok((rest, link_destination))
         } else {
             Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
-    
+
     pub(crate) fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         let (mut remaining, mut link) = Self::parse(input)?;
         if let Some(first) = remaining.chars().next() {
@@ -94,7 +85,6 @@ impl LinkDestination<'_> {
         Ok((remaining, link))
     }
 }
-
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum LinkParseError<I> {

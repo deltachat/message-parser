@@ -6,22 +6,16 @@ use nom::{
     IResult,
 };
 
+use super::{base_parsers::*, parse_all};
 use crate::parser::{
     link_url::LinkDestination,
     parse_from_text::{
-        text_elements::{
-            email_address,
-            parse_text_element,
-        },
         base_parsers::direct_delimited,
+        text_elements::{email_address, parse_text_element},
         Element,
     },
-    utils::{
-        is_white_space,
-        is_white_space_but_not_linebreak,
-    },
+    utils::{is_white_space, is_white_space_but_not_linebreak},
 };
-use super::{base_parsers::*, parse_all};
 
 fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     delimited(tag("`"), is_not("`"), tag("`"))(input)
