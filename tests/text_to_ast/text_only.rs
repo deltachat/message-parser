@@ -1,5 +1,5 @@
 use super::*;
-use deltachat_message_parser::parser::{parse_only_text, LinkDestination};
+use deltachat_message_parser::parser::parse_only_text;
 
 #[test]
 fn do_not_parse_markdown_elements() {

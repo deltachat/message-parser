@@ -38,7 +38,7 @@ pub struct LinkDestination<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq, Serialize)]
-pub(crate) struct PunycodeWarning {
+pub struct PunycodeWarning {
     pub original_hostname: String,
     pub ascii_hostname: String,
     pub punycode_encoded_url: String,

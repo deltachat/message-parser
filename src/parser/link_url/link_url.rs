@@ -16,7 +16,10 @@ use crate::parser::{
     link_url::{
         PunycodeWarning,
         LinkDestination,
-        ip::{ipv4, ipliteral},
+        ip::{
+            ipv4::ipv4,
+            ip_literal::ip_literal,
+        },
     },
     utils::{is_not_white_space, is_alpha, is_hex_digit, is_digit, is_in_one_of_ranges, is_sub_delim, is_unreserved},
 };
@@ -450,7 +453,6 @@ mod test {
 
     #[test]
     fn basic_parsing() {
-        let x: LinkDestination;
         let test_cases_no_puny = vec![
             "http://delta.chat",
             "http://delta.chat:8080",

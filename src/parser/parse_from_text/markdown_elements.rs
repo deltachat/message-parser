@@ -15,7 +15,7 @@ use crate::parser::{
         },
         base_parsers::direct_delimited,
         Element,
-    }
+    },
     utils::{
         is_white_space,
         is_white_space_but_not_linebreak,

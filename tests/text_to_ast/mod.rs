@@ -1,7 +1,7 @@
 use deltachat_message_parser::parser::Element::*;
-use deltachat_message_parser::parser::{LinkDestination, PunycodeWarning};
+use deltachat_message_parser::parser::LinkDestination;
 
-fn http_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
+fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -10,16 +10,7 @@ fn http_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
     }
 }
 
-fn https_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
-    LinkDestination {
-        target,
-        hostname: Some(hostname),
-        scheme: "http",
-        punycode: None
-    }
-}
-
-fn http_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
+fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -28,7 +19,16 @@ fn http_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
     }
 }
 
-fn mailto_link_no_puny(target: &str, hostname: &str) -> LinkDestination {
+fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
+    LinkDestination {
+        target,
+        hostname: Some(hostname),
+        scheme: "http",
+        punycode: None
+    }
+}
+
+fn mailto_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),

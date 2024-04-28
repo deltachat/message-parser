@@ -6,10 +6,12 @@ use nom::{
     IResult,
 };
 
-use crate::parser::utils::{
-    is_hex_digit,
-    is_sub_delim,
-    is_unreserved,
+use crate::parser::{
+    utils::{
+        is_hex_digit,
+        is_sub_delim,
+        is_unreserved,
+    },
     parse_from_text::base_parsers::CustomError,
 };
 

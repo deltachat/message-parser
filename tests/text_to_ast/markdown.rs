@@ -1,6 +1,5 @@
 use super::*;
 use deltachat_message_parser::parser::parse_markdown_text;
-use deltachat_message_parser::parser::LinkDestination;
 
 #[test]
 fn bold_capitalized_command_suggestion() {
@@ -565,35 +564,46 @@ fn link() {
     ];
 
 
-    for (input, destination) in &test_cases_no_puny {
-        println!("testing {}", input);
+    for (input, expected_destination) in &test_cases_no_puny {
+        println!("testing {input}");
+        let result = parse_markdown_text(input);
         assert_eq!(
-            parse_markdown_text(input),
-            vec![Link {
-                destination: *destination
-            }]
+            result.len(),
+            1
+        );
+        assert_eq!(
+            result[0],
+            Link {
+                destination: *expected_destination.clone()
+            }
         );
     }
 
-    for (input, destination) in &test_cases_with_puny {
+    for (input, expected_destination) in &test_cases_with_puny {
         println!("testing <{}>", input);
-        let result = parse_markdown_text(input)[0].destination;
-        assert_eq!(
-            result.target,
-            destination.target
-        );
-        assert_eq!(
-            result.scheme,
-            destination.scheme
-        );
-        assert_eq!(
-            result.hostname,
-            destination.hostname,
-        );
-        assert_eq!(
-            result.punycode.is_some(),
-            true
-        );
+        match &parse_markdown_text(input)[0] {
+            Link { destination } => {
+                assert_eq!(
+                    expected_destination.target,
+                    destination.target
+                );
+                assert_eq!(
+                    expected_destination.scheme,
+                    destination.scheme
+                );
+                assert_eq!(
+                    expected_destination.hostname,
+                    destination.hostname,
+                );
+                assert_eq!(
+                    destination.punycode.is_some(),
+                    true
+                );
+            }
+            _ => {
+                panic!();
+            }
+        }
     }
 }
 
@@ -605,10 +615,10 @@ fn test_link_example() {
         ),
         vec![
             Text("This is an my site: "),
-            http_link_no_puny(
+            Link { destination: http_link_no_puny(
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat"
-            ),
+            )},
             Linebreak,
             Text("Visit me there")
         ]
@@ -636,10 +646,10 @@ fn test_delimited_link_example() {
         ),
         vec![
             Text("This is an my site: "),
-            https_link_no_puny(
+            Link { destination: https_link_no_puny(
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat"
-            ),
+            )},
             Linebreak,
             Text("Visit me there")
         ]

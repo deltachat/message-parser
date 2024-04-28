@@ -3,7 +3,7 @@ pub mod parse_from_text;
 pub mod link_url;
 mod utils;
 
-pub use crate::parser::link_url::LinkDestination;
+pub use crate::parser::link_url::{LinkDestination, PunycodeWarning};
 
 /// The representation of Elements for the Abstract Syntax Tree
 #[derive(Debug, PartialEq, Eq, Serialize)]
@@ -66,6 +66,5 @@ pub fn parse_only_text(input: &str) -> std::vec::Vec<Element> {
 
 /// parses text and delimited/labled link elements to replicate current desktop elements
 pub fn parse_desktop_set(input: &str) -> std::vec::Vec<Element> {
-    let x: LinkDestination;
     parse_from_text::parse_desktop_set(input)
 }
