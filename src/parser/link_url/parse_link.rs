@@ -449,7 +449,7 @@ pub(super) fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomEr
 #[cfg(test)]
 mod test {
     #![allow(clippy::unwrap_used)]
-    use crate::parser::{LinkDestination, link_url::link_url::{punycode_encode, PunycodeWarning}};
+    use crate::parser::{LinkDestination, link_url::parse_link::{punycode_encode, PunycodeWarning}};
 
     #[test]
     fn basic_parsing() {

@@ -1,4 +1,4 @@
-mod link_url;
+mod parse_link;
 mod ip;
 
 use nom::{
@@ -9,7 +9,7 @@ use nom::{
 
 use crate::parser::{
     parse_from_text::base_parsers::CustomError,
-    link_url::link_url::parse_link,
+    link_url::parse_link::parse_link,
 };
 
 
