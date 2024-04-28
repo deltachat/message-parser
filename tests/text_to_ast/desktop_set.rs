@@ -191,7 +191,7 @@ fn link() {
         ),
         (
             "https://delta.chat",
-            https_link_no_puny("http://delta.chat", "delta.chat"),
+            https_link_no_puny("https://delta.chat", "delta.chat"),
         ),
         (
             "ftp://delta.chat",
@@ -223,19 +223,19 @@ fn link() {
         ),
         (
             "mailto:delta@example.com",
-            mailto_link_no_puny("mailto:delta@example.com", "example.com"),
+            mailto_link_no_puny("mailto:delta@example.com"),
         ),
         (
             "mailto:delta@example.com?subject=hi&body=hello%20world",
-            mailto_link_no_puny("mailto:delta@example.com?subject=hi&body=hello%20world", "example.com"),
+            mailto_link_no_puny("mailto:delta@example.com?subject=hi&body=hello%20world"),
+        ),
+        (
+            "mailto:foö@ü.chat",
+            mailto_link_no_puny("mailto:foö@ü.chat"),
         ),
     ];
 
     let test_cases_with_puny = [
-        (
-            "mailto:foö@ü.chat",
-            mailto_link_no_puny("mailto:foö@ü.chat", "ü.chat"),
-        ),
         (
             "https://ü.app#help",
             https_link_no_puny("https://ü.app#help", "ü.app")

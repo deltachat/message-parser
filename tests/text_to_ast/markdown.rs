@@ -512,7 +512,7 @@ fn link() {
         ),
         (
             "https://delta.chat",
-            https_link_no_puny("http://delta.chat", "delta.chat"),
+            https_link_no_puny("https://delta.chat", "delta.chat"),
         ),
         (
             "ftp://delta.chat",
@@ -544,19 +544,19 @@ fn link() {
         ),
         (
             "mailto:delta@example.com",
-            mailto_link_no_puny("mailto:delta@example.com", "example.com"),
+            mailto_link_no_puny("mailto:delta@example.com"),
         ),
         (
             "mailto:delta@example.com?subject=hi&body=hello%20world",
-            mailto_link_no_puny("mailto:delta@example.com?subject=hi&body=hello%20world", "example.com"),
+            mailto_link_no_puny("mailto:delta@example.com?subject=hi&body=hello%20world"),
+        ),
+        (
+            "mailto:foö@ü.chat",
+            mailto_link_no_puny("mailto:foö@ü.chat"),
         ),
     ];
 
     let test_cases_with_puny = [
-        (
-            "mailto:foö@ü.chat",
-            mailto_link_no_puny("mailto:foö@ü.chat", "ü.chat"),
-        ),
         (
             "https://ü.app#help",
             https_link_no_puny("https://ü.app#help", "ü.app")
@@ -615,7 +615,7 @@ fn test_link_example() {
         ),
         vec![
             Text("This is an my site: "),
-            Link { destination: http_link_no_puny(
+            Link { destination: https_link_no_puny(
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat"
             )},
@@ -645,11 +645,12 @@ fn test_delimited_link_example() {
             "This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
         ),
         vec![
-            Text("This is an my site: "),
+            Text("This is an my site: <"),
             Link { destination: https_link_no_puny(
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat"
             )},
+            Text(">"),
             Linebreak,
             Text("Visit me there")
         ]
@@ -691,7 +692,7 @@ fn labeled_link_example() {
             LabeledLink {
                 label: vec![Text("here")],
                 destination: https_link_no_puny(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                    "https://delta.chat/en/help",
                     "delta.chat"
                 ),
             },
