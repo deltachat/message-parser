@@ -7,11 +7,8 @@ use nom::{
 };
 
 use crate::parser::{
-    link_url::parse_link::{
-        parse_link,
-        ifragment,
-    },
-    parse_from_text::base_parsers::CustomError
+    link_url::parse_link::{ifragment, parse_link},
+    parse_from_text::base_parsers::CustomError,
 };
 
 ///! Parsing / Validation of URLs
@@ -93,12 +90,15 @@ impl LinkDestination<'_> {
             }
             Err(..) => {
                 let (remaining, target) = ifragment(input)?;
-                Ok((remaining, LinkDestination {
-                    target,
-                    scheme: "",
-                    hostname: None,
-                    punycode: None
-                }))
+                Ok((
+                    remaining,
+                    LinkDestination {
+                        target,
+                        scheme: "",
+                        hostname: None,
+                        punycode: None,
+                    },
+                ))
             }
         }
     }

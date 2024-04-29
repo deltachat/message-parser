@@ -236,6 +236,42 @@ fn link() {
             "mailto:foö@ü.chat",
             mailto_link_no_puny("mailto:foö@ü.chat"),
         ),
+        (
+            "https://delta.chat/%C3%BC%C3%A4%C3%B6",
+            https_link_no_puny(
+                "https://delta.chat/%C3%BC%C3%A4%C3%B6",
+                "delta.chat",
+            )
+        ),
+        (
+            "https://delta.chat/üäö",
+            https_link_no_puny(
+                "https://delta.chat/üäö",
+                "delta.chat",
+            )
+        ),
+        (
+            "https://90eghtesadi.com/Keywords/Index/2031708/%D9%82%D8%B1%D8%A7%D8%B1%D8%AF%D8%A7%D8%AF-%DB%B2%DB%B5-%D8%B3%D8%A7%D9%84%D9%87-%D8%A7%DB%8C%D8%B1%D8%A7%D9%86-%D9%88-%DA%86%DB%8C%D9%86",
+            // ^ I guess shame on the Iranian government of the time? --Farooq
+            https_link_no_puny(
+                "https://90eghtesadi.com/Keywords/Index/2031708/%D9%82%D8%B1%D8%A7%D8%B1%D8%AF%D8%A7%D8%AF-%DB%B2%DB%B5-%D8%B3%D8%A7%D9%84%D9%87-%D8%A7%DB%8C%D8%B1%D8%A7%D9%86-%D9%88-%DA%86%DB%8C%D9%86",
+                "90eghtesadi.com",
+            )
+        ),
+        (
+            "https://pcworms.ir/صفحه",
+            https_link_no_puny(
+                "https://pcworms.ir/صفحه",
+                "pcworms.ir",
+            ),
+        ),
+        (
+            "gopher://republic.circumlunar.space/1/~farooqkz",
+            gopher_link_no_puny(
+                "gopher://republic.circumlunar.space/1/~farooqkz",
+                "republic.circumlunar.space",
+            ),
+        ),
     ];
 
     let test_cases_with_puny = [(
