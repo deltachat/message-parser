@@ -6,12 +6,18 @@ use nom::{
     IResult, Slice,
 };
 
-use crate::parser::{link_url::parse_link::parse_link, parse_from_text::base_parsers::CustomError};
+use crate::parser::{
+    link_url::parse_link::{
+        parse_link,
+        ifragment,
+    },
+    parse_from_text::base_parsers::CustomError
+};
 
 ///! Parsing / Validation of URLs
 ///
-/// - hyperlinks (:// scheme)
-/// - whitelisted scheme (: scheme)
+/// - hyperlinks (:// scheme) according to RFC3987 and RFC3988
+/// - whitelisted scheme (: scheme) according to our own simple thing :)
 ///
 /// for hyperlinks it also checks whether the domain contains punycode
 
@@ -74,15 +80,27 @@ impl LinkDestination<'_> {
     }
 
     pub(crate) fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        let (mut remaining, mut link) = Self::parse(input)?;
-        if let Some(first) = remaining.chars().next() {
-            if matches!(first, ';' | '.' | ',' | ':') {
-                let point = link.target.len().saturating_add(1);
-                link.target = input.slice(..point);
-                remaining = input.slice(point..);
+        match Self::parse(input) {
+            Ok((mut remaining, mut link)) => {
+                if let Some(first) = remaining.chars().next() {
+                    if matches!(first, ';' | '.' | ',' | ':') {
+                        let point = link.target.len().saturating_add(1);
+                        link.target = input.slice(..point);
+                        remaining = input.slice(point..);
+                    }
+                }
+                Ok((remaining, link))
+            }
+            Err(..) => {
+                let (remaining, target) = ifragment(input)?;
+                Ok((remaining, LinkDestination {
+                    target,
+                    scheme: "",
+                    hostname: None,
+                    punycode: None
+                }))
             }
         }
-        Ok((remaining, link))
     }
 }
 

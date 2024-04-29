@@ -268,6 +268,10 @@ pub fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> 
     }
 }
 
+pub fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(tuple((char('#'), take_while_ifragment)))(input)
+}
+
 // IRI links per RFC3987 and RFC3986
 #[allow(clippy::integer_arithmetic)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
@@ -297,7 +301,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     // which in the third case it's down to ipath-empty(see below)
     let path = path.unwrap_or(""); // it's ipath-empty
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
-    let (_, fragment) = opt(recognize(tuple((char('#'), take_while_ifragment))))(input)?;
+    let (_, fragment) = opt(ifragment)(input)?;
     let query = query.unwrap_or(""); // in the case of no iquery
     let fragment = fragment.unwrap_or(""); // in the case of no ifragment
     let ihier_len = 3usize
