@@ -50,15 +50,17 @@ pub fn is_in_one_of_ranges(c: u32, ranges: &[RangeInclusive<u32>]) -> bool {
     }
 }
 
-// TODO: Convert these(is_alpha, is_hex_digit, is_digit) to macros OR inline
+#[inline(always)]
 pub(crate) fn is_alpha(c: char) -> bool {
     c.is_alphabetic()
 }
 
+#[inline(always)]
 pub(crate) fn is_hex_digit(c: char) -> bool {
     c.is_ascii_hexdigit()
 }
 
+#[inline(always)]
 pub(crate) fn is_digit(c: char) -> bool {
     c.is_ascii_digit()
 }
