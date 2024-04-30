@@ -1,8 +1,5 @@
 #![allow(clippy::unwrap_used)]
-use deltachat_message_parser::parser::{
-    link_url::PunycodeWarning,
-    LinkDestination,
-};
+use deltachat_message_parser::parser::{link_url::PunycodeWarning, LinkDestination};
 
 #[test]
 fn basic_parsing() {
@@ -31,8 +28,8 @@ fn basic_parsing() {
     let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];
 
     for input in &test_cases_no_puny {
-        let (rest, link_destination) =
-            LinkDestination::parse(input).unwrap_or_else(|_| panic!("Cannot parse link: {}", input));
+        let (rest, link_destination) = LinkDestination::parse(input)
+            .unwrap_or_else(|_| panic!("Cannot parse link: {}", input));
 
         assert_eq!(input, &link_destination.target);
         assert_eq!(rest.len(), 0);
@@ -40,10 +37,9 @@ fn basic_parsing() {
     }
 
     for input in &test_cases_with_puny {
-        let Ok((rest, link_destination)) =
-            LinkDestination::parse(input) else {
-                panic!("Parsing {} as link failed", input);
-            };
+        let Ok((rest, link_destination)) = LinkDestination::parse(input) else {
+            panic!("Parsing {} as link failed", input);
+        };
 
         assert!(link_destination.punycode.is_some());
         assert_eq!(rest.len(), 0);
