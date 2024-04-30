@@ -68,7 +68,7 @@ impl LinkDestination<'_> {
             }
         }
     */
-    pub(crate) fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((rest, link_destination))
         } else {
@@ -77,7 +77,7 @@ impl LinkDestination<'_> {
     }
     
     // This is for parsing markdown labelled links.
-    pub(crate) fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         match Self::parse(input) {
             Ok((mut remaining, mut link)) => {
                 if let Some(first) = remaining.chars().next() {

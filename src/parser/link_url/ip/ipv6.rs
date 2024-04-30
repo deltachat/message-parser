@@ -12,8 +12,6 @@ use crate::parser::{parse_from_text::base_parsers::CustomError, utils::is_hex_di
 
 use super::ipv4::ipv4;
 
-// consume 1 to 4 hex digit(s)
-// TODO These 4 functions should be macros instead
 fn h16(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     take_while_m_n(1, 4, is_hex_digit)(input)
 }
@@ -28,7 +26,6 @@ fn ls32(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     }
 }
 
-// consume <h16> <period>
 fn h16_and_period(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((h16, char(':'))))(input)
 }
