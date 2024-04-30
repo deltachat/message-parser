@@ -1,9 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use deltachat_message_parser::parser::{
-    LinkDestination,
-    parse_desktop_set,
-    parse_markdown_text,
-    parse_only_text
+    parse_desktop_set, parse_markdown_text, parse_only_text, LinkDestination,
 };
 
 pub fn criterion_benchmark(c: &mut Criterion) {

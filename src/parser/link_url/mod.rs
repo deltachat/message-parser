@@ -75,7 +75,7 @@ impl LinkDestination<'_> {
             Err(nom::Err::Error(CustomError::InvalidLink))
         }
     }
-    
+
     // This is for parsing markdown labelled links.
     pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         match Self::parse(input) {
