@@ -32,7 +32,7 @@ fn basic_parsing() {
 
     for input in &test_cases_no_puny {
         let (rest, link_destination) =
-            LinkDestination::parse(input).expect(&format!("Test failed: {input}"));
+            LinkDestination::parse(input).unwrap_or_else(|_| panic!("Cannot parse link: {}", input));
 
         assert_eq!(input, &link_destination.target);
         assert_eq!(rest.len(), 0);
