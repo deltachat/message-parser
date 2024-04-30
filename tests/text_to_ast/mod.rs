@@ -10,7 +10,7 @@ fn gopher_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestinatio
     }
 }
 
-fn internal_link<'a>(target: &'a str) -> LinkDestination<'a> {
+fn internal_link(target: &str) -> LinkDestination<'_> {
     LinkDestination {
         target,
         hostname: None,
@@ -46,7 +46,7 @@ fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination
     }
 }
 
-fn mailto_link_no_puny<'a>(target: &'a str) -> LinkDestination<'a> {
+fn mailto_link_no_puny(target: &str) -> LinkDestination<'_> {
     LinkDestination {
         target,
         hostname: None,
