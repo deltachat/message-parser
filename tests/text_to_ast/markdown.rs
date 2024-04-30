@@ -557,6 +557,27 @@ fn link() {
             "mailto:foö@ü.chat",
             mailto_link_no_puny("mailto:foö@ü.chat"),
         ),
+        (
+            "gopher://[::1]/",
+            gopher_link_no_puny(
+                "gopher://[::1]/",
+                "[::1]",
+            ),
+        ),
+        (
+            "https://[2345:0425:2CA1:0000:0000:0567:5673:23b5]/hello_world",
+            https_link_no_puny(
+                "https://[2345:0425:2CA1:0000:0000:0567:5673:23b5]/hello_world",
+                "[2345:0425:2CA1:0000:0000:0567:5673:23b5]",
+            ),
+        ),
+        (
+            "https://[2345:425:2CA1:0:0:0567:5673:23b5]/hello_world",
+            https_link_no_puny(
+                "https://[2345:425:2CA1:0:0:0567:5673:23b5]/hello_world",
+                "[2345:425:2CA1:0:0:0567:5673:23b5]",
+            ),
+        )
     ];
 
     let test_cases_with_puny = [(
