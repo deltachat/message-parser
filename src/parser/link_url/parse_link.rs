@@ -273,7 +273,7 @@ pub fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 }
 
 // IRI links per RFC3987 and RFC3986
-#[allow(clippy::integer_arithmetic)]
+#[allow(clippy::arithmetic_side_effects)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     // a link is <scheme> :// <iauthority> [ipath] [iquery] [ifragment]

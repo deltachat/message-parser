@@ -1,4 +1,3 @@
-///! nom parsers for text elements
 use nom::{
     bytes::{
         complete::{tag, take, take_while, take_while1},

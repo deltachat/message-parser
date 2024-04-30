@@ -25,12 +25,12 @@ fn find_range_for_char(code: u32, ranges: &'_ [RangeInclusive<u32>]) -> FindRang
     match index {
         Ok(_) => FindRangeResult::WasOnRangeStart,
         Err(index) => match index {
-            #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
+            #[allow(clippy::arithmetic_side_effects, clippy::indexing_slicing)]
             0 => FindRangeResult::Range(&ranges[0]),
             // Since `index` can never be 0, `index - 1` will never overflow. Furthermore, the
             // maximum value which the binary search function returns is `NUMBER_OF_RANGES`.
             // Therefore, `index - 1` will never panic if we index the array with it.
-            #[allow(clippy::integer_arithmetic, clippy::indexing_slicing)]
+            #[allow(clippy::arithmetic_side_effects, clippy::indexing_slicing)]
             index => FindRangeResult::Range(&ranges[index - 1]),
         },
     }

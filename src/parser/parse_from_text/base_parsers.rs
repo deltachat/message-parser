@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-///! Base utility parsers, used by both text and markdown parsers
+// Base utility parsers, used by both text and markdown parsers
 use nom::{
     bytes::complete::tag,
     error::{ErrorKind, ParseError},

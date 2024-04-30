@@ -11,17 +11,18 @@ use crate::parser::{
     parse_from_text::base_parsers::CustomError,
 };
 
-///! Parsing / Validation of URLs
-///
-/// - hyperlinks (:// scheme) according to RFC3987 and RFC3988
-/// - whitelisted scheme (: scheme) according to our own simple thing :)
-///
-/// for hyperlinks it also checks whether the domain contains punycode
-
-// There are two kinds of Urls
-// - Common Internet Scheme[1]
-// - Every other url (like mailto)
-// [1] RFC1738(Section 3.1), RFC3987, RFC3988 --Farooq
+/* Parsing / Validation of URLs
+ *
+ * - hyperlinks (:// scheme) according to RFC3987 and RFC3988
+ * - whitelisted scheme (: scheme) according to our own simple thing :)
+ *
+ *  for hyperlinks it also checks whether the domain contains punycode
+ *
+ * There are two kinds of Urls
+ * - Common Internet Scheme[1]
+ * - Every other url (like mailto)
+ * [1] RFC1738(Section 3.1), RFC3987, RFC3988 --Farooq
+ */
 
 #[derive(Debug, PartialEq, Eq, Serialize, Clone)]
 pub struct LinkDestination<'a> {
