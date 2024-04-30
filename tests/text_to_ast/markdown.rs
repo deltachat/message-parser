@@ -601,7 +601,7 @@ fn link() {
                 assert_eq!(expected_destination.target, destination.target);
                 assert_eq!(expected_destination.scheme, destination.scheme);
                 assert_eq!(expected_destination.hostname, destination.hostname,);
-                assert_eq!(destination.punycode.is_some(), true);
+                assert!(destination.punycode.is_some());
             }
             _ => {
                 panic!();
