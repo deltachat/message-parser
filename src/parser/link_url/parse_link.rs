@@ -121,7 +121,7 @@ fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
 /// Parse the iauthority block
 /// # Description
 ///  An iauthority is...
-///  [iuserinfo] <host> [:port]
+///  `[iuserinfo] <host> [:port]`
 /// # Return value
 ///  unconsumed string AND `(iauthority, host, is_ipliteral)` where `ipliteral` is a boolean
 fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str>> /* (iauthority, host, bool) */
