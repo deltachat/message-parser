@@ -6,10 +6,7 @@ use nom::{
     IResult, Slice,
 };
 
-use crate::parser::{
-    link_url::parse_link::parse_link,
-    parse_from_text::base_parsers::CustomError,
-};
+use crate::parser::{link_url::parse_link::parse_link, parse_from_text::base_parsers::CustomError};
 
 /* Parsing / Validation of URLs
  *

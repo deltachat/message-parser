@@ -272,6 +272,67 @@ fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((char('#'), take_while_ifragment)))(input)
 }
 
+macro_rules! link_correct {
+    ($a: expr, $b: expr, $c: expr, $d: expr) => {
+        // for opening ones
+        {
+            $a = $a.saturating_add(1);
+            if $d.slice($c..).find($b).is_none() {
+                return Some($c);
+            }
+        }
+    };
+    ($a: expr, $b: expr) => {
+        // for closing ones
+        {
+            if $a == 0 {
+                return Some($b);
+            } else {
+                $a = $a.saturating_sub(1);
+            }
+        }
+    };
+}
+
+// TODO: better name for this function
+fn get_correct_link(link: &str) -> Option<usize> {
+    let mut parenthes = 0usize; // ()
+    let mut curly_bracket = 0usize; // {}
+    let mut bracket = 0usize; // []
+    let mut angle = 0usize; // <>
+
+    for (i, ch) in link.chars().enumerate() {
+        match ch {
+            '(' => {
+                link_correct!(parenthes, ')', i, link);
+            }
+            '{' => {
+                link_correct!(curly_bracket, '}', i, link);
+            }
+            '[' => {
+                link_correct!(bracket, ']', i, link);
+            }
+            '<' => {
+                link_correct!(angle, '>', i, link);
+            }
+            ')' => {
+                link_correct!(parenthes, i);
+            }
+            ']' => {
+                link_correct!(bracket, i);
+            }
+            '}' => {
+                link_correct!(curly_bracket, i);
+            }
+            '>' => {
+                link_correct!(angle, i);
+            }
+            _ => continue,
+        }
+    }
+    None
+}
+
 // IRI links per RFC3987 and RFC3986
 #[allow(clippy::arithmetic_side_effects)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
@@ -322,78 +383,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                 host = input_.slice(scheme.len() + 3..input_.len() - 1);
             }
         }
-
-        let mut parenthes = 0usize; // ()
-        let mut curly_bracket = 0usize; // {}
-        let mut bracket = 0usize; // []
-        let mut angle = 0usize; // <>
-
-        for (i, ch) in link.chars().enumerate() {
-            match ch {
-                '(' => {
-                    parenthes = parenthes.saturating_add(1);
-                    if link.slice(i..).find(')').is_none() {
-                        len = i;
-                        break;
-                    }
-                }
-                '{' => {
-                    curly_bracket = curly_bracket.saturating_add(1);
-                    if link.slice(i..).find('}').is_none() {
-                        len = i;
-                        break;
-                    }
-                }
-                '[' => {
-                    bracket = bracket.saturating_add(1);
-                    if link.slice(i..).find(']').is_none() {
-                        len = i;
-                        break;
-                    }
-                }
-                '<' => {
-                    angle = angle.saturating_add(1);
-                    if link.slice(i..).find('>').is_none() {
-                        len = i;
-                        break;
-                    }
-                }
-                ')' => {
-                    if parenthes == 0 {
-                        len = i;
-                        break;
-                    } else {
-                        parenthes -= 1;
-                    }
-                }
-                ']' => {
-                    if bracket == 0 {
-                        len = i;
-                        break;
-                    } else {
-                        bracket -= 1;
-                    }
-                }
-                '}' => {
-                    if curly_bracket == 0 {
-                        len = i;
-                        break;
-                    } else {
-                        curly_bracket -= 1;
-                    }
-                }
-                '>' => {
-                    if angle == 0 {
-                        len = i;
-                        break;
-                    } else {
-                        angle -= 1;
-                    }
-                }
-                _ => continue,
-            }
-        }
-
+        len = get_correct_link(link).unwrap_or(len);
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
 
