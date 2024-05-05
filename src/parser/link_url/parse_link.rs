@@ -377,9 +377,9 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     // compute length of link which is ihier_len + scheme + query + fragment
     if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',']) {
-            len -= 1;
+            len = len.saturating_sub(1);
             if path.is_empty() && query.is_empty() && fragment.is_empty() {
-                host = input_.slice(scheme.len() + 3..input_.len() - 1);
+                host = input_.slice(scheme.len().saturating_add(3)..input_.len().saturating_sub(1));
             }
         }
         len = get_correct_link(link).unwrap_or(len);
