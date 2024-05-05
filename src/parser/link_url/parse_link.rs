@@ -334,7 +334,6 @@ fn get_correct_link(link: &str) -> Option<usize> {
 }
 
 // IRI links per RFC3987 and RFC3986
-#[allow(clippy::arithmetic_side_effects)]
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
     // a link is <scheme> :// <iauthority> [ipath] [iquery] [ifragment]
