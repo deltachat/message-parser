@@ -7,7 +7,7 @@ use nom::{
 };
 
 use crate::parser::{
-    link_url::parse_link::{ifragment, parse_link},
+    link_url::parse_link::parse_link,
     parse_from_text::base_parsers::CustomError,
 };
 
@@ -79,32 +79,17 @@ impl LinkDestination<'_> {
 
     // This is for parsing markdown labelled links.
     pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-        match Self::parse(input) {
-            Ok((mut remaining, mut link)) => {
-                if let Some(first) = remaining.chars().next() {
-                    if matches!(first, ';' | '.' | ',' | ':') {
-                        // ^ markdown labelled links can include one of these characters at the end
-                        // and it's therefore part of the link
-                        let point = link.target.len().saturating_add(1);
-                        link.target = input.slice(..point);
-                        remaining = input.slice(point..);
-                    }
-                }
-                Ok((remaining, link))
-            }
-            Err(..) => {
-                let (remaining, target) = ifragment(input)?;
-                Ok((
-                    remaining,
-                    LinkDestination {
-                        target,
-                        scheme: "",
-                        hostname: None,
-                        punycode: None,
-                    },
-                ))
+        let (mut remaining, mut link) = Self::parse(input)?;
+        if let Some(first) = remaining.chars().next() {
+            if matches!(first, ';' | '.' | ',' | ':') {
+                // ^ markdown labelled links can include one of these characters at the end
+                // and it's therefore part of the link
+                let point = link.target.len().saturating_add(1);
+                link.target = input.slice(..point);
+                remaining = input.slice(point..);
             }
         }
+        Ok((remaining, link))
     }
 }
 

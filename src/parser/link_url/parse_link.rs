@@ -268,7 +268,7 @@ pub fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> 
     }
 }
 
-pub fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((char('#'), take_while_ifragment)))(input)
 }
 

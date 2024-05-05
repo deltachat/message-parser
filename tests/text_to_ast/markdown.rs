@@ -688,13 +688,6 @@ fn labeled_link() {
             ),
         }]
     );
-    assert_eq!(
-        parse_markdown_text("[internal link](#internal)"),
-        vec![LabeledLink {
-            label: vec![Text("internal link")],
-            destination: internal_link("#internal")
-        }]
-    );
 }
 
 #[test]
