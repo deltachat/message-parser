@@ -1,19 +1,20 @@
+///! nom parsers for text elements
+use crate::parser::link_url::LinkDestination;
+
+use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::Element;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while, take_while1},
+        complete::{tag, take, take_while1, take_while},
         streaming::take_till1,
     },
-    character,
     character::complete::char,
     combinator::{peek, recognize, verify},
     sequence::tuple,
-    AsChar, IResult, Offset, Slice,
+    AsChar, IResult, Slice, Offset
 };
 
 use super::base_parsers::CustomError;
-use super::hashtag_content_char_ranges::hashtag_content_char;
-use super::Element;
-use crate::parser::link_url::LinkDestination;
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -21,7 +22,7 @@ fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content) = recognize(tuple((
-        character::complete::char('#'),
+        char('#'),
         take_while1(hashtag_content_char),
     )))(input)?;
 
@@ -248,7 +249,7 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
             s.len() < 256
         }),
     )))(input)?;
-    if content[1..].contains('/') {
+    if content.slice(1..).contains('/') {
         Ok((input, Element::Text(content)))
     } else {
         Ok((input, Element::BotCommandSuggestion(content)))
