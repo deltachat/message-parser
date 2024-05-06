@@ -5,13 +5,13 @@ use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while1, take_while},
+        complete::{tag, take, take_while, take_while1},
         streaming::take_till1,
     },
     character::complete::char,
     combinator::{peek, recognize, verify},
     sequence::tuple,
-    AsChar, IResult, Slice, Offset
+    AsChar, IResult, Offset, Slice,
 };
 
 use super::base_parsers::CustomError;
@@ -21,10 +21,7 @@ fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
 }
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content) = recognize(tuple((
-        char('#'),
-        take_while1(hashtag_content_char),
-    )))(input)?;
+    let (input, content) = recognize(tuple((char('#'), take_while1(hashtag_content_char))))(input)?;
 
     Ok((input, Element::Tag(content)))
 }
