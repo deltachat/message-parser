@@ -230,7 +230,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
 */
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
-        '@' | '\\' | '_' | '/' | '.' | '-' => true,
+        '@' | '\\' | '_' | '.' | '-' | '/' => true,
         _ => char.is_alphanum(),
     }
 }
@@ -248,8 +248,11 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
             s.len() < 256
         }),
     )))(input)?;
-
-    Ok((input, Element::BotCommandSuggestion(content)))
+    if content[1..].contains('/') {
+        Ok((input, Element::Text(content)))
+    } else {
+        Ok((input, Element::BotCommandSuggestion(content)))
+    }
 }
 
 pub(crate) fn parse_text_element(
@@ -269,7 +272,9 @@ pub(crate) fn parse_text_element(
         if prev_char == Some(' ') || prev_char.is_none() {
             bot_command_suggestion(input)
         } else {
-            Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
+            Err(nom::Err::Error(
+                CustomError::<&str>::PrecedingWhitespaceMissing,
+            ))
         }
     } {
         Ok((i, elm))

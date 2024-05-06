@@ -54,6 +54,12 @@ fn command_suggestions() {
 }
 
 #[test]
+fn unix_abs_path_is_not_command() {
+    let input = "/etc/nginx";
+    assert_eq!(parse_only_text(input), vec![Text("/etc/nginx")]);
+}
+
+#[test]
 fn invalid_command_suggestions() {
     let input = "/1\n /hello world";
     assert_eq!(
