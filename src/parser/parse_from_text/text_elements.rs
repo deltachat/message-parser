@@ -1,4 +1,4 @@
-///! nom parsers for text elements
+/// nom parsers for text elements
 use crate::parser::link_url::LinkDestination;
 
 use super::hashtag_content_char_ranges::hashtag_content_char;
