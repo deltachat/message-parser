@@ -107,17 +107,10 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     }
     let label = parse_all(raw_label);
 
-    let (input, raw_link): (&str, &str) = delimited(tag("("), is_not(")"), tag(")"))(input)?;
-    if raw_link.is_empty() {
-        return Err(nom::Err::Error(CustomError::NoContent));
-    }
-    // check if result is valid link
-    let (remainder, destination) = LinkDestination::parse_labelled(raw_link)?;
-    if remainder.is_empty() {
-        Ok((input, Element::LabeledLink { label, destination }))
-    } else {
-        Err(nom::Err::Error(CustomError::InvalidLink))
-    }
+    let (input, (_, destination, _)) =
+        tuple((tag("("), LinkDestination::parse_labelled, tag(")")))(input)?;
+
+    Ok((input, Element::LabeledLink { label, destination }))
 }
 
 pub(crate) fn parse_element(

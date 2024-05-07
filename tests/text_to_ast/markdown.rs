@@ -690,6 +690,17 @@ fn labeled_link() {
 }
 
 #[test]
+fn labeled_link_parenthesis_in_target() {
+    assert_eq!(
+        parse_markdown_text("[a link](https://delta.chat/en/help(help)hi)"),
+        vec![LabeledLink {
+            label: vec![Text("a link")],
+            destination: https_link_no_puny("https://delta.chat/en/help(help)hi", "delta.chat"),
+        }]
+    );
+}
+
+#[test]
 fn labeled_link_example() {
     assert_eq!(
         parse_markdown_text("you can find the details [here](https://delta.chat/en/help)."),

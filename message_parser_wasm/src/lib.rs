@@ -23,7 +23,7 @@ pub fn parse_text(s: &str, enable_markdown: bool) -> JsValue {
     serde_wasm_bindgen::to_value(&ast).expect("Element converts to JsValue")
 }
 
-/// parses text to json AST (text elements and labled links, to replicate current desktop implementation)
+/// parses text to json AST (text elements and labeled links, to replicate current desktop implementation)
 #[wasm_bindgen]
 pub fn parse_desktop_set(s: &str) -> JsValue {
     serde_wasm_bindgen::to_value(&deltachat_message_parser::parser::parse_desktop_set(s))
