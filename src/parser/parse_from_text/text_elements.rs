@@ -1,9 +1,13 @@
+///! nom parsers for text elements
+use crate::parser::link_url::LinkDestination;
+
+use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::Element;
 use nom::{
     bytes::{
         complete::{tag, take, take_while, take_while1},
         streaming::take_till1,
     },
-    character,
     character::complete::char,
     combinator::{peek, recognize, verify},
     sequence::tuple,
@@ -11,19 +15,13 @@ use nom::{
 };
 
 use super::base_parsers::CustomError;
-use super::hashtag_content_char_ranges::hashtag_content_char;
-use super::Element;
-use crate::parser::link_url::LinkDestination;
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
 }
 
 fn hashtag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content) = recognize(tuple((
-        character::complete::char('#'),
-        take_while1(hashtag_content_char),
-    )))(input)?;
+    let (input, content) = recognize(tuple((char('#'), take_while1(hashtag_content_char))))(input)?;
 
     Ok((input, Element::Tag(content)))
 }
@@ -230,7 +228,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
 */
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
-        '@' | '\\' | '_' | '/' | '.' | '-' => true,
+        '@' | '\\' | '_' | '.' | '-' | '/' => true,
         _ => char.is_alphanum(),
     }
 }
@@ -248,8 +246,11 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
             s.len() < 256
         }),
     )))(input)?;
-
-    Ok((input, Element::BotCommandSuggestion(content)))
+    if content.slice(1..).contains('/') {
+        Ok((input, Element::Text(content)))
+    } else {
+        Ok((input, Element::BotCommandSuggestion(content)))
+    }
 }
 
 pub(crate) fn parse_text_element(
@@ -269,7 +270,9 @@ pub(crate) fn parse_text_element(
         if prev_char == Some(' ') || prev_char.is_none() {
             bot_command_suggestion(input)
         } else {
-            Err(nom::Err::Error(CustomError::PrecedingWhitespaceMissing))
+            Err(nom::Err::Error(
+                CustomError::<&str>::PrecedingWhitespaceMissing,
+            ))
         }
     } {
         Ok((i, elm))
