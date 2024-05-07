@@ -8,7 +8,7 @@
 */
 export function parse_text(s: string, enable_markdown: boolean): any;
 /**
-* parses text to json AST (text elements and labled links, to replicate current desktop implementation)
+* parses text to json AST (text elements and labeled links, to replicate current desktop implementation)
 * @param {string} s
 * @returns {any}
 */
