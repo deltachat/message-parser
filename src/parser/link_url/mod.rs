@@ -42,30 +42,9 @@ pub struct PunycodeWarning {
 
 impl LinkDestination<'_> {
     /// parse a link that is not in a delimited link or a labled link, just a part of normal text
-    /// it has a whitelist of schemes, because otherwise
-    /*
-        pub(crate) fn parse_standalone_with_whitelist(
-            input: &str,
-        ) -> IResult<&str, LinkDestination, CustomError<&str>> {
-            if let Ok((rest, link_destination)) = parse_link(input) {
-                if link_destination.hostname.is_none() {
-                    // if it's a generic url like geo:-15.5,41.1
-                    if !is_allowed_generic_scheme(link_destination.scheme) {
-                        Err(nom::Err::Error(CustomError::InvalidLink))
-                    } else {
-                        Ok((rest, link_destination))
-                    }
-                } else {
-                    Ok((
-                        rest,
-                        link_destination
-                    ))
-                }
-            } else {
-                Err(nom::Err::Error(CustomError::InvalidLink))
-            }
-        }
-    */
+    ///
+    /// - for generic schemes (schemes without `://`) this uses a whitelist not reduce false positives
+    /// - it also ignores the last punctuation sign if it is at the end of the link
     pub fn parse(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         if let Ok((rest, link_destination)) = parse_link(input) {
             Ok((rest, link_destination))
