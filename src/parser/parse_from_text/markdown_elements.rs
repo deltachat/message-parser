@@ -1,16 +1,20 @@
-use crate::parser::link_url::LinkDestination;
-use crate::parser::parse_from_text::text_elements::email_address;
-
-use super::text_elements::{link, parse_text_element};
-use super::Element;
-use super::{base_parsers::*, parse_all};
-///! nom parsers for markdown elements
 use nom::{
     bytes::complete::{is_not, tag, take, take_while},
     character::complete::alphanumeric1,
     combinator::{opt, peek, recognize},
-    sequence::delimited,
+    sequence::{delimited, tuple},
     IResult,
+};
+
+use super::{base_parsers::*, parse_all};
+use crate::parser::{
+    link_url::LinkDestination,
+    parse_from_text::{
+        base_parsers::direct_delimited,
+        text_elements::{email_address, parse_text_element},
+        Element,
+    },
+    utils::{is_white_space, is_white_space_but_not_linebreak},
 };
 
 fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
@@ -90,15 +94,9 @@ pub(crate) fn delimited_email_address(input: &str) -> IResult<&str, Element, Cus
 
 // <https://link>
 pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
-    if content.is_empty() {
-        return Err(nom::Err::Error(CustomError::NoContent));
-    }
-    let (rest, link) = link(content)?;
-    if !rest.is_empty() {
-        return Err(nom::Err::Error(CustomError::UnexpectedContent));
-    }
-    Ok((input, link))
+    let (input, (_, destination, _)): (&str, (&str, LinkDestination, &str)) =
+        tuple((tag("<"), LinkDestination::parse_labelled, tag(">")))(input)?;
+    Ok((input, Element::Link { destination }))
 }
 
 // [labeled](https://link)
@@ -109,18 +107,10 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     }
     let label = parse_all(raw_label);
 
-    let (input, raw_link): (&str, &str) = delimited(tag("("), is_not(")"), tag(")"))(input)?;
-    if raw_link.is_empty() {
-        return Err(nom::Err::Error(CustomError::NoContent));
-    }
-    // check if result is valid link
-    let (remainder, destination) = LinkDestination::parse(raw_link)?;
+    let (input, (_, destination, _)) =
+        tuple((tag("("), LinkDestination::parse_labelled, tag(")")))(input)?;
 
-    if remainder.is_empty() {
-        Ok((input, Element::LabeledLink { label, destination }))
-    } else {
-        Err(nom::Err::Error(CustomError::InvalidLink))
-    }
+    Ok((input, Element::LabeledLink { label, destination }))
 }
 
 pub(crate) fn parse_element(

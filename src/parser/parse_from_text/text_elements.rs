@@ -1,22 +1,19 @@
-///! nom parsers for text elements
-use crate::parser::link_url::LinkDestination;
-
-use super::base_parsers::*;
-use super::hashtag_content_char_ranges::hashtag_content_char;
-use super::Element;
-use crate::nom::{Offset, Slice};
-use nom::bytes::complete::take_while;
-use nom::character::complete::char;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while1},
+        complete::{tag, take, take_while, take_while1},
         streaming::take_till1,
     },
     character,
+    character::complete::char,
     combinator::{peek, recognize, verify},
     sequence::tuple,
-    AsChar, IResult,
+    AsChar, IResult, Offset, Slice,
 };
+
+use super::base_parsers::CustomError;
+use super::hashtag_content_char_ranges::hashtag_content_char;
+use super::Element;
+use crate::parser::link_url::LinkDestination;
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -94,8 +91,13 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     }
 }
 
+/*
 fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
+}
+
+fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
+    let (input, _) = take_while1(link_scheme)(input)?;
 }
 
 /// rough recognition of an link, results gets checked by a real link parser
@@ -225,7 +227,7 @@ pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         Err(nom::Err::Error(CustomError::InvalidLink))
     }
 }
-
+*/
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
         '@' | '\\' | '_' | '/' | '.' | '-' => true,
@@ -273,8 +275,8 @@ pub(crate) fn parse_text_element(
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = link(input) {
-        Ok((i, elm))
+    } else if let Ok((i, destination)) = LinkDestination::parse(input) {
+        Ok((i, Element::Link { destination }))
     } else if let Ok((i, _)) = linebreak(input) {
         Ok((i, Element::Linebreak))
     } else {

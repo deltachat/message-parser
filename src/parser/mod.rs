@@ -1,9 +1,9 @@
 // mod email;
+pub mod link_url;
 pub mod parse_from_text;
+mod utils;
 
-mod link_url;
-
-pub use link_url::LinkDestination;
+pub use crate::parser::link_url::LinkDestination;
 
 /// The representation of Elements for the Abstract Syntax Tree
 #[derive(Debug, PartialEq, Eq, Serialize)]

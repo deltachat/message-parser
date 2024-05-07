@@ -1,5 +1,5 @@
 use super::*;
-use deltachat_message_parser::parser::{parse_only_text, LinkDestination};
+use deltachat_message_parser::parser::parse_only_text;
 
 #[test]
 fn do_not_parse_markdown_elements() {
@@ -272,63 +272,6 @@ fn email_address_do_not_parse_last_char_if_special() {
 }
 
 #[test]
-fn link() {
-    let test_cases = vec![
-        "http://delta.chat",
-        "http://delta.chat:8080",
-        "http://localhost",
-        "http://127.0.0.0",
-        "https://delta.chat",
-        "ftp://delta.chat",
-        "https://delta.chat/en/help",
-        "https://delta.chat/en/help?hi=5&e=4",
-        "https://delta.chat?hi=5&e=4",
-        "https://delta.chat/en/help?hi=5&e=4#section2.0",
-        "https://delta#section2.0",
-        "http://delta.chat:8080?hi=5&e=4#section2.0",
-        "http://delta.chat:8080#section2.0",
-        "mailto:delta@example.com",
-        "mailto:delta@example.com?subject=hi&body=hello%20world",
-        "mailto:foö@ü.chat",
-        "https://ü.app#help", // TODO add more urls for testing
-    ];
-
-    for input in &test_cases {
-        println!("testing {}", input);
-        assert_eq!(
-            parse_only_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
-        );
-    }
-
-    for input in &test_cases {
-        println!("testing <{}>", input);
-        assert_eq!(
-            parse_only_text(input),
-            vec![Link {
-                destination: link_destination_for_testing(input)
-            }]
-        );
-    }
-
-    let input = "http://[2001:0db8:85a3:08d3::0370:7344]:8080/";
-    let hostname = "[2001:0db8:85a3:08d3::0370:7344]";
-    assert_eq!(
-        parse_only_text(input),
-        vec![Link {
-            destination: LinkDestination {
-                target: input,
-                hostname: Some(hostname),
-                punycode: None,
-                scheme: "http"
-            }
-        }]
-    );
-}
-
-#[test]
 fn test_link_example() {
     assert_eq!(
         parse_only_text(
@@ -337,8 +280,9 @@ fn test_link_example() {
         vec![
             Text("This is an my site: "),
             Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                    "delta.chat",
                 )
             },
             Linebreak,
@@ -352,7 +296,7 @@ fn delimited_email_should_not_work() {
     assert_ne!(
         parse_only_text("This is an my site: <hello@delta.chat>\nMessage me there"),
         vec![
-            Text("This is an my site: "),
+            Text("This is an my email: "),
             EmailAddress("hello@delta.chat"),
             Linebreak,
             Text("Message me there")
@@ -369,8 +313,9 @@ fn delimited_link_should_not_work() {
         vec![
             Text("This is an my site: "),
             Link {
-                destination: link_destination_for_testing(
-                    "https://delta.chat/en/help?hi=5&e=4#section2.0"
+                destination: https_link_no_puny(
+                    "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                    "delta.chat",
                 )
             },
             Linebreak,
@@ -385,8 +330,9 @@ fn labeled_link_should_not_work() {
         parse_only_text("[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("a link")],
-            destination: link_destination_for_testing(
-                "https://delta.chat/en/help?hi=5&e=4#section2.0"
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat",
             )
         }]
     );
@@ -394,8 +340,9 @@ fn labeled_link_should_not_work() {
         parse_only_text("[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
         vec![LabeledLink {
             label: vec![Text("rich content "), Bold(vec![Text("bold")])],
-            destination: link_destination_for_testing(
-                "https://delta.chat/en/help?hi=5&e=4#section2.0"
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat",
             )
         }]
     );
@@ -409,7 +356,7 @@ fn labeled_link_example_should_not_work() {
             Text("you can find the details "),
             LabeledLink {
                 label: vec![Text("here")],
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat")
             },
             Text(".")
         ]
@@ -423,7 +370,7 @@ fn link_do_not_consume_last_comma() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat")
             },
             Text(",")
         ]
@@ -437,7 +384,7 @@ fn link_do_not_consume_last_semicolon_or_colon() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat")
             },
             Text(";")
         ]
@@ -447,7 +394,7 @@ fn link_do_not_consume_last_semicolon_or_colon() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat")
             },
             Text(":")
         ]
@@ -461,7 +408,7 @@ fn link_do_not_consume_last_dot() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help")
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat")
             },
             Text(".")
         ]
@@ -471,7 +418,7 @@ fn link_do_not_consume_last_dot() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help.txt")
+                destination: https_link_no_puny("https://delta.chat/en/help.txt", "delta.chat")
             },
             Text(".")
         ]
@@ -485,7 +432,7 @@ fn link_with_file_extention() {
         vec![
             Text("you can find the details on "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/help.html")
+                destination: https_link_no_puny("https://delta.chat/en/help.html", "delta.chat")
             }
         ]
     );
@@ -498,7 +445,7 @@ fn parenthesis_in_links() {
         vec![
             Text("links can contain parenthesis, "),
             Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_(disambiguation)")
+                destination: https_link_no_puny("https://en.wikipedia.org/wiki/Bracket_(disambiguation)", "en.wikipedia.org")
             },
             Text(" is an example of this.")
         ]
@@ -514,8 +461,9 @@ fn link_in_parenthesis() {
         vec![
             Text("for more information see ("),
             Link {
-                destination: link_destination_for_testing(
-                    "https://github.com/deltachat/message-parser/issues/12"
+                destination: https_link_no_puny(
+                    "https://github.com/deltachat/message-parser/issues/12",
+                    "github.com"
                 )
             },
             Text(")")
@@ -530,7 +478,7 @@ fn link_with_parenthesis_in_parenthesis() {
         vec![
             Text("there are links that contain parenthesis (for example "),
             Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_(disambiguation)")
+                destination: https_link_no_puny("https://en.wikipedia.org/wiki/Bracket_(disambiguation)", "en.wikipedia.org")
             },
             Text(")")
         ]
@@ -546,39 +494,12 @@ fn link_with_different_parenthesis_in_parenthesis() {
         vec![
             Text("()(for [example{ "),
             Link {
-                destination: link_destination_for_testing(
-                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation){[}hi]"
+                destination: https_link_no_puny(
+                    "https://en.wikipedia.org/wiki/Bracket_(disambiguation)",
+                    "en.wikipedia.org"
                 )
             },
-            Text("])}")
-        ]
-    );
-}
-
-#[test]
-fn link_with_backets_in_backets() {
-    assert_eq!(
-        parse_only_text("there are links that contain backets [for example https://en.wikipedia.org/wiki/Bracket_[disambiguation]]"),
-        vec![
-            Text("there are links that contain backets [for example "),
-            Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_[disambiguation]")
-            },
-            Text("]")
-        ]
-    );
-}
-
-#[test]
-fn link_with_parenthesis_in_parenthesis_curly() {
-    assert_eq!(
-        parse_only_text("there are links that contain parenthesis {for example https://en.wikipedia.org/wiki/Bracket_{disambiguation}}"),
-        vec![
-            Text("there are links that contain parenthesis {for example "),
-            Link {
-                destination: link_destination_for_testing("https://en.wikipedia.org/wiki/Bracket_{disambiguation}")
-            },
-            Text("}")
+            Text("{[}hi]])}")
         ]
     );
 }
@@ -589,7 +510,7 @@ fn link_with_descriptive_parenthesis() {
         parse_only_text("https://delta.chat/page(this is the link to our site)"),
         vec![
             Link {
-                destination: link_destination_for_testing("https://delta.chat/page")
+                destination: https_link_no_puny("https://delta.chat/page", "delta.chat")
             },
             Text("(this is the link to our site)")
         ]
@@ -603,7 +524,7 @@ fn link_in_parenthesis2() {
         vec![
             Text("A great chat app (see "),
             Link {
-                destination: link_destination_for_testing("https://delta.chat/en/")
+                destination: https_link_no_puny("https://delta.chat/en/", "delta.chat")
             },
             Text(")")
         ]

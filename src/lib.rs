@@ -9,7 +9,7 @@
     clippy::get_last_with_len,
     clippy::get_unwrap,
     clippy::get_unwrap,
-    clippy::integer_arithmetic,
+    clippy::arithmetic_side_effects,
     clippy::match_on_vec_items,
     clippy::match_wild_err_arm,
     clippy::missing_panics_doc,

@@ -1,12 +1,14 @@
 use std::fmt::Debug;
 
-///! Base utility parsers, used by both text and markdown parsers
+// Base utility parsers, used by both text and markdown parsers
 use nom::{
     bytes::complete::tag,
     error::{ErrorKind, ParseError},
     sequence::delimited,
     IResult,
 };
+
+use crate::parser::utils::is_white_space;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum CustomError<I> {
@@ -57,18 +59,6 @@ impl<I, T, E: Debug> IntoCustomError<I, T> for Result<T, E> {
     }
 }
 
-pub(crate) fn is_white_space(c: char) -> bool {
-    matches!(c, '\n' | '\r' | '\t' | ' ')
-}
-
-pub(crate) fn is_not_white_space(c: char) -> bool {
-    !is_white_space(c)
-}
-
-pub(crate) fn is_white_space_but_not_linebreak(c: char) -> bool {
-    matches!(c, '\t' | ' ')
-}
-
 /// delimited no whitespace start or end
 pub(crate) fn direct_delimited<'a>(
     input: &'a str,
@@ -97,3 +87,9 @@ impl From<PropertiesError> for Err<CustomError<I>> {
     }
 }
 */
+/*
+impl From<nom::Err<nom::err::Error<I>> for nom::Err<CustomError<I>> {
+    fn from(input: I, code: ErrorKind) -> nom::Err<CustomError<I>> {
+        nom::Err(CustomError::Nom(input, code)
+    }
+}*/

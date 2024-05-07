@@ -1,0 +1,20 @@
+Let's add some more links just for testing and benching:
+
+these are some IPv6 links:
+
+gopher://[::1]/
+https://[::1]/سلام
+https://[2345:0425:2CA1:0000:0000:0567:5673:23b5]/hello_world
+https://[2345:425:2CA1:0:0:0567:5673:23b5]/hello_world
+
+an IPvfuture link:
+ftp://mrchickenkiller@[vA.A]/var/log/boot.log
+
+some normal links:
+
+https://www.ietf.org/rfc/rfc3987.txt
+https://iamb.chat/messages/index.html
+https://github.com/deltachat/message-parser/issues/67
+https://far.chickenkiller.com
+gopher://republic.circumlunar.space
+https://far.chickenkiller.com/religion/a-god-who-does-not-care/

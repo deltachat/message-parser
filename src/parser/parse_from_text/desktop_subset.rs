@@ -1,7 +1,7 @@
 //! desktop subset of markdown, becase this way we can already use the punycode detection of this crate
 //! and also we can keep delimited and labled links in desktop
 
-use super::base_parsers::*;
+use super::base_parsers::CustomError;
 use super::markdown_elements::{delimited_email_address, delimited_link, labeled_link};
 use super::text_elements::parse_text_element;
 use super::Element;
