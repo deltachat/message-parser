@@ -650,14 +650,13 @@ fn test_delimited_link_example() {
             "This is an my site: <https://delta.chat/en/help?hi=5&e=4#section2.0>\nVisit me there"
         ),
         vec![
-            Text("This is an my site: <"),
+            Text("This is an my site: "),
             Link {
                 destination: https_link_no_puny(
                     "https://delta.chat/en/help?hi=5&e=4#section2.0",
                     "delta.chat"
                 )
             },
-            Text(">"),
             Linebreak,
             Text("Visit me there")
         ]

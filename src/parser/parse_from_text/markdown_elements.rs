@@ -94,14 +94,7 @@ pub(crate) fn delimited_email_address(input: &str) -> IResult<&str, Element, Cus
 
 // <https://link>
 pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, content): (&str, &str) = delimited(tag("<"), is_not(">"), tag(">"))(input)?;
-    if content.is_empty() {
-        return Err(nom::Err::Error(CustomError::NoContent));
-    }
-    let (rest, destination) = LinkDestination::parse(input)?;
-    if !rest.is_empty() {
-        return Err(nom::Err::Error(CustomError::UnexpectedContent));
-    }
+    let (input, (_, destination, _)): (&str, (&str, LinkDestination, &str)) = tuple((tag("<"), LinkDestination::parse_labelled , tag(">")))(input)?;
     Ok((input, Element::Link { destination }))
 }
 
