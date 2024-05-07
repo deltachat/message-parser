@@ -13,6 +13,18 @@ export function parse_text(s: string, enable_markdown: boolean): any;
 * @returns {any}
 */
 export function parse_desktop_set(s: string): any;
+/**
+* returns first emoji from text if text begins with an emoji
+* @param {string} input
+* @returns {string | undefined}
+*/
+export function get_first_emoji(input: string): string | undefined;
+/**
+* If string contains only emojis count the emojis otherwise retuns null
+* @param {string} input
+* @returns {number | undefined}
+*/
+export function count_emojis_if_only_contains_emoji(input: string): number | undefined;
 
 export type PunycodeWarning = {
   original_hostname: string;
@@ -49,8 +61,12 @@ export interface InitOutput {
   readonly memory: WebAssembly.Memory;
   readonly parse_text: (a: number, b: number, c: number) => number;
   readonly parse_desktop_set: (a: number, b: number) => number;
+  readonly get_first_emoji: (a: number, b: number, c: number) => void;
+  readonly count_emojis_if_only_contains_emoji: (a: number, b: number, c: number) => void;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+  readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
+  readonly __wbindgen_free: (a: number, b: number, c: number) => void;
 }
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;
