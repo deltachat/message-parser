@@ -2,7 +2,7 @@ use nom::{
     bytes::complete::{is_not, tag, take, take_while},
     character::complete::alphanumeric1,
     combinator::{opt, peek, recognize},
-    sequence::delimited,
+    sequence::{delimited, tuple},
     IResult,
 };
 
@@ -94,7 +94,8 @@ pub(crate) fn delimited_email_address(input: &str) -> IResult<&str, Element, Cus
 
 // <https://link>
 pub(crate) fn delimited_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, (_, destination, _)): (&str, (&str, LinkDestination, &str)) = tuple((tag("<"), LinkDestination::parse_labelled , tag(">")))(input)?;
+    let (input, (_, destination, _)): (&str, (&str, LinkDestination, &str)) =
+        tuple((tag("<"), LinkDestination::parse_labelled, tag(">")))(input)?;
     Ok((input, Element::Link { destination }))
 }
 
