@@ -41,6 +41,7 @@ Make email addresses clickable, opens the chat with that contact and creates it 
 Make URLs clickable.
 
 - detect all valid hyperlink URLs that have the `://` (protocol://host).
+  - according to [RFC3987](https://www.rfc-editor.org/rfc/rfc3987) and [RFC3988](https://www.rfc-editor.org/rfc/rfc3988)
 
 - other links like `mailto:` (note there is just a single `:`, no `://`) will get separate parsing that includes a whitelisted protocol name, otherwise there will likely be unexpected behavior if user types `hello:world` - will be recognized as link.
 
