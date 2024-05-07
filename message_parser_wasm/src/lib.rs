@@ -59,3 +59,15 @@ export type ParsedElement =
       c: { label: ParsedElement[]; destination: LinkDestination };
     };
 "#;
+
+/// returns first emoji from text if text begins with an emoji
+#[wasm_bindgen]
+pub fn get_first_emoji(input: &str) -> Option<String> {
+    deltachat_message_parser::parser::is_emoji::get_first_emoji(input).map(|s| s.to_owned())
+}
+
+/// If string contains only emojis count the emojis otherwise retuns null
+#[wasm_bindgen]
+pub fn count_emojis_if_only_contains_emoji(input: &str) -> Option<u32> {
+    deltachat_message_parser::parser::is_emoji::count_emojis_if_only_contains_emoji(input)
+}
