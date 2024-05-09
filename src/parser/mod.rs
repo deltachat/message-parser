@@ -17,6 +17,11 @@ pub enum Element<'a> {
     Text(&'a str),
     /// #hashtag
     Tag(&'a str),
+    /// [label](#tag)
+    LabelledTag {
+        label: Box<Element<'a>>,
+        tag: &'a str
+    },
     /// Represents a linebreak - \n
     Linebreak,
     Link {

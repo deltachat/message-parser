@@ -174,6 +174,34 @@ fn persian_hashtag_with_underline() {
 }
 
 #[test]
+fn labelled_hashtag() {
+    let input = "[Hello](#hello) #world";
+
+    assert_eq!(
+        parse_only_text(input),
+        vec![
+            LabelledTag {
+                label: vec![Text("Hello")],
+                tag: "#hello",
+            },
+            Tag("#world"),
+        ]
+    );
+    
+    let input_bold = "[**Hello**](#hi) ";
+    assert_eq!(
+        parse_only_text(input_bold),
+        vec![
+            LaballedTag {
+                label: vec![Bold(vec![Text(Hello)])],
+                tag: "#hi",
+            },
+            Text(" ")
+        ]
+    );
+}
+
+#[test]
 fn email_address_standalone() {
     let test_cases = vec![
         "message.parser@example.com",

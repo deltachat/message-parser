@@ -9,7 +9,7 @@ use nom::{
         streaming::take_till1,
     },
     character::complete::char,
-    combinator::{peek, recognize, verify},
+    combinator::{peek, recognize, verify, consumed},
     sequence::tuple,
     AsChar, IResult, Offset, Slice,
 };
@@ -253,6 +253,20 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
     }
 }
 
+fn labelled_tag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, label) = delimited(char('['), is_not("["), char(']'))(input)?;
+    let (_, label) = parse_text_element(label, None)?;
+    let (input, tag) = delimited(char('('), is_not("("), char(')'))(input)?;
+    let (_, tag) = consumed(hashtag)(tag)?;
+    Ok((
+            input,
+            Element::LabelledTag {
+                label: Box::new(label),
+                tag
+            }
+    ))
+}
+
 pub(crate) fn parse_text_element(
     input: &str,
     prev_char: Option<char>,
@@ -265,6 +279,8 @@ pub(crate) fn parse_text_element(
     // text elements parsers MUST NOT call the parser for markdown elements internally
 
     if let Ok((i, elm)) = hashtag(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = labelled_tag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = {
         if prev_char == Some(' ') || prev_char.is_none() {
