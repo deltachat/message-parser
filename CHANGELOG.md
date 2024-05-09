@@ -2,11 +2,22 @@
 
 ## Unreleased
 
+## 0.10.0 - Specification compliant detection for internationalized links
+
 ### Added
 - Add new methods for working with emojis (they are standalone helper functions and not part of message parsing):
   - `parser::is_emoji::emoji`(rust only) - nom parser that eats one emoji
   - `parser::is_emoji::get_first_emoji(text)` - get first emoji if text begins with an emoji
   - `parser::is_emoji::count_emojis_if_only_contains_emoji(text)` - counts emojis in texts that contain only emojis
+- Parse IRI links (Links that contain non ASCII characters in location part) - link parsing is now RFC3987 and RFC3988 compliant.
+
+### Changed
+- upgrade rust toolchain to 1.77.2
+- improved example page (added example text)
+
+### Fixed
+- fix absolute unix paths being detected as bot commands suggestions
+- fix parenthesis in target of labeled link
 
 ## 0.9.0 - Improve BotCommandSuggestion Parsing
 

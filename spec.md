@@ -73,7 +73,7 @@ On click, the command gets prefilled as the draft, so it can be easily send.
 Also if the draft is not empty it should ask before replacing it.
 
 ```regex
-/(?<=^|\\s)/[a-zA-Z][a-zA-Z@\\d_/.-]{0,254}/
+/(?<=^|\\s)//[a-zA-Z][a-zA-Z@\\d_.-]{0,254}/
 ```
 
 <a name="hashtag" id="hashtag"></a>
