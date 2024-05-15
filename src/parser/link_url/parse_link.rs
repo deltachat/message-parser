@@ -420,7 +420,7 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
     if !is_allowed_generic_scheme(scheme) {
         return Err(nom::Err::Error(CustomError::InvalidLink));
     }
-    let (input, colon) = char(':')(input)?;
+    let (input, _colon) = char(':')(input)?;
     let (input, rest) = take_while1(is_not_white_space)(input)?;
     let len = scheme.len().saturating_add(rest.len()).saturating_add(1);
     if let Some(target) = i.get(0..len) {
