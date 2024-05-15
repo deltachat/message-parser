@@ -45,20 +45,12 @@ fn basic_parsing() {
         assert_eq!(rest.len(), 0);
         assert_eq!(input, &link_destination.target);
     }
-
-    }
+}
 
 #[test]
 fn bare_scheme_no_parse() {
     // bare scheme shouldn't be linkified
-    let bare = vec![
-        "tel",
-        "tel:",
-        "bitcoin:",
-        "mailto",
-        "https://",
-        "http://"
-    ];
+    let bare = vec!["tel", "tel:", "bitcoin:", "mailto", "https://", "http://"];
 
     for input in bare {
         let result = LinkDestination::parse(input);
