@@ -6,7 +6,7 @@ The specification can be found in [spec.md](./spec.md).
 
 WASM Demo: <https://deltachat.github.io/message-parser/>
 
-## Idea behind it
+## The idea behind it
 
 Have the same rich message parsing on all platforms.
 
@@ -20,9 +20,9 @@ that can then be displayed by the UIs how they see fit, for desktop it will be c
 - **many** test cases
 - aim to be fast - so also benchmarks to make sure the lib stays fast enough
 
-## Recomendations:
+## Recomendations
 
-If used for message parsing, don't parse messages that are over `10 000` chars in size to ensure performance stays excelent. (the lib could and should support more than that and should aim to be fast enough for it, but on slow devices or transpiled to wasm or asmjs limiting it makes sense to avoid laggy/freezed interface)
+If used for message parsing, don't parse messages that are over `10 000` chars in size to ensure performance stays excellent. (the lib could and should support more than that and should aim to be fast enough for it, but on slow devices or transpiled to wasm or asmjs limiting it makes sense to avoid laggy/freezed interface)
 
 ### Benchmarking:
 
@@ -37,6 +37,20 @@ cargo criterion
 ```
 
 docs about benchmarking: https://bheisler.github.io/criterion.rs/book/criterion_rs.html
+
+### Changing CPU power settings for consistent results
+
+These days most CPUs change their performance according to some rules to save power.
+To produce consistent benchmark results, CPU performance must not change between benchmarks. There are various ways to achieve this.
+If you've got a laptop, the first step might be connecting the AC adapter to ensure your laptop won't go on power saving mode and thus changing the 
+CPU frequency. The next step is to change CPU frequency to a constant value *under the maximum frequency CPU can handle*. Because the CPUs usually can't handle the maximum possible frequency on all cores.
+
+On Linux, you can set the CPU frequency using `cpupower` utility:
+
+```sh
+cpupower frequency-set --min 3500 --max 3500 # this to set maximum and minimum to the same value
+cpupower frequency-set -f 3500 # set frequency explicitly if the kernel module is available
+```
 
 ## References
 
