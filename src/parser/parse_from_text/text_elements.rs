@@ -5,12 +5,12 @@ use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while, take_while1},
+        complete::{tag, take, take_while, take_while1, is_not},
         streaming::take_till1,
     },
     character::complete::char,
     combinator::{peek, recognize, verify, consumed},
-    sequence::tuple,
+    sequence::{tuple, delimited},
     AsChar, IResult, Offset, Slice,
 };
 
@@ -254,17 +254,35 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
 }
 
 fn labelled_tag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, label) = delimited(char('['), is_not("["), char(']'))(input)?;
-    let (_, label) = parse_text_element(label, None)?;
-    let (input, tag) = delimited(char('('), is_not("("), char(')'))(input)?;
-    let (_, tag) = consumed(hashtag)(tag)?;
-    Ok((
-            input,
-            Element::LabelledTag {
-                label: Box::new(label),
-                tag
-            }
-    ))
+    let (input, label) = delimited(
+        char('['),
+        take_while1(|c| !matches!(c, '[' | ']')),
+        char(']')
+    )(input)?;
+    println!("Label: {label}");
+    let mut remaining = label;
+    let mut elements: Vec<Element> = vec![];
+    while let Ok((remaining, elm)) = parse_text_element(label, None) {
+        elements.push(elm); 
+    }
+    println!("Elements: {:?}", elements);
+    let (input, tag) = delimited(
+        char('('),
+        take_while1(|c| !matches!(c, '(' | ')')),
+        char(')')
+    )(input)?;
+    let (_, (consumed, _output)) = consumed(hashtag)(tag)?;
+    if consumed == tag {
+        Ok((
+                input,
+                Element::LabelledTag {
+                    label: elements,
+                    tag: consumed,
+                }
+        ))
+    } else {
+        Err(nom::Err::Error(CustomError::UnexpectedContent))
+    }
 }
 
 pub(crate) fn parse_text_element(
@@ -277,10 +295,12 @@ pub(crate) fn parse_text_element(
     //
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
-
-    if let Ok((i, elm)) = hashtag(input) {
+    {
+        println!("{:?}", labelled_tag(input));
+    }
+    if let Ok((i, elm)) = labelled_tag(input) {
         Ok((i, elm))
-    } else if let Ok((i, elm)) = labelled_tag(input) {
+    } else if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = {
         if prev_char == Some(' ') || prev_char.is_none() {
