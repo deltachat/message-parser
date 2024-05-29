@@ -78,7 +78,7 @@ fn eat_markdown_label_text(input: &str) -> IResult<&str, (), CustomError<&str>> 
     Ok((remaining, ()))
 }
 
-/// Consumes text until another parser of [parse_label_element] works again
+/// Consumes text until another parser of [parse_markdown_label_element] works again
 ///
 /// used as last parser, if the others do not consume the input it consumes the input until another parser works again
 /// (uses whitespace seperation to make the parsing faster)
