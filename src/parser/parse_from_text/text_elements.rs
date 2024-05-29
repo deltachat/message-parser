@@ -9,12 +9,12 @@ use nom::{
         streaming::take_till1,
     },
     character::complete::char,
-    combinator::{peek, recognize, verify},
-    sequence::tuple,
+    combinator::{consumed, peek, recognize, verify},
+    sequence::{delimited, tuple},
     AsChar, IResult, Offset, Slice,
 };
 
-use super::base_parsers::CustomError;
+use super::{base_parsers::CustomError, parse_only_text};
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -89,143 +89,6 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     }
 }
 
-/*
-fn not_link_part_char(c: char) -> bool {
-    !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
-}
-
-fn link(input: &str) -> IResult<&str, (), CustomError<&str>> {
-    let (input, _) = take_while1(link_scheme)(input)?;
-}
-
-/// rough recognition of an link, results gets checked by a real link parser
-fn link_intern(input: &str) -> IResult<&str, (), CustomError<&str>> {
-    let (input, _) = take_while1(not_link_part_char)(input)?;
-    let (input, _) = tag(":")(input)?;
-    let i = <&str>::clone(&input);
-    let (remaining, consumed) = take_while1(is_not_white_space)(i)?;
-
-    let mut parentheses_count = 0usize; // ()
-    let mut curly_brackets_count = 0usize; // {}
-    let mut brackets_count = 0usize; // []
-    let mut angle_brackets = 0usize; // <>
-
-    let mut alternative_offset = None;
-    for (i, char) in consumed.chars().enumerate() {
-        match char {
-            '(' => {
-                parentheses_count = parentheses_count.saturating_add(1);
-                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
-                if (<&str>::clone(&consumed)).slice(i..).find(')').is_none() {
-                    alternative_offset = Some(i);
-                    break;
-                }
-            }
-            '{' => {
-                curly_brackets_count = curly_brackets_count.saturating_add(1);
-                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
-                if (<&str>::clone(&consumed)).slice(i..).find('}').is_none() {
-                    alternative_offset = Some(i);
-                    break;
-                }
-            }
-            '[' => {
-                brackets_count = brackets_count.saturating_add(1);
-                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
-                if (<&str>::clone(&consumed)).slice(i..).find(']').is_none() {
-                    alternative_offset = Some(i);
-                    break;
-                }
-            }
-            '<' => {
-                angle_brackets = angle_brackets.saturating_add(1);
-                // if there is no closing bracket in the link, then don't take the bracket as a part of the link
-                if (<&str>::clone(&consumed)).slice(i..).find('>').is_none() {
-                    alternative_offset = Some(i);
-                    break;
-                }
-            }
-            ')' => {
-                if parentheses_count == 0 {
-                    alternative_offset = Some(i);
-                    break;
-                } else {
-                    parentheses_count = parentheses_count.saturating_sub(1);
-                }
-            }
-            '}' => {
-                if curly_brackets_count == 0 {
-                    alternative_offset = Some(i);
-                    break;
-                } else {
-                    curly_brackets_count = curly_brackets_count.saturating_sub(1);
-                }
-            }
-            ']' => {
-                if brackets_count == 0 {
-                    alternative_offset = Some(i);
-                    break;
-                } else {
-                    brackets_count = brackets_count.saturating_sub(1);
-                }
-            }
-            '>' => {
-                if angle_brackets == 0 {
-                    alternative_offset = Some(i);
-                    break;
-                } else {
-                    angle_brackets = angle_brackets.saturating_sub(1);
-                }
-            }
-            _ => continue,
-        }
-    }
-
-    if let Some(offset) = alternative_offset {
-        let remaining = input.slice(offset..);
-        Ok((remaining, ()))
-    } else {
-        Ok((remaining, ()))
-    }
-}
-
-pub(crate) fn link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    // basically
-    //let (input, content) = recognize(link_intern)(input)?;
-    // but don't eat the last char if it is one of these: `.,;:`
-    let i = <&str>::clone(&input);
-    let i2 = <&str>::clone(&input);
-    let i3 = <&str>::clone(&input);
-    let (input, content) = match link_intern(i) {
-        Ok((remaining, _)) => {
-            let index = i2.offset(remaining);
-            let consumed = i2.slice(..index);
-            match consumed.chars().last() {
-                Some(c) => match c {
-                    '.' | ',' | ':' | ';' => {
-                        let index = input.offset(remaining).saturating_sub(1);
-                        let consumed = i3.slice(..index);
-                        let remaining = input.slice(index..);
-                        Ok((remaining, consumed))
-                    }
-                    _ => Ok((remaining, consumed)),
-                },
-                _ => Ok((remaining, consumed)),
-            }
-        }
-        Err(e) => Err(e),
-    }?;
-
-    // check if result is valid link
-    let (remainder, destination) = LinkDestination::parse_standalone_with_whitelist(content)?;
-
-    if remainder.is_empty() {
-        Ok((input, Element::Link { destination }))
-    } else {
-        Err(nom::Err::Error(CustomError::InvalidLink))
-    }
-}
-*/
 fn is_allowed_bot_cmd_suggestion_char(char: char) -> bool {
     match char {
         '@' | '\\' | '_' | '.' | '-' | '/' => true,
@@ -253,6 +116,32 @@ fn bot_command_suggestion(input: &str) -> IResult<&str, Element, CustomError<&st
     }
 }
 
+fn labelled_tag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, label) = delimited(
+        char('['),
+        take_while1(|c| !matches!(c, '[' | ']')),
+        char(']'),
+    )(input)?;
+    let elements: Vec<Element> = parse_only_text(label);
+    let (input, tag) = delimited(
+        char('('),
+        take_while1(|c| !matches!(c, '(' | ')')),
+        char(')'),
+    )(input)?;
+    let (_, (consumed, _output)) = consumed(hashtag)(tag)?;
+    if consumed == tag {
+        Ok((
+            input,
+            Element::LabelledTag {
+                label: elements,
+                tag: consumed,
+            },
+        ))
+    } else {
+        Err(nom::Err::Error(CustomError::UnexpectedContent))
+    }
+}
+
 pub(crate) fn parse_text_element(
     input: &str,
     prev_char: Option<char>,
@@ -263,8 +152,12 @@ pub(crate) fn parse_text_element(
     //
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
-
-    if let Ok((i, elm)) = hashtag(input) {
+    {
+        //println!("{:?}", labelled_tag(input));
+    }
+    if let Ok((i, elm)) = labelled_tag(input) {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = hashtag(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = {
         if prev_char == Some(' ') || prev_char.is_none() {

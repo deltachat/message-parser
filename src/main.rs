@@ -1,6 +1,6 @@
 use std::io::{self, Read, Write};
 
-use parser::parse_markdown_text;
+use parser::parse_only_text;
 #[allow(dead_code)]
 mod parser;
 extern crate nom;
@@ -13,7 +13,7 @@ fn main() -> io::Result<()> {
 
     //println!("input: {:?}", buffer);
 
-    let output = parse_markdown_text(&buffer);
+    let output = parse_only_text(&buffer);
 
     io::stdout().write_all(format!("output: {:?}", output).as_bytes())?;
 

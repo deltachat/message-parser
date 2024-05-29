@@ -23,6 +23,7 @@
   - [Delimited Email addresses: `<hello@delta.chat>`](#delimited-email-addresses)
   - [Delimited Links: `<http://example.org>`](#delimited-links)
   - [Labeled Links: `[Name](url)`](#labled-links)
+  - [Labeled hashtags: `[Tag][#tag]`](#labeled-tags)
 
 ## Text Enhancements
 
@@ -181,6 +182,13 @@ Also show the URL as encode puny code to make puny code attacks useless.
 Optionally, a client can implement a system to trust a domain (a "don't ask again for links on this domain" checkbox in the confirmation dialog)
 
 URL parsing allows all valid URLs, no restrictions on schemes, no whitelist is needed, because the format already specifies that it is a link.
+
+
+<a name="labeled-tags" />
+
+### Labelled hashtags
+
+The idea is to have hashtags but labelled with an alternative text. This feature is very unique and less seen in other IMs.
 
 ## Ideas For The Future:
 
