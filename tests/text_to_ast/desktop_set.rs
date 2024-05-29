@@ -355,7 +355,7 @@ fn labeled_link_should_not_work() {
             "[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"
         ),
         vec![LabeledLink {
-            label: vec![Text("rich content "), Bold(vec![Text("bold")])],
+            label: vec![Text("rich content **bold**")],
             destination: https_link_no_puny(
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat",
@@ -403,6 +403,36 @@ fn inline_link_do_not_eat_last_char_if_it_is_special() {
         parse_desktop_set("https://delta.chat/page.hi"),
         vec![Link {
             destination: https_link_no_puny("https://delta.chat/page.hi", "delta.chat")
+        }]
+    );
+}
+
+#[test]
+fn labeled_link() {
+    assert_eq!(
+        parse_desktop_set("[a link](https://delta.chat/en/help?hi=5&e=4#section2.0)"),
+        vec![LabeledLink {
+            label: vec![Text("a link")],
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
+        }]
+    );
+}
+
+#[test]
+fn labeled_link_no_markdown_in_desktop_set() {
+    assert_ne!(
+        parse_desktop_set(
+            "[rich content **bold**](https://delta.chat/en/help?hi=5&e=4#section2.0)"
+        ),
+        vec![LabeledLink {
+            label: vec![Text("rich content "), Bold(vec![Text("bold")])],
+            destination: https_link_no_puny(
+                "https://delta.chat/en/help?hi=5&e=4#section2.0",
+                "delta.chat"
+            ),
         }]
     );
 }
