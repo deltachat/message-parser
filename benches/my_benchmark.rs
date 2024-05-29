@@ -21,6 +21,15 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         "🍏",
         "lorem",
         "😀",
+        "\u{2755}",
+        "\u{2655}",
+        "\u{2000}",
+        "\u{25aa}",
+        "\u{2934}",
+        "\u{2195}",
+        "🆎",
+        "🎓",
+        "🟰",
     ];
 
     c.bench_function("only_text_lorem_ipsum.txt", |b| {
