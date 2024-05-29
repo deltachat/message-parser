@@ -846,3 +846,17 @@ fn labeled_link_should_not_allow_email_in_bold() {
         ]
     );
 }
+
+#[test]
+fn labeled_link_should_not_allow_codeblock() {
+    assert_ne!(
+        parse_markdown_text("[```\nhello world\n```](https://delta.chat)"),
+        vec![
+            LabeledLink {
+                label: vec![Text("```\nhello world\n```")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}

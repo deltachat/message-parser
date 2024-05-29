@@ -436,3 +436,17 @@ fn labeled_link_no_markdown_in_desktop_set() {
         }]
     );
 }
+
+#[test]
+fn labeled_link_should_not_allow_codeblock() {
+    assert_ne!(
+        parse_desktop_set("[```\nhello world\n```](https://delta.chat)"),
+        vec![
+            LabeledLink {
+                label: vec![Text("```\nhello world\n```")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
