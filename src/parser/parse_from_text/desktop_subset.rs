@@ -20,9 +20,9 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     if raw_label.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    
+
     // in desktop set there is no element that can appear inside of a lablel
-    let label = vec![Element::Text(raw_label)]; 
+    let label = vec![Element::Text(raw_label)];
 
     let (input, (_, destination, _)) =
         tuple((tag("("), LinkDestination::parse_labelled, tag(")")))(input)?;

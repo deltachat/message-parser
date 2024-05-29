@@ -4,7 +4,13 @@ use nom::{
     IResult,
 };
 
-use crate::parser::{parse_from_text::{base_parsers::{direct_delimited, CustomError}, markdown_elements::inline_code}, Element};
+use crate::parser::{
+    parse_from_text::{
+        base_parsers::{direct_delimited, CustomError},
+        markdown_elements::inline_code,
+    },
+    Element,
+};
 
 /// Parsers for label in labelled links and later also labled hashtags
 /// parse elements inside of label in markdown set

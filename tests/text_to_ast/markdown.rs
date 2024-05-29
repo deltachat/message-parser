@@ -798,7 +798,9 @@ fn labeled_link_should_not_allow_hashtag_element() {
 #[test]
 fn labeled_link_should_not_allow_email() {
     assert_eq!(
-        parse_markdown_text("you can find the details [here delta@example.com](https://delta.chat/en/help)."),
+        parse_markdown_text(
+            "you can find the details [here delta@example.com](https://delta.chat/en/help)."
+        ),
         vec![
             Text("you can find the details "),
             LabeledLink {
@@ -813,7 +815,9 @@ fn labeled_link_should_not_allow_email() {
 #[test]
 fn labeled_link_should_allow_bold() {
     assert_eq!(
-        parse_markdown_text("you can find the details [here **bold**](https://delta.chat/en/help)."),
+        parse_markdown_text(
+            "you can find the details [here **bold**](https://delta.chat/en/help)."
+        ),
         vec![
             Text("you can find the details "),
             LabeledLink {
@@ -828,7 +832,9 @@ fn labeled_link_should_allow_bold() {
 #[test]
 fn labeled_link_should_not_allow_email_in_bold() {
     assert_ne!(
-        parse_markdown_text("you can find the details [here **email@example.com**](https://delta.chat/en/help)."),
+        parse_markdown_text(
+            "you can find the details [here **email@example.com**](https://delta.chat/en/help)."
+        ),
         vec![
             Text("you can find the details"),
             Bold(vec![Text("email@example.com")]),
