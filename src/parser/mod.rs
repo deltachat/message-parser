@@ -20,7 +20,7 @@ pub enum Element<'a> {
     /// [label](#tag)
     LabelledTag {
         label: Vec<Element<'a>>,
-        tag: &'a str
+        tag: &'a str,
     },
     /// Represents a linebreak - \n
     Linebreak,

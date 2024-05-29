@@ -9,15 +9,12 @@ use nom::{
         streaming::take_till1,
     },
     character::complete::char,
-    combinator::{peek, recognize, verify, consumed},
-    sequence::{tuple, delimited},
+    combinator::{consumed, peek, recognize, verify},
+    sequence::{delimited, tuple},
     AsChar, IResult, Offset, Slice,
 };
 
-use super::{
-    parse_only_text,
-    base_parsers::CustomError,
-};
+use super::{base_parsers::CustomError, parse_only_text};
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -123,22 +120,22 @@ fn labelled_tag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, label) = delimited(
         char('['),
         take_while1(|c| !matches!(c, '[' | ']')),
-        char(']')
+        char(']'),
     )(input)?;
     let elements: Vec<Element> = parse_only_text(label);
     let (input, tag) = delimited(
         char('('),
         take_while1(|c| !matches!(c, '(' | ')')),
-        char(')')
+        char(')'),
     )(input)?;
     let (_, (consumed, _output)) = consumed(hashtag)(tag)?;
     if consumed == tag {
         Ok((
-                input,
-                Element::LabelledTag {
-                    label: elements,
-                    tag: consumed,
-                }
+            input,
+            Element::LabelledTag {
+                label: elements,
+                tag: consumed,
+            },
         ))
     } else {
         Err(nom::Err::Error(CustomError::UnexpectedContent))

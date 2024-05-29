@@ -188,7 +188,7 @@ fn labelled_hashtag() {
             Tag("#world"),
         ]
     );
-    
+
     let input_bold = "[**Hello**](#hi) ";
     assert_eq!(
         parse_only_text(input_bold),
