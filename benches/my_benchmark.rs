@@ -1,10 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use deltachat_message_parser::parser::{
-    parse_desktop_set,
-    parse_markdown_text,
-    parse_only_text,
+    is_emoji::get_first_emoji, parse_desktop_set, parse_markdown_text, parse_only_text,
     LinkDestination,
-    is_emoji::get_first_emoji,
 };
 
 pub fn criterion_benchmark(c: &mut Criterion) {
