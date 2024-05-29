@@ -12,9 +12,9 @@ use crate::parser::{
     Element,
 };
 
-/// Parsers for label in labelled links and later also labled hashtags
+/// Parsers for label in labelled links and later also labeled hashtags
 /// parse elements inside of label in markdown set
-pub(crate) fn parse_label_elements(input: &str) -> std::vec::Vec<Element> {
+pub(crate) fn parse_label_elements(input: &str) -> Vec<Element> {
     let mut result = Vec::new();
     let mut remaining = input;
     // println!("p-{}", input);

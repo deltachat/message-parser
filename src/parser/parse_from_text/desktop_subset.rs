@@ -16,7 +16,7 @@ use super::Element;
 
 // [labeled](https://link)
 pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    let (input, raw_label): (&str, &str) = delimited(tag("["), is_not("]"), tag("]"))(input)?;
+    let (input, raw_label) = delimited(tag("["), is_not("]"), tag("]"))(input)?;
     if raw_label.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
