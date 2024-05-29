@@ -59,9 +59,9 @@ pub(crate) fn parse_markdown_label_element(
         Err(nom::Err::Error(CustomError::NoElement))
     }
 }
-/// consumes all text until [parse_label_element] works again, internal use text instead
+/// consumes all text until [parse_label_elements] works again, this method is only for internal use by [markdown_label_text]
 ///
-/// its output is useable on its own, always combinate this with [nom::combinator::recognize]
+/// its output is not useable on its own, always combinate this with [nom::combinator::recognize]
 fn eat_markdown_label_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {

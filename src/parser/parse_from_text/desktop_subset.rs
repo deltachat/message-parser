@@ -30,9 +30,9 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     Ok((input, Element::LabeledLink { label, destination }))
 }
 
-/// consumes all text until [parse_element] works again, internal use text instead
+/// consumes all text until [parse_element] works again, this method is only for internal use by [desktopset_text]
 ///
-/// its output is useable on its own, always combinate this with [nom::combinator::recognize]
+/// its output is not useable on its own, always combinate this with [nom::combinator::recognize]
 fn eat_desktopset_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {
