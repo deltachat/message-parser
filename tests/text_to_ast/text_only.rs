@@ -184,6 +184,7 @@ fn labelled_hashtag() {
                 label: vec![Text("Hello")],
                 tag: "#hello",
             },
+            Text(" "),
             Tag("#world"),
         ]
     );
@@ -193,26 +194,10 @@ fn labelled_hashtag() {
         parse_only_text(input_bold),
         vec![
             LabelledTag {
-                label: vec![Bold(vec![Text("Hello")])],
+                label: vec![Text("**Hello**")],
                 tag: "#hi",
             },
             Text(" ")
-        ]
-    );
-
-    let input_bold_and_italic = "Hello this is a [_labeled_ **hashtag**](#tag)";
-    assert_eq!(
-        parse_only_text(input_bold_and_italic),
-        vec![
-            Text("Hello this is a "),
-            LabelledTag {
-                label: vec![
-                    Italics(vec![Text("labeled")]),
-                    Text(" "),
-                    Bold(vec![Text("hashtag")]),
-                ],
-                tag: "#tag",
-            }
         ]
     );
 }

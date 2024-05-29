@@ -5,7 +5,7 @@ use super::hashtag_content_char_ranges::hashtag_content_char;
 use super::Element;
 use nom::{
     bytes::{
-        complete::{tag, take, take_while, take_while1, is_not},
+        complete::{tag, take, take_while, take_while1},
         streaming::take_till1,
     },
     character::complete::char,
@@ -14,7 +14,10 @@ use nom::{
     AsChar, IResult, Offset, Slice,
 };
 
-use super::base_parsers::CustomError;
+use super::{
+    parse_only_text,
+    base_parsers::CustomError,
+};
 
 fn linebreak(input: &str) -> IResult<&str, char, CustomError<&str>> {
     char('\n')(input)
@@ -122,13 +125,7 @@ fn labelled_tag(input: &str) -> IResult<&str, Element, CustomError<&str>> {
         take_while1(|c| !matches!(c, '[' | ']')),
         char(']')
     )(input)?;
-    println!("Label: {label}");
-    let mut remaining = label;
-    let mut elements: Vec<Element> = vec![];
-    while let Ok((remaining, elm)) = parse_text_element(label, None) {
-        elements.push(elm); 
-    }
-    println!("Elements: {:?}", elements);
+    let elements: Vec<Element> = parse_only_text(label);
     let (input, tag) = delimited(
         char('('),
         take_while1(|c| !matches!(c, '(' | ')')),
@@ -159,7 +156,7 @@ pub(crate) fn parse_text_element(
     // Also as this is the text element parser,
     // text elements parsers MUST NOT call the parser for markdown elements internally
     {
-        println!("{:?}", labelled_tag(input));
+        //println!("{:?}", labelled_tag(input));
     }
     if let Ok((i, elm)) = labelled_tag(input) {
         Ok((i, elm))
