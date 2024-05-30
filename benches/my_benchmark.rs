@@ -1,6 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use deltachat_message_parser::parser::{
-    parse_desktop_set, parse_markdown_text, parse_only_text, LinkDestination,
+    is_emoji::get_first_emoji, parse_desktop_set, parse_markdown_text, parse_only_text,
+    LinkDestination,
 };
 
 pub fn criterion_benchmark(c: &mut Criterion) {
@@ -8,6 +9,28 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let lorem_ipsum_txt = include_str!("lorem_ipsum.txt");
     let r10s_update_message = include_str!("r10s_update_message.txt");
     let links = include_str!("moar_links.txt");
+    let emojies = vec![
+        "not an emoji",
+        "\u{3299}\u{3300}",
+        "🟠",
+        "",
+        "🟠y",
+        "🍏",
+        "lorem",
+        "😀",
+        "\u{2755}",
+        "\u{2655}",
+        "\u{2000}",
+        "\u{25aa}",
+        "\u{2934}",
+        "\u{2195}",
+        "🆎",
+        "🎓",
+        "🟰",
+        "👨‍👩‍👧‍👧",
+        "👨‍👩‍👧‍👧👨‍👩‍👧‍👧👨‍👩‍👧‍👧👨‍👩‍👧‍👧",
+        "👸🏾",
+    ];
 
     c.bench_function("only_text_lorem_ipsum.txt", |b| {
         b.iter(|| parse_only_text(black_box(lorem_ipsum_txt)))
@@ -41,6 +64,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("parse_link_moar_links.txt", |b| {
         b.iter(|| LinkDestination::parse(black_box(links)))
+    });
+    c.bench_function("emoji", |b| {
+        b.iter(|| emojies.iter().map(|s| get_first_emoji(black_box(s))))
     });
 }
 
