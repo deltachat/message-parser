@@ -1,19 +1,38 @@
 //! desktop subset of markdown, becase this way we can already use the punycode detection of this crate
 //! and also we can keep delimited and labled links in desktop
-
-use super::base_parsers::CustomError;
-use super::markdown_elements::{delimited_email_address, delimited_link, labeled_link};
-use super::text_elements::parse_text_element;
-use super::Element;
 use nom::{
-    bytes::complete::take,
+    bytes::complete::{is_not, tag, take},
     combinator::{peek, recognize},
+    sequence::{delimited, tuple},
     IResult,
 };
 
-/// consumes all text until [parse_element] works again, internal use text instead
+use crate::parser::LinkDestination;
+
+use super::base_parsers::CustomError;
+use super::markdown_elements::{delimited_email_address, delimited_link};
+use super::text_elements::parse_text_element;
+use super::Element;
+
+// [labeled](https://link)
+pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, raw_label) = delimited(tag("["), is_not("]"), tag("]"))(input)?;
+    if raw_label.is_empty() {
+        return Err(nom::Err::Error(CustomError::NoContent));
+    }
+
+    // in desktop set there is no element that can appear inside of a lablel
+    let label = vec![Element::Text(raw_label)];
+
+    let (input, (_, destination, _)) =
+        tuple((tag("("), LinkDestination::parse_labelled, tag(")")))(input)?;
+
+    Ok((input, Element::LabeledLink { label, destination }))
+}
+
+/// consumes all text until [parse_element] works again, this method is only for internal use by [desktopset_text]
 ///
-/// its output is useable on its own, always combinate this with [nom::combinator::recognize]
+/// its output is not useable on its own, always combinate this with [nom::combinator::recognize]
 fn eat_desktopset_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {

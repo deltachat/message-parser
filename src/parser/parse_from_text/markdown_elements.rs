@@ -17,11 +17,14 @@ use crate::parser::{
     utils::{is_white_space, is_white_space_but_not_linebreak},
 };
 
-fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+mod label_elements;
+use label_elements::parse_label_elements;
+
+pub(crate) fn inline_code(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     delimited(tag("`"), is_not("`"), tag("`"))(input)
 }
 
-fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+pub(crate) fn code_block(input: &str) -> IResult<&str, Element, CustomError<&str>> {
     let (input, content): (&str, &str) = delimited(tag("```"), is_not("```"), tag("```"))(input)?;
 
     // parse language
@@ -105,7 +108,9 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     if raw_label.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    let label = parse_all(raw_label);
+    // the list of elements that can appear inside of a label is restricted
+    // clickable elements make no sense there.
+    let label = parse_label_elements(raw_label);
 
     let (input, (_, destination, _)) =
         tuple((tag("("), LinkDestination::parse_labelled, tag(")")))(input)?;
@@ -145,9 +150,9 @@ pub(crate) fn parse_element(
     }
 }
 
-/// consumes all text until [parse_element] works again, internal use text instead
+/// consumes all text until [parse_element] works again, this method is only for internal use by [markdown_text]
 ///
-/// its output is useable on its own, always combinate this with [nom::combinator::recognize]
+/// its output is not useable on its own, always combinate this with [nom::combinator::recognize]
 fn eat_markdown_text(input: &str) -> IResult<&str, (), CustomError<&str>> {
     let mut remaining = input;
     while !remaining.is_empty() {

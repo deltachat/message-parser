@@ -182,6 +182,14 @@ Optionally, a client can implement a system to trust a domain (a "don't ask agai
 
 URL parsing allows all valid URLs, no restrictions on schemes, no whitelist is needed, because the format already specifies that it is a link.
 
+The label can contain basic markdown elements (bold, italics), but no "complex" linkified elements such as hashtags, links and email addresses.
+
+- parsers that run for a label:
+  - (desktop set): none
+  - (markdown set): bold, italics, underline, code-inline
+- parsers that do not run for a label (just returned as part of Text element):
+  - hashtag, email, link, labeled link, delimited email & link, codeblock, mentions (basically everything clickable)
+
 ## Ideas For The Future:
 
 ### `:emoji:`

@@ -762,3 +762,101 @@ fn labeled_link_can_have_comma_or_dot_at_end() {
         ]
     );
 }
+
+#[test]
+fn labeled_link_should_not_allow_link_element() {
+    assert_eq!(
+        parse_markdown_text(
+            "you can find the details [here https://delta.chat](https://delta.chat/en/help)."
+        ),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here https://delta.chat")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_should_not_allow_hashtag_element() {
+    assert_eq!(
+        parse_markdown_text("you can find the details [here #42](https://delta.chat/en/help)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here #42")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_should_not_allow_email() {
+    assert_eq!(
+        parse_markdown_text(
+            "you can find the details [here delta@example.com](https://delta.chat/en/help)."
+        ),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here delta@example.com")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_should_allow_bold() {
+    assert_eq!(
+        parse_markdown_text(
+            "you can find the details [here **bold**](https://delta.chat/en/help)."
+        ),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here "), Bold(vec![Text("bold")])],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_should_not_allow_email_in_bold() {
+    assert_ne!(
+        parse_markdown_text(
+            "you can find the details [here **email@example.com**](https://delta.chat/en/help)."
+        ),
+        vec![
+            Text("you can find the details"),
+            Bold(vec![Text("email@example.com")]),
+            LabeledLink {
+                label: vec![Text("here delta@example.com")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_should_not_allow_codeblock() {
+    assert_ne!(
+        parse_markdown_text("[```\nhello world\n```](https://delta.chat)"),
+        vec![
+            LabeledLink {
+                label: vec![Text("```\nhello world\n```")],
+                destination: https_link_no_puny("https://delta.chat/en/help", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
