@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 0.11.0 - Bug fixes for Link Parsing
+
+### Fixed
+- fix: restrict elements that can appear inside a label for a labeled link ([issue #59](https://github.com/deltachat/message-parser/issues/59))
+- fix: Generic schemes were linkified even without content & also a lone http:// was linkified ([issue #71](https://github.com/deltachat/message-parser/issues/71))
+
 ## 0.10.0 - Specification compliant detection for internationalized links
 
 ### Added
