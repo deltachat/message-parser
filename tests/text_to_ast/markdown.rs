@@ -860,3 +860,24 @@ fn labeled_link_should_not_allow_codeblock() {
         ]
     );
 }
+
+#[test]
+fn extensive_italics() {
+    let input_output = vec![
+        ("*foo bar*", vec![Italics(vec![Text("foo bar")])]),
+        ("a * foo bar*", vec![Text("a * foo bar*")]),
+        ("a*\"foo\"*", vec![Text("a*\"foo\"*")]),
+        ("*$*alpha.", vec![Text("*$*alpha.")]),
+        ("foo*bar*", vec![Text("foo"), Italics(vec![Text("bar")])]),
+        ("_foo bar_", vec![Italics(vec![Text("foo bar")])]),
+        ("_ foo bar_", vec![Text("_ foo bar_")]),
+        ("foo_bar_", vec![Text("foo_bar_")]),
+        ("a_\"foo\"_", vec![Text("a_\"foo\"_")]),
+        ("foo-_(bar)_", vec![Text("foo-"), Italics(vec![Text("(bar)")])]),
+    ];
+
+    for (input, output) in input_output.iter() {
+        assert_eq!(parse_markdown_text(input), *output);
+    }
+
+}
