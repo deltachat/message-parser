@@ -1,5 +1,5 @@
 # This script is written by Farooq Karimi Zadeh to 
-# extract hashtag whitespace characters. A whitespace character is within Zs category
+# extract whitespace characters. A whitespace character is within Zs category
 
 from xml.etree import ElementTree
 from dataclasses import dataclass
