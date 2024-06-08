@@ -132,7 +132,9 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
     let userinfo = userinfo.unwrap_or("");
     let port = port.unwrap_or("");
-    let len = userinfo.len().saturating_add(port.len());
+    let len = userinfo.len()
+        .saturating_add(port.len());
+
     if let Some(out) = i.get(0..len) {
         Ok((input, (out, host, is_ipv6_or_future)))
     } else {
@@ -142,10 +144,10 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
 
 /// Consume an iuserinfo
 fn take_while_iuserinfo(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    alt((
-        recognize(many0(take_while_pct_encoded)),
-        take_while(is_iuserinfo_not_pct_encoded),
-    ))(input)
+    recognize(many1(alt((
+        recognize(many1(take_while_pct_encoded)),
+        take_while1(is_iuserinfo_not_pct_encoded),
+    ))))(input)
 }
 
 fn is_iuserinfo_not_pct_encoded(c: char) -> bool {

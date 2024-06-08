@@ -200,4 +200,5 @@ fn dclogin_link() {
     assert!(link_destination.punycode.is_none());
     assert_eq!(link_destination.scheme, "dclogin");
     assert_eq!(link_destination.target, link);
+    assert_eq!(link_destination.hostname, Some("nine.testrun.org"));
 }
