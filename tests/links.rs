@@ -48,6 +48,35 @@ fn basic_parsing() {
 }
 
 #[test]
+fn link_with_username() {
+    let link = "https://slaux@example.com";
+    let Ok((rest, link_destination)) = LinkDestination::parse(link) else {
+        panic!("Parsing {} as link failed", link);
+    };
+    
+    assert!(link_destination.punycode.is_none());
+    assert_eq!(rest.len(), 0);
+    assert_eq!(link_destination.scheme, "https");
+    assert_eq!(link_destination.target, "https://slaux@example.com");
+    assert_eq!(link_destination.hostname, Some("example.com"));
+
+}
+
+#[test]
+fn link_with_username_and_password() {
+    let link = "https://slaux:secret@example.com";
+    let Ok((rest, link_destination)) = LinkDestination::parse(link) else {
+        panic!("Parsing {} as link failed", link);
+    };
+    
+    assert!(link_destination.punycode.is_none());
+    assert_eq!(rest.len(), 0);
+    assert_eq!(link_destination.scheme, "https");
+    assert_eq!(link_destination.target, "https://slaux:secret@example.com");
+    assert_eq!(link_destination.hostname, Some("example.com"));
+}
+
+#[test]
 fn bare_scheme_no_parse() {
     // bare scheme shouldn't be linkified
     let bare = vec!["tel", "tel:", "bitcoin:", "mailto", "https://", "http://"];
@@ -158,4 +187,17 @@ fn generic_schemes() {
             hostname: None
         }
     );
+}
+
+
+#[test]
+fn dclogin_link() {
+    let link = "dclogin://example@nine.testrun.org?p=L%265j%3A%40g%3C3%5C%5Crr&v=1";
+    let Ok((rest, link_destination)) = LinkDestination::parse(link) else {
+        panic!("Cannot parse {} as link", link);
+    };
+    assert_eq!(rest.len(), 0);
+    assert!(link_destination.punycode.is_none());
+    assert_eq!(link_destination.scheme, "dclogin");
+    assert_eq!(link_destination.target, link);
 }
