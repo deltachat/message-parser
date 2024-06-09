@@ -14,7 +14,12 @@ use crate::parser::{
         text_elements::{email_address, parse_text_element},
         Element,
     },
-    utils::{is_white_space, is_white_space_but_not_linebreak},
+    utils::{
+        is_white_space,
+        is_white_space_but_not_linebreak,
+        is_unicode_white_space,
+        is_unicode_punctuation,
+    },
 };
 
 mod label_elements;
@@ -118,6 +123,32 @@ pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&s
     Ok((input, Element::LabeledLink { label, destination }))
 }
 
+
+/*
+ * For description on how these functions(parse_italics and parse_bold) work
+ * refer to this link: https://spec.commonmark.org/0.31.2/#emphasis-and-strong-emphasis
+ */
+fn parse_italics(input: &str, prev_char: Option<char>) -> IResult<&str, &str, CustomError<&str>> {
+    let (input_, (content, tag_str)) = direct_delimited(input, &["_", "*"][..])?;
+    let is_start_left_flanking: bool = 
+        b.starts_with(is_unicode_white_space) &&
+        (!b.starts_with(is_unicode_punctuation) ||
+         (b.starts_with(is_unicode_punctuation) &&
+          (prev_char.is_none() ||
+           is_unicode_punctuation(prev_char.unwrap()) ||
+           is_unicode_white_space(prev_char.unwrap()))));
+    // it is of great note here that order is very important. Iff prev_char.is_none() evals to
+    // false, this means it is a Some, and prev_char.unwrap() won't panic.
+    // On the other hand, iff it evals to true, the rest won't be run and again
+    // no panic happens.
+
+
+}
+
+fn parse_bold(input: &str, prev_char: Option<char>) -> IResult<&str, &str, CustomError<&str>> {
+
+}
+
 pub(crate) fn parse_element(
     input: &str,
     prev_char: Option<char>,
@@ -125,15 +156,11 @@ pub(crate) fn parse_element(
     // the order is important
     // generaly more specific parsers that fail/return fast should be in the front
     // But keep in mind that the order can also change how and if the parser works as intended
-    if let Ok((i, b)) = direct_delimited(input, "**") {
+    if let Ok((i, b)) = parse_bold(input, prev_char) {
         Ok((i, Element::Bold(parse_all(b))))
-    } else if let Ok((i, b)) = direct_delimited(input, "__") {
-        Ok((i, Element::Bold(parse_all(b))))
-    } else if let Ok((i, b)) = direct_delimited(input, "_") {
+    } else if let Ok((i, b)) = parse_italics(input, prev_char) {
         Ok((i, Element::Italics(parse_all(b))))
-    } else if let Ok((i, b)) = direct_delimited(input, "*") {
-        Ok((i, Element::Italics(parse_all(b))))
-    } else if let Ok((i, b)) = direct_delimited(input, "~~") {
+    } else if let Ok((i, (b, _tag_str))) = direct_delimited(input, &["~~"][..]) {
         Ok((i, Element::StrikeThrough(parse_all(b))))
     } else if let Ok((i, elm)) = code_block(input) {
         Ok((i, elm))

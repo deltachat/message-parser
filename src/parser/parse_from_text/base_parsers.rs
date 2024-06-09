@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 // Base utility parsers, used by both text and markdown parsers
 use nom::{
-    bytes::complete::tag,
+    bytes::complete::{tag, is_not},
     error::{ErrorKind, ParseError},
     sequence::delimited,
     IResult,
@@ -62,22 +62,29 @@ impl<I, T, E: Debug> IntoCustomError<I, T> for Result<T, E> {
 /// delimited no whitespace start or end
 pub(crate) fn direct_delimited<'a>(
     input: &'a str,
-    tag_str: &str,
-) -> IResult<&'a str, &'a str, CustomError<&'a str>> {
-    let (input, content): (&str, &str) = delimited(
-        tag(tag_str),
-        nom::bytes::complete::is_not(tag_str),
-        tag(tag_str),
-    )(input)?;
+    tag_strings: &[&str],
+) -> IResult<&'a str, (&'a str, &'a str), CustomError<&'a str>> {
+    let mut tag_strings = tag_strings.iter();
+    let (input, content, tag_str) = loop {
+        let tag_str = tag_strings.next();
+        if tag_str.is_none() {
+            return Err(nom::Err::Error(CustomError::NoElement));
+        }
+        let tag_str: &str = tag_str.unwrap();
+        let result: IResult<&str, &str> = delimited(
+            tag(tag_str),
+            is_not(tag_str),
+            tag(tag_str),
+        )(input);
+        if result.is_ok() {
+            let (input, content) = result.unwrap();
+            break (input, content, tag_str);
+        }
+    };
     if content.is_empty() {
         return Err(nom::Err::Error(CustomError::NoContent));
     }
-    if is_white_space(content.chars().next().into_result()?)
-        || is_white_space(content.chars().last().into_result()?)
-    {
-        return Err(nom::Err::Error(CustomError::InvalidWhiteSpaceFound));
-    }
-    Ok((input, content))
+    Ok((input, (content, tag_str)))
 }
 
 /*

@@ -3,6 +3,7 @@ pub mod is_emoji;
 pub mod link_url;
 pub mod parse_from_text;
 pub mod utils;
+pub mod unicode_ranges;
 
 pub use crate::parser::link_url::LinkDestination;
 
