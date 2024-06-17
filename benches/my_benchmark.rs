@@ -31,6 +31,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
         "👨‍👩‍👧‍👧👨‍👩‍👧‍👧👨‍👩‍👧‍👧👨‍👩‍👧‍👧",
         "👸🏾",
     ];
+    let hugetext = include_str!("hugetext.txt");
 
     c.bench_function("only_text_lorem_ipsum.txt", |b| {
         b.iter(|| parse_only_text(black_box(lorem_ipsum_txt)))
@@ -67,6 +68,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     });
     c.bench_function("emoji", |b| {
         b.iter(|| emojies.iter().map(|s| get_first_emoji(black_box(s))))
+    });
+    c.bench_function("huge text, test performance", |b| {
+        b.iter(|| parse_desktop_set(black_box(hugetext)))
     });
 }
 
