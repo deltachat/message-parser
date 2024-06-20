@@ -3,7 +3,7 @@
 // NOTE that they are sorted.
 // --Farooq fkz riseup.net
 //          farooqkz testrun.org
-pub const UNICODE_WHITESPACE_RANGES: [RangeInclusive<u32>; 339] =[
+pub const UNICODE_WHITESPACE_RANGES: [RangeInclusive<u32>; 339] = [
     0x21..=0x2f,
     0x3a..=0x40,
     0x5b..=0x60,

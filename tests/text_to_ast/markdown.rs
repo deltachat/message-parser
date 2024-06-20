@@ -873,11 +873,13 @@ fn extensive_italics() {
         ("_ foo bar_", vec![Text("_ foo bar_")]),
         ("foo_bar_", vec![Text("foo_bar_")]),
         ("a_\"foo\"_", vec![Text("a_\"foo\"_")]),
-        ("foo-_(bar)_", vec![Text("foo-"), Italics(vec![Text("(bar)")])]),
+        (
+            "foo-_(bar)_",
+            vec![Text("foo-"), Italics(vec![Text("(bar)")])],
+        ),
     ];
 
     for (input, output) in input_output.iter() {
         assert_eq!(parse_markdown_text(input), *output);
     }
-
 }

@@ -1,5 +1,5 @@
-use std::ops::RangeInclusive;
 use super::unicode_ranges::UNICODE_PUNCTUATION_RANGES;
+use std::ops::RangeInclusive;
 
 #[derive(Debug, PartialEq, Eq)]
 enum FindRangeResult<'a> {
@@ -82,8 +82,8 @@ pub(crate) fn is_white_space(c: char) -> bool {
 }
 
 pub(crate) fn is_unicode_white_space(c: char) -> bool {
-    is_white_space(c) || 
-        matches!(c as u32,
+    is_white_space(c)
+        || matches!(c as u32,
                  0x20 |
                  0xa0 |
                  0x1680..=0x1680 |
@@ -91,10 +91,10 @@ pub(crate) fn is_unicode_white_space(c: char) -> bool {
                  0x202f..=0x202f |
                  0x205f..=0x205f |
                  0x3000..=0x3000)
-        // These ranges are extracted from unicode DB using 
-        // the script /scripts/extract_unicode_whitespace_ranges.py
-        // -- Farooq fkz riseup.net
-        //           farooqkz testrun.org
+    // These ranges are extracted from unicode DB using
+    // the script /scripts/extract_unicode_whitespace_ranges.py
+    // -- Farooq fkz riseup.net
+    //           farooqkz testrun.org
 }
 
 pub(crate) fn is_unicode_punctuation(c: char) -> bool {

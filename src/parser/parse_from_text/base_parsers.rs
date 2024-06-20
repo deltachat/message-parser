@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 // Base utility parsers, used by both text and markdown parsers
 use nom::{
-    bytes::complete::{tag, is_not},
+    bytes::complete::{is_not, tag},
     error::{ErrorKind, ParseError},
     sequence::delimited,
     IResult,
@@ -71,11 +71,8 @@ pub(crate) fn direct_delimited<'a>(
             return Err(nom::Err::Error(CustomError::NoElement));
         }
         let tag_str: &str = tag_str.unwrap();
-        let result: IResult<&str, &str> = delimited(
-            tag(tag_str),
-            is_not(tag_str),
-            tag(tag_str),
-        )(input);
+        let result: IResult<&str, &str> =
+            delimited(tag(tag_str), is_not(tag_str), tag(tag_str))(input);
         if result.is_ok() {
             let (input, content) = result.unwrap();
             break (input, content, tag_str);

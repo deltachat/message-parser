@@ -53,13 +53,12 @@ fn link_with_username() {
     let Ok((rest, link_destination)) = LinkDestination::parse(link) else {
         panic!("Parsing {} as link failed", link);
     };
-    
+
     assert!(link_destination.punycode.is_none());
     assert_eq!(rest.len(), 0);
     assert_eq!(link_destination.scheme, "https");
     assert_eq!(link_destination.target, "https://slaux@example.com");
     assert_eq!(link_destination.hostname, Some("example.com"));
-
 }
 
 #[test]
@@ -68,7 +67,7 @@ fn link_with_username_and_password() {
     let Ok((rest, link_destination)) = LinkDestination::parse(link) else {
         panic!("Parsing {} as link failed", link);
     };
-    
+
     assert!(link_destination.punycode.is_none());
     assert_eq!(rest.len(), 0);
     assert_eq!(link_destination.scheme, "https");
@@ -188,7 +187,6 @@ fn generic_schemes() {
         }
     );
 }
-
 
 #[test]
 fn dclogin_link() {

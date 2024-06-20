@@ -132,8 +132,7 @@ fn iauthority(input: &str) -> IResult<&str, (&str, &str, bool), CustomError<&str
     let (input, port) = opt(recognize(tuple((char(':'), take_while(is_digit)))))(input)?;
     let userinfo = userinfo.unwrap_or("");
     let port = port.unwrap_or("");
-    let len = userinfo.len()
-        .saturating_add(port.len());
+    let len = userinfo.len().saturating_add(port.len());
 
     if let Some(out) = i.get(0..len) {
         Ok((input, (out, host, is_ipv6_or_future)))
