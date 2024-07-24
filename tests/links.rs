@@ -23,6 +23,8 @@ fn basic_parsing() {
         "mailto:delta@example.com?subject=hi&body=hello%20world",
         "mailto:foö@ü.chat",
         "ftp://test-test",
+        "https://www.openmandriva.org/en/news/article/openmandriva-rome-24-07-released",
+        "https://www.openmandriva.org///en/news/article/openmandriva-rome-24-07-released",
     ];
 
     let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];

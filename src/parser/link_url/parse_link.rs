@@ -333,6 +333,32 @@ fn get_correct_link(link: &str) -> Option<usize> {
     None
 }
 
+fn parse_ipath_abempty(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(many0(tuple((char('/'), opt(take_while_ipchar1)))))(input)
+}
+
+#[test]
+fn test_ipath_abempty() {
+    assert_eq!(parse_ipath_abempty("///foo/bar"), Ok(("", "///foo/bar")));
+}
+
+fn parse_ipath_absolute(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    recognize(tuple((
+        char('/'),
+        opt(tuple((
+            take_while_ipchar1,
+            many0(tuple((char('/'), opt(take_while_ipchar1)))),
+        ))),
+    )))(input)
+}
+
+#[test]
+fn test_ipath_absolute() {
+    assert_eq!(parse_ipath_absolute("/foo"), Ok(("", "/foo")));
+    assert_eq!(parse_ipath_absolute("/foo/bar"), Ok(("", "/foo/bar")));
+    assert_eq!(parse_ipath_absolute("/foo//bar"), Ok(("", "/foo//bar")));
+}
+
 // IRI links per RFC3987 and RFC3986
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
@@ -345,13 +371,8 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     // host is actually part of authority but we need it separately
     // see iauthority function description for more information
     let (input, path) = opt(alt((
-        recognize(tuple((
-            char('/'),
-            opt(tuple((
-                take_while_ipchar1,
-                many0(tuple((char('/'), opt(take_while_ipchar1)))),
-            ))),
-        ))), // ipath-absolute
+        parse_ipath_abempty,
+        parse_ipath_absolute,
         recognize(tuple((
             take_while_ipchar,
             many0(tuple((char('/'), opt(take_while_ipchar1)))),
