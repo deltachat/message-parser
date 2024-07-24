@@ -1,5 +1,6 @@
 {
   "name": "message_parser_wasm",
+  "type": "module",
   "description": "Parsing of Links, Email adresses, simple text formatting (markdown subset), user mentions, hashtags and more in DeltaChat messages.",
   "version": "0.11.0",
   "license": "MPL-2.0",
@@ -12,7 +13,7 @@
     "message_parser_wasm.js",
     "message_parser_wasm.d.ts"
   ],
-  "module": "message_parser_wasm.js",
+  "main": "message_parser_wasm.js",
   "types": "message_parser_wasm.d.ts",
   "sideEffects": [
     "./snippets/*"
