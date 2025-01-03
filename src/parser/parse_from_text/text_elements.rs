@@ -89,6 +89,12 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     }
 }
 
+// see https://github.com/deltachat/message-parser/issues/82
+pub(crate) fn fediverse_address_as_text(input: &str) -> IResult<&str, Element, CustomError<&str>> {
+    let (input, consumed) = recognize(tuple((tag("@"), email_address)))(input)?;
+    Ok((input, Element::Text(consumed)))
+}
+
 /*
 fn not_link_part_char(c: char) -> bool {
     !matches!(c, ':' | '\n' | '\r' | '\t' | ' ')
@@ -275,6 +281,8 @@ pub(crate) fn parse_text_element(
             ))
         }
     } {
+        Ok((i, elm))
+    } else if let Ok((i, elm)) = fediverse_address_as_text(input) {
         Ok((i, elm))
     } else if let Ok((i, elm)) = email_address(input) {
         Ok((i, elm))
