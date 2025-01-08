@@ -57,7 +57,7 @@ impl LinkDestination<'_> {
     pub fn parse_labelled(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         let (mut remaining, mut link) = Self::parse(input)?;
         if let Some(first) = remaining.chars().next() {
-            if matches!(first, ';' | '.' | ',' | ':') {
+            if matches!(first, ';' | '.' | ',' | ':' | '!') {
                 // ^ markdown labelled links can include one of these characters at the end
                 // and it's therefore part of the link
                 let point = link.target.len().saturating_add(1);
