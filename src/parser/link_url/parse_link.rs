@@ -22,6 +22,8 @@ use crate::parser::{
     },
 };
 
+use super::parenthesis_counter::count_chars_in_complete_parenthesis;
+
 /// determines which generic schemes (without '://') get linkifyed
 fn is_allowed_generic_scheme(scheme: &str) -> bool {
     matches!(
@@ -272,67 +274,6 @@ fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(tuple((char('#'), take_while_ifragment)))(input)
 }
 
-macro_rules! link_correct {
-    ($a: expr, $b: expr, $c: expr, $d: expr) => {
-        // for opening ones
-        {
-            $a = $a.saturating_add(1);
-            if $d.slice($c..).find($b).is_none() {
-                return Some($c);
-            }
-        }
-    };
-    ($a: expr, $b: expr) => {
-        // for closing ones
-        {
-            if $a == 0 {
-                return Some($b);
-            } else {
-                $a = $a.saturating_sub(1);
-            }
-        }
-    };
-}
-
-// TODO: better name for this function
-fn get_correct_link(link: &str) -> Option<usize> {
-    let mut parenthes = 0usize; // ()
-    let mut curly_bracket = 0usize; // {}
-    let mut bracket = 0usize; // []
-    let mut angle = 0usize; // <>
-
-    for (i, ch) in link.chars().enumerate() {
-        match ch {
-            '(' => {
-                link_correct!(parenthes, ')', i, link);
-            }
-            '{' => {
-                link_correct!(curly_bracket, '}', i, link);
-            }
-            '[' => {
-                link_correct!(bracket, ']', i, link);
-            }
-            '<' => {
-                link_correct!(angle, '>', i, link);
-            }
-            ')' => {
-                link_correct!(parenthes, i);
-            }
-            ']' => {
-                link_correct!(bracket, i);
-            }
-            '}' => {
-                link_correct!(curly_bracket, i);
-            }
-            '>' => {
-                link_correct!(angle, i);
-            }
-            _ => continue,
-        }
-    }
-    None
-}
-
 fn parse_ipath_abempty(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(tuple((char('/'), opt(take_while_ipchar1)))))(input)
 }
@@ -406,7 +347,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                 host = input_.slice(scheme.len().saturating_add(3)..input_.len().saturating_sub(1));
             }
         }
-        len = get_correct_link(link).unwrap_or(len);
+        len = count_chars_in_complete_parenthesis(link).unwrap_or(len);
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
 
