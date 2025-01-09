@@ -1,7 +1,7 @@
 use deltachat_message_parser::parser::Element::*;
 use deltachat_message_parser::parser::LinkDestination;
 
-fn gopher_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
+pub(crate) fn gopher_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -10,7 +10,7 @@ fn gopher_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestinatio
     }
 }
 
-fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
+pub(crate) fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -19,7 +19,7 @@ fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<
     }
 }
 
-fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
+pub(crate) fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -28,7 +28,7 @@ fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'
     }
 }
 
-fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
+pub(crate) fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination<'a> {
     LinkDestination {
         target,
         hostname: Some(hostname),
@@ -37,7 +37,7 @@ fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDestination
     }
 }
 
-fn mailto_link_no_puny(target: &str) -> LinkDestination<'_> {
+pub(crate) fn mailto_link_no_puny(target: &str) -> LinkDestination<'_> {
     LinkDestination {
         target,
         hostname: None,
