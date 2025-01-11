@@ -2,7 +2,7 @@
   "name": "message_parser_wasm",
   "type": "module",
   "description": "Parsing of Links, Email adresses, simple text formatting (markdown subset), user mentions, hashtags and more in DeltaChat messages.",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "license": "MPL-2.0",
   "repository": {
     "type": "git",
