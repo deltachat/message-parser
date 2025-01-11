@@ -171,7 +171,7 @@ dependencies = [
 
 [[package]]
 name = "deltachat_message_parser"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "criterion",
  "nom",
@@ -266,7 +266,7 @@ checksum = "8452105ba047068f40ff7093dd1d9da90898e63dd61736462e9cdda6a90ad3c3"
 
 [[package]]
 name = "message_parser_wasm"
-version = "0.11.0"
+version = "0.12.0"
 dependencies = [
  "console_error_panic_hook",
  "deltachat_message_parser",
