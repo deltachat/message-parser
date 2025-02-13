@@ -422,6 +422,20 @@ fn labeled_link() {
 }
 
 #[test]
+fn labeled_link_domain_only() {
+    assert_eq!(
+        parse_desktop_set("[a link](https://delta.chat)"),
+        vec![LabeledLink {
+            label: vec![Text("a link")],
+            destination: https_link_no_puny(
+                "https://delta.chat",
+                "delta.chat"
+            ),
+        }]
+    );
+}
+
+#[test]
 fn labeled_link_no_markdown_in_desktop_set() {
     assert_ne!(
         parse_desktop_set(

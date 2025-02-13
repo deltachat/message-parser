@@ -716,6 +716,36 @@ fn labeled_link_example() {
 }
 
 #[test]
+fn labeled_link_example_domain_only() {
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: https_link_no_puny("https://delta.chat", "delta.chat"),
+            },
+            Text(".")
+        ]
+    );
+}
+
+#[test]
+fn labeled_link_works_without_trailing_space() {
+    assert_eq!(
+        parse_markdown_text("you can find the details [here](https://delta.chat)foo(bar)."),
+        vec![
+            Text("you can find the details "),
+            LabeledLink {
+                label: vec![Text("here")],
+                destination: https_link_no_puny("https://delta.chat", "delta.chat"),
+            },
+            Text("foo(bar).")
+        ]
+    );
+}
+
+#[test]
 fn labeled_link_can_have_comma_or_dot_at_end() {
     assert_eq!(
         parse_markdown_text("you can find the details [here](https://delta.chat/en/help.)."),
