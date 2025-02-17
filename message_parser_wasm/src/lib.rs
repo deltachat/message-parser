@@ -71,3 +71,21 @@ pub fn get_first_emoji(input: &str) -> Option<String> {
 pub fn count_emojis_if_only_contains_emoji(input: &str) -> Option<u32> {
     deltachat_message_parser::parser::is_emoji::count_emojis_if_only_contains_emoji(input)
 }
+
+/// encode a host to punycode encoded string
+#[wasm_bindgen]
+pub fn punycode_encode_host(host: &str) -> String {
+    deltachat_message_parser::parser::punycode_encode_host(host)
+}
+
+/// Returns host as decoded unicode string
+#[wasm_bindgen]
+pub fn punycode_decode_host(host: &str) -> String {
+    deltachat_message_parser::parser::punycode_decode_host(host)
+}
+
+/// Returns true if host string contains non ASCII characters
+#[wasm_bindgen]
+pub fn is_puny(host: &str) -> bool {
+  deltachat_message_parser::parser::is_puny(host)
+}

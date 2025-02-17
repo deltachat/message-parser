@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add functions for punycode
+  - `parser::punycode_encode_host(host)`
+  - `parser::punycode_decode_host(host)`
+  - `parser::is_puny(host)`
+
 ## 0.12.0 - Bug fixes
 
 - fix: parse fediverse addresses as text, so they are not mistaken for email addresses ([issue #82](https://github.com/deltachat/message-parser/issues/82))

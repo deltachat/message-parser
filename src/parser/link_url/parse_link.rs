@@ -13,7 +13,7 @@ use nom::{
 use crate::parser::{
     link_url::{
         ip::{ip_literal::ip_literal, ipv4::ipv4},
-        LinkDestination, PunycodeWarning,
+        LinkDestination,
     },
     parse_from_text::base_parsers::CustomError,
     utils::{
@@ -22,7 +22,10 @@ use crate::parser::{
     },
 };
 
-use super::parenthesis_counter::count_chars_in_complete_parenthesis;
+use super::{
+    parenthesis_counter::count_chars_in_complete_parenthesis,
+    punycode_warning::get_puny_code_warning,
+};
 
 /// determines which generic schemes (without '://') get linkifyed
 fn is_allowed_generic_scheme(scheme: &str) -> bool {
@@ -226,48 +229,6 @@ fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>>
         char('%'),
         take_while_m_n(2, 2, is_hex_digit),
     ))))(input)
-}
-
-/// encode a host to punycode encoded string
-fn punycode_encode(host: &str) -> String {
-    host.split('.')
-        .map(|sub| {
-            if is_puny(sub) {
-                format!(
-                    "xn--{}",
-                    unic_idna_punycode::encode_str(sub)
-                        .unwrap_or_else(|| "[punycode encode failed]".to_owned())
-                )
-            } else {
-                sub.to_owned()
-            }
-        })
-        .collect::<Vec<String>>()
-        .join(".")
-}
-
-/// Returns true if host string contains non ASCII characters
-fn is_puny(host: &str) -> bool {
-    for ch in host.chars() {
-        if !(ch.is_ascii_alphanumeric() || matches!(ch, '.' | '-')) {
-            return true;
-        }
-    }
-    false
-}
-
-/// Return a PunycodeWarning struct if host need punycode encoding else None
-pub fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> {
-    if is_puny(host) {
-        let ascii_hostname = punycode_encode(host);
-        Some(PunycodeWarning {
-            original_hostname: host.to_owned(),
-            ascii_hostname: ascii_hostname.to_owned(),
-            punycode_encoded_url: link.replacen(host, &ascii_hostname, 1),
-        })
-    } else {
-        None
-    }
 }
 
 fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {

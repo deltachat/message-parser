@@ -1,11 +1,13 @@
 mod ip;
 mod parenthesis_counter;
 mod parse_link;
+pub(crate) mod punycode_warning;
 
 use nom::{
     error::{ErrorKind, ParseError},
     IResult, Slice,
 };
+use punycode_warning::PunycodeWarning;
 
 use crate::parser::{link_url::parse_link::parse_link, parse_from_text::base_parsers::CustomError};
 
@@ -32,13 +34,6 @@ pub struct LinkDestination<'a> {
     pub punycode: Option<PunycodeWarning>,
     /// scheme
     pub scheme: &'a str,
-}
-
-#[derive(Debug, PartialEq, Eq, Serialize, Clone)]
-pub struct PunycodeWarning {
-    pub original_hostname: String,
-    pub ascii_hostname: String,
-    pub punycode_encoded_url: String,
 }
 
 impl LinkDestination<'_> {
