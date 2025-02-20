@@ -27,8 +27,7 @@ pub fn punycode_encode_host(host: &str) -> String {
 
 /// Returns host as decoded unicode string
 pub fn punycode_decode_host(host: &str) -> String {
-    host
-        .split('.')
+    host.split('.')
         .map(|sub| {
             if let Some(sub) = sub.strip_prefix("xn--") {
                 unic_idna_punycode::decode_to_string(sub)
@@ -69,7 +68,6 @@ pub fn get_puny_code_warning(link: &str, host: &str) -> Option<PunycodeWarning> 
 mod test {
     use crate::parser::{is_puny, punycode_decode_host, punycode_encode_host};
 
-
     #[test]
     fn is_puny_positive() {
         assert!(is_puny("münchen.de"));
@@ -83,14 +81,20 @@ mod test {
     }
 
     #[test]
-    fn encode_host(){
+    fn encode_host() {
         assert_eq!(punycode_encode_host("münchen.de"), "xn--mnchen-3ya.de");
-        assert_eq!(punycode_encode_host("wikipediа.org"), "xn--wikipedi-86g.org");
+        assert_eq!(
+            punycode_encode_host("wikipediа.org"),
+            "xn--wikipedi-86g.org"
+        );
     }
 
     #[test]
-    fn decode_host(){
+    fn decode_host() {
         assert_eq!(punycode_decode_host("xn--mnchen-3ya.de"), "münchen.de");
-        assert_eq!(punycode_decode_host("xn--wikipedi-86g.org"), "wikipediа.org");
+        assert_eq!(
+            punycode_decode_host("xn--wikipedi-86g.org"),
+            "wikipediа.org"
+        );
     }
 }

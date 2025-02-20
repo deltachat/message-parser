@@ -87,5 +87,5 @@ pub fn punycode_decode_host(host: &str) -> String {
 /// Returns true if host string contains non ASCII characters
 #[wasm_bindgen]
 pub fn is_puny(host: &str) -> bool {
-  deltachat_message_parser::parser::is_puny(host)
+    deltachat_message_parser::parser::is_puny(host)
 }
