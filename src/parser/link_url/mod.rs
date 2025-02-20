@@ -7,7 +7,7 @@ use nom::{
     error::{ErrorKind, ParseError},
     IResult, Slice,
 };
-use punycode_warning::PunycodeWarning;
+pub use punycode_warning::PunycodeWarning;
 
 use crate::parser::{link_url::parse_link::parse_link, parse_from_text::base_parsers::CustomError};
 
