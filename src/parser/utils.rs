@@ -73,7 +73,11 @@ pub(crate) fn is_sub_delim(c: char) -> bool {
 }
 
 pub(crate) fn is_unreserved(c: char) -> bool {
-    is_alpha(c) || is_digit(c) || matches!(c, '_' | '.' | '-' | '~')
+    is_alpha(c) || is_digit(c) || is_ireg_special_chars(c)
+}
+
+pub(crate) fn is_ireg_special_chars(c: char) -> bool {
+    matches!(c, '_' | '.' | '-' | '~')
 }
 
 pub(crate) fn is_white_space(c: char) -> bool {

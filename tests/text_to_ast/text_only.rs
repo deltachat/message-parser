@@ -558,3 +558,31 @@ fn bot_suggestion_is_no_email() {
         ]
     );
 }
+
+#[test]
+fn link_with_delimiter_and_space() {
+    assert_eq!(
+        parse_only_text("https://example.com!\nfoo"),
+        vec![
+            Link {
+                destination: https_link_no_puny("https://example.com", "example.com")
+            },
+            Text("!"),
+            Linebreak,
+            Text("foo")
+        ]
+    );
+}
+
+#[test]
+fn link_with_domain_and_multiple_delimiters() {
+    assert_eq!(
+        parse_only_text("https://example.com..."),
+        vec![
+            Link {
+                destination: https_link_no_puny("https://example.com", "example.com")
+            },
+            Text("...")
+        ]
+    );
+}
