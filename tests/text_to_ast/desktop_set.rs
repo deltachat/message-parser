@@ -447,10 +447,7 @@ fn labeled_link_domain_only() {
         parse_desktop_set("[a link](https://delta.chat)"),
         vec![LabeledLink {
             label: vec![Text("a link")],
-            destination: https_link_no_puny(
-                "https://delta.chat",
-                "delta.chat"
-            ),
+            destination: https_link_no_puny("https://delta.chat", "delta.chat"),
         }]
     );
 }
