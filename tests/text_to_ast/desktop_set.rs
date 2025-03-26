@@ -421,6 +421,14 @@ fn inline_link_do_not_eat_last_char_if_it_is_special() {
             Text(".")
         ]
     );
+    assert_eq!(
+        parse_desktop_set("So here's the link: https://delta.cat/page, have fun"),
+        vec![
+            Text("So here's the link: "),
+            Link { destination: https_link_no_puny("https://delta.cat/page", "delta.cat") },
+            Text(", have fun")
+        ]
+    );
 }
 
 #[test]
