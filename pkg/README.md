@@ -2,7 +2,7 @@
 
 Parsing of Links, email addresses, simple text formatting (markdown subset), user mentions, hashtags and more in DeltaChat messages.
 
-The specification can be found in [spec.md](https://github.com/deltachat/message-parser/blob/master/message_parser_wasm/spec.md).
+The specification can be found in [spec.md](https://github.com/deltachat/message-parser/blob/main/message_parser_wasm/spec.md).
 
 The parser is written in rust with the [nom crate](https://github.com/Geal/nom) and compiled to web assembly for this package.
 
