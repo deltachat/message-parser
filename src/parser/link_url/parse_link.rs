@@ -117,10 +117,12 @@ fn parse_host(input: &str) -> IResult<&str, (&str, bool), CustomError<&str>> {
 }
 
 fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(many0(alt((
+    let (input, result) = recognize(many0(alt((
         recognize(many1(take_while_pct_encoded)),
         take_while1(is_ireg_name_not_pct_encoded),
-    ))))(input)
+    ))))(input)?;
+
+    Ok((input, result.trim_end_matches('.')))
 }
 
 /// Parse the iauthority block
