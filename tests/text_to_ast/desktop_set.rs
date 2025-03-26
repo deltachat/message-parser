@@ -413,6 +413,14 @@ fn inline_link_do_not_eat_last_char_if_it_is_special() {
             Text(".")
         ]
     );
+    assert_eq!(
+        parse_desktop_set("Here's a list of organizations which funded DC: https://delta.chat/en/help#how-are-delta-chat-developments-funded."),
+        vec![
+            Text("Here's a list of organizations which funded DC: "),
+            Link { destination: https_link_no_puny("https://delta.chat/en/help#how-are-delta-chat-developments-funded", "delta.chat")},
+            Text(".")
+        ]
+    );
 }
 
 #[test]
