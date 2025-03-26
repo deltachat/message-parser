@@ -1,5 +1,5 @@
 use super::*;
-use deltachat_message_parser::parser::parse_desktop_set;
+use deltachat_message_parser::parser::{link_url::PunycodeWarning, parse_desktop_set};
 
 #[test]
 fn do_not_parse_markdown_elements() {
@@ -417,6 +417,26 @@ fn labeled_link() {
                 "https://delta.chat/en/help?hi=5&e=4#section2.0",
                 "delta.chat"
             ),
+        }]
+    );
+}
+
+#[test]
+fn labeled_link_with_special_char_in_domain() {
+    assert_eq!(
+        parse_desktop_set("[munich](https://münchen.de)"),
+        vec![LabeledLink {
+            label: vec![Text("munich")],
+            destination: LinkDestination {
+                target: "https://münchen.de",
+                hostname: Some("münchen.de"),
+                punycode: Some(PunycodeWarning {
+                    original_hostname: "münchen.de".to_string(),
+                    ascii_hostname: "xn--mnchen-3ya.de".to_string(),
+                    punycode_encoded_url: "https://xn--mnchen-3ya.de".to_string()
+                }),
+                scheme: "https"
+            },
         }]
     );
 }
