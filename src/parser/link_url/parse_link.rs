@@ -82,8 +82,11 @@ fn is_other_scheme(c: char) -> bool {
     matches!(c, '+' | '-' | '.')
 }
 
+/**
+ * allowed chars in host names (except for pct encoded)
+ */
 fn is_ireg_name_not_pct_encoded(c: char) -> bool {
-    is_iunreserved(c) || is_sub_delim(c)
+    is_iunreserved(c)
 }
 
 /// Parse host
