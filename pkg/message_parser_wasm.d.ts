@@ -25,6 +25,24 @@ export function get_first_emoji(input: string): string | undefined;
 * @returns {number | undefined}
 */
 export function count_emojis_if_only_contains_emoji(input: string): number | undefined;
+/**
+* encode a host to punycode encoded string
+* @param {string} host
+* @returns {string}
+*/
+export function punycode_encode_host(host: string): string;
+/**
+* Returns host as decoded unicode string
+* @param {string} host
+* @returns {string}
+*/
+export function punycode_decode_host(host: string): string;
+/**
+* Returns true if host string contains non ASCII characters
+* @param {string} host
+* @returns {boolean}
+*/
+export function is_puny(host: string): boolean;
 
 export type PunycodeWarning = {
   original_hostname: string;
@@ -63,6 +81,9 @@ export interface InitOutput {
   readonly parse_desktop_set: (a: number, b: number) => number;
   readonly get_first_emoji: (a: number, b: number, c: number) => void;
   readonly count_emojis_if_only_contains_emoji: (a: number, b: number, c: number) => void;
+  readonly punycode_encode_host: (a: number, b: number, c: number) => void;
+  readonly punycode_decode_host: (a: number, b: number, c: number) => void;
+  readonly is_puny: (a: number, b: number) => number;
   readonly __wbindgen_malloc: (a: number, b: number) => number;
   readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
   readonly __wbindgen_add_to_stack_pointer: (a: number) => number;
