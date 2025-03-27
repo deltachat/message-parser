@@ -4,6 +4,10 @@ pub mod link_url;
 pub mod parse_from_text;
 pub mod utils;
 
+#[allow(unused_imports)]
+pub use crate::parser::link_url::punycode_warning::{
+    is_puny, punycode_decode_host, punycode_encode_host,
+};
 pub use crate::parser::link_url::LinkDestination;
 
 /// The representation of Elements for the Abstract Syntax Tree

@@ -5,6 +5,9 @@ import init, {
   parse_text,
   get_first_emoji,
   count_emojis_if_only_contains_emoji,
+  is_puny,
+  punycode_encode_host,
+  punycode_decode_host,
 } from "./pkg/message_parser_wasm.js";
 
 /** @typedef {import("./pkg/message_parser_wasm.js").ParsedElement} ParsedElement */
@@ -183,7 +186,23 @@ init().then(() => {
     emoji_out_count.innerText = String(
       count_emojis_if_only_contains_emoji(text)
     );
-    setTimeout(emoji_update, 1)
+    setTimeout(emoji_update, 1);
   };
-  emoji_input.onchange = emoji_input.onkeydown = ()=>setTimeout(emoji_update, 1);
+  emoji_input.onchange = emoji_input.onkeydown = () =>
+    setTimeout(emoji_update, 1);
+
+  // punycode
+  /** @type {HTMLInputElement} */
+  const punycode_input = document.getElementById("punycode-test");
+  const punycode_is_puny = document.getElementById("punycode-test-is_puny");
+  const punycode_puny = document.getElementById("punycode-test-puny");
+  const punycode_uni = document.getElementById("punycode-test-uni");
+  const punycode_update = () => {
+    const input = punycode_input.value;
+    punycode_is_puny.innerText = String(is_puny(input));
+    punycode_puny.innerText = punycode_encode_host(input);
+    punycode_uni.innerText = punycode_decode_host(input);
+  };
+  punycode_input.onchange = punycode_input.onkeydown = () =>
+    setTimeout(punycode_update, 1);
 });

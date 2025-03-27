@@ -69,3 +69,9 @@ Additionally to message parsing this crate also contains some useful functions f
 - `parser::is_emoji::count_emojis_if_only_contains_emoji(text)` - counts emojis in texts that contain only emojis
     - useful for jumbomoji logic (if you send a small message with just emojis the emojis get displayed larger).
     - this function does not fail on too long strings, so to keep good performance check the length beforehand and if it is too long the message would not be big anyway so you don't need to call this function.
+
+## Punycode Helpers
+
+- `parser::punycode_encode_host(host)` - encode a host to punycode encoded string
+- `parser::punycode_decode_host(host)` - decode a punycode encoded host to unicode string
+- `parser::is_puny(host)` - returns true if host string contains non ASCII characters (alphanumeric + `.` + `-`) - acts as indicator if host string needs to be encoded
