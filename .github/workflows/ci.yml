@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
       - staging
       - trying
 
@@ -73,7 +73,7 @@ jobs:
             rust: 1.77.2
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@main
 
       - name: Install ${{ matrix.rust }}
         uses: actions-rs/toolchain@v1
