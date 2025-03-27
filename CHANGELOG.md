@@ -2,10 +2,13 @@
 
 ## Unreleased
 
+## 0.13.0 - Bug fixes and punycode api
+
 - Add functions for punycode
   - `parser::punycode_encode_host(host)`
   - `parser::punycode_decode_host(host)`
   - `parser::is_puny(host)`
+- Fixes to link parsing.
 
 ## 0.12.0 - Bug fixes
 
