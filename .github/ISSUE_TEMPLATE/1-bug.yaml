@@ -1,0 +1,37 @@
+name: Bug report
+description: Message parser doesn't parse right
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping to improve DeltaChat! Please fill information below to make it easier to kill it!
+  - type: input
+    id: version
+    attributes:
+      label: DeltaChat Desktop version
+      description: In what version of DeltaChat desktop this happens? Please specify a version number. Or of you are using it from source, you could specify commit hash.
+      placeholder: v0.0.0
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Explaination
+      description: Explain about the bug. Optionally explain why do you think it's a bug. Like is it out of sync with some spec?
+    validations:
+      required: true
+  - type: textarea
+    id: testcase_0
+    attributes:
+      label: Testcase 0
+      description: Optionally provide a testcase
+  - type: textarea
+    id: testcase_1
+    attributes:
+      label: Testcase 1
+      description: Optionally provide a testcase
+  - type: textarea
+    id: testcase_2
+    attributes:
+      label: Testcase 2
+      description: Optionally provide a testcase
