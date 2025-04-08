@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Simon Laux
-    url: mailto:simon@merlinux.eu
+  - name: DeltaChat
+    url: mailto:delta@merlinux.eu
     about: Report security bugs to Simon
