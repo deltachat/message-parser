@@ -19,6 +19,9 @@ body:
       description: Explain about the bug. Optionally explain why do you think it's a bug. Like is it out of sync with some spec?
     validations:
       required: true
+  - type: markdown
+    attributes:
+      value: Each testcase should ideally be a text sample as input, the expected and the actual AST. You can take a look at already existing tests.
   - type: textarea
     id: testcase_0
     attributes:
