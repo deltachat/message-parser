@@ -2,4 +2,4 @@ blank_issues_enabled: true
 contact_links:
   - name: DeltaChat
     url: mailto:delta@merlinux.eu
-    about: Report security bugs to Simon
+    about: Report security bugs to the team
