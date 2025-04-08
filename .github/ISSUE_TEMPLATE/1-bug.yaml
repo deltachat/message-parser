@@ -4,12 +4,11 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: Thanks for helping to improve DeltaChat! Please fill information below to make it easier to kill it!
+      value: Thanks for helping to improve DeltaChat! Please fill information below to make it easier to kill this bug!
   - type: input
     id: version
     attributes:
-      label: DeltaChat Desktop version
-      description: In what version of DeltaChat desktop this happens? Please specify a version number. Or of you are using it from source, you could specify commit hash.
+      label: Message parser version or commit
       placeholder: v0.0.0
     validations:
       required: true
