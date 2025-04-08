@@ -4,7 +4,7 @@ labels: ["bug"]
 body:
   - type: markdown
     attributes:
-      value: Thanks for helping to improve DeltaChat! Please fill information below to make it easier to kill this bug!
+      value: Thanks for helping to improve DeltaChat! Please fill information below to make it easier to us to understand and solve the issue.
   - type: input
     id: version
     attributes:
