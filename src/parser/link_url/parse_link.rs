@@ -46,6 +46,21 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
     )
 }
 
+const ALLOWED_TOP_LEVEL_DOMAINS: &'static [&'static str] = &[
+    // originals from RFC920 + net
+    ".com",
+    ".org",
+    ".net",
+    ".edu",
+    ".gov",
+    ".mil",
+
+    // for deltachat
+    ".chat",
+
+    // !todo country codes here next
+];
+
 // These ranges have been extracted from RFC3987, Page 8.
 const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
     0xa0..=0xd7ff,
@@ -125,6 +140,12 @@ fn take_while_ireg(input: &str) -> IResult<&str, &str, CustomError<&str>> {
         take_while1(is_ireg_name_not_pct_encoded),
     ))))(input)?;
 
+    Ok((input, result.trim_end_matches('.')))
+}
+
+// domain with unreserved characters (no iauthority etc)
+fn take_while_simple_domain(input: &str) -> IResult<&str, &str, CustomError<&str>> {
+    let (input, result) = recognize(take_while1(is_ireg_name_not_pct_encoded))(input)?;
     Ok((input, result.trim_end_matches('.')))
 }
 
@@ -334,12 +355,70 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     Err(nom::Err::Failure(CustomError::NoContent))
 }
 
-/*
-// For future
-fn parse_irelative_ref(input: &str) -> IResult<&str, Element, CustomError<&str>> {
-    todo!()
+// parse simple domain without scheme after exausting others
+fn parse_no_scheme(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
+    let input_ = <&str>::clone(&input);
+    let (input, mut host) = take_while_simple_domain(input)?;
+
+    // Simple for-loop checking end of host matches one of our allow-list TLDs
+    // Is there a better way to do this with nom?
+    let mut matched = false;
+    for allowed_domain in ALLOWED_TOP_LEVEL_DOMAINS {
+        if host.ends_with(allowed_domain) {
+            matched = true;
+            break;
+        }
+    }
+    if !matched {
+        return Err(nom::Err::Failure(CustomError::InvalidLink));
+    }
+
+    let (input, path) = opt(alt((
+        parse_ipath_abempty,
+        parse_ipath_absolute,
+        recognize(tuple((
+            take_while_ipchar,
+            many0(tuple((char('/'), opt(take_while_ipchar1)))),
+        ))), // ipath-rootless
+    )))(input)?;
+    // ^ parse one of ipath-absolute or ipath-rootless or none
+    // which in the third case it's down to ipath-empty(see below)
+    let path = path.unwrap_or(""); // it's ipath-empty
+    
+    let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
+    let (_, fragment) = opt(ifragment)(input)?;
+    let query = query.unwrap_or(""); // in the case of no iquery
+    let fragment = fragment.unwrap_or(""); // in the case of no ifragment
+    let ihier_len = 0usize.saturating_add(host.len()).saturating_add(path.len());
+
+    let mut len = 0usize
+        .saturating_add(ihier_len)
+        .saturating_add(query.len())
+        .saturating_add(fragment.len());
+    if let Some(link) = input_.get(0..len) {
+        if link.ends_with([':', ';', '.', ',', '!']) {
+            len = len.saturating_sub(1);
+            if path.is_empty() && query.is_empty() && fragment.is_empty() {
+                host = input_.slice(3..input_.len().saturating_sub(1));
+            }
+        }
+
+        len = count_chars_in_complete_parenthesis(link).unwrap_or(len);
+        let link = input_.slice(0..len);
+        let input = input_.slice(len..);
+
+        return Ok((
+            input,
+            LinkDestination {
+                target: link,
+                hostname: if host.is_empty() { None } else { Some(host) },
+                punycode: get_puny_code_warning(link, host),
+                scheme: link.slice(0..0), // empty scheme from link to match 'a lifetime
+            },
+        ));
+    }
+    Err(nom::Err::Failure(CustomError::NoContent))
 }
-*/
 
 // White listed links in this format: scheme:some_char like tel:+989164364485
 fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
@@ -366,5 +445,5 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
 }
 
 pub(super) fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
-    alt((parse_generic, parse_iri))(input)
+    alt((parse_generic, parse_iri, parse_no_scheme))(input)
 }

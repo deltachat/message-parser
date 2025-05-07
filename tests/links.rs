@@ -25,6 +25,8 @@ fn basic_parsing() {
         "ftp://test-test",
         "https://www.openmandriva.org/en/news/article/openmandriva-rome-24-07-released",
         "https://www.openmandriva.org///en/news/article/openmandriva-rome-24-07-released",
+        "www.delta.chat",
+        "example.com/some/link?q=something#hash-fragment",
     ];
 
     let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];
