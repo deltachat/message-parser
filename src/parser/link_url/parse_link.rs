@@ -46,7 +46,7 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
     )
 }
 
-const ALLOWED_TOP_LEVEL_DOMAINS: &'static [&'static str] = &[
+const ALLOWED_TOP_LEVEL_DOMAINS: &[&str] = &[
     // originals from RFC920 + net
     ".com",
     ".org",
