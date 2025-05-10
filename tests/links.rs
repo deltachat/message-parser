@@ -163,3 +163,13 @@ fn generic_schemes() {
         }
     );
 }
+
+
+#[test]
+fn isolated_link() {
+    // assert_eq!((LinkDestination::parse("http://whatever1.com/path").unwrap().1).target, "http://whatever1.com/path");
+    // assert_eq!((LinkDestination::parse("whatever2.com/path").unwrap().1).target, "whatever2.com/path");
+    assert_eq!((LinkDestination::parse("whatever3.com").unwrap().1).target, "whatever3.com");
+}
+
+
