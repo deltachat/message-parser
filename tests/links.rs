@@ -25,8 +25,6 @@ fn basic_parsing() {
         "ftp://test-test",
         "https://www.openmandriva.org/en/news/article/openmandriva-rome-24-07-released",
         "https://www.openmandriva.org///en/news/article/openmandriva-rome-24-07-released",
-        "www.delta.chat",
-        "example.com/some/link?q=something#hash-fragment",
     ];
 
     let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];
@@ -164,12 +162,76 @@ fn generic_schemes() {
     );
 }
 
-
 #[test]
-fn isolated_link() {
-    // assert_eq!((LinkDestination::parse("http://whatever1.com/path").unwrap().1).target, "http://whatever1.com/path");
-    // assert_eq!((LinkDestination::parse("whatever2.com/path").unwrap().1).target, "whatever2.com/path");
-    assert_eq!((LinkDestination::parse("whatever3.com").unwrap().1).target, "whatever3.com");
+fn no_scheme() {
+    assert_eq!(
+        LinkDestination::parse("example.com").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("example.com"),
+                scheme: "",
+                punycode: None,
+                target: "example.com"
+            }
+        )
+    );
+
+    // exceptional
+    assert_eq!(
+        LinkDestination::parse("delta.chat").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("delta.chat"),
+                scheme: "",
+                punycode: None,
+                target: "delta.chat"
+            }
+        )
+    );
+
+    // long one with all the path segments
+    assert_eq!(
+        LinkDestination::parse("delta.chat/path/with/segments?query=params#fragment").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("delta.chat"),
+                scheme: "",
+                punycode: None,
+                target: "delta.chat/path/with/segments?query=params#fragment"
+            }
+        )
+    );
+
+    // punycode
+    assert_eq!(
+        LinkDestination::parse("münchen.com").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("münchen.com"),
+                scheme: "",
+                punycode: Some(PunycodeWarning {
+                    original_hostname: "münchen.com".to_owned(),
+                    ascii_hostname: "xn--mnchen-3ya.com".to_owned(),
+                    punycode_encoded_url: "xn--mnchen-3ya.com".to_owned()
+                }),
+                target: "münchen.com"
+            }
+        )
+    );
+
+    // Failing case for unsupported TLD
+    let result = LinkDestination::parse("free_money.zip");
+    assert!(result.is_err());
+
+    // Failing case with user prefix, we dont want this for simple links without scheme
+    let result = LinkDestination::parse("user@delta.chat");
+    assert!(result.is_err());
+
+    // Failing case with port, also not good for simple links without scheme
+    let result = LinkDestination::parse("delta.chat:8080/api");
+    assert!(result.is_ok());
 }
-
-

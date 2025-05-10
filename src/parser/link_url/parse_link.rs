@@ -1,7 +1,13 @@
 use std::ops::RangeInclusive;
 
 use nom::{
-    branch::alt, bytes::complete::{tag, take_while, take_while1, take_while_m_n}, character::complete::char, combinator::{opt, recognize}, multi::{many0, many1}, sequence::{pair, tuple}, IResult, Slice
+    branch::alt,
+    bytes::complete::{tag, take_while, take_while1, take_while_m_n},
+    character::complete::char,
+    combinator::{opt, recognize},
+    multi::{many0, many1},
+    sequence::{pair, tuple},
+    IResult, Slice,
 };
 
 use crate::parser::{
@@ -40,18 +46,11 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
     )
 }
 
-const _ALLOWED_TOP_LEVEL_DOMAINS: &[&str] = &[
+const ALLOWED_TOP_LEVEL_DOMAINS: &[&str] = &[
     // originals from RFC920 + net
-    ".com",
-    ".org",
-    ".net",
-    ".edu",
-    ".gov",
-    ".mil",
-
+    ".com", ".org", ".net", ".edu", ".gov", ".mil",
     // for deltachat
     ".chat",
-
     // !todo country codes here next
 ];
 
@@ -212,57 +211,36 @@ fn take_while_ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     recognize(many0(alt((take_while_ipchar1, tag("/"), tag("?")))))(input)
 }
 
-/// Consume scheme characters from input
+/// Consume scheme characters from input and then :// or :
 ///
 /// # Description
-/// This function as it can be seen, consumes exactly an alpha and as many
+/// This function as it can be seen, consumes exactly one alpha and as many
 /// scheme characters as there are. then it gets a slice of input(as cloned to i)
-///
-/// # Arguments
-///
-///  - `input` the input string
-///
-/// # Return value
-///  (unconsumed input AND the scheme string in order) OR Error
-fn scheme(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    let i = <&str>::clone(&input);
-    let (input, _first) = take_while_m_n(1, 1, is_alpha)(input)?;
-    let (input, second) = take_while(is_scheme)(input)?;
-    let len = 1usize.saturating_add(second.len());
-    // "1" is for the first, its length is always 1
-    if let Some(out) = i.get(0..len) {
-        Ok((input, out))
-    } else {
-        Err(nom::Err::Failure(CustomError::NoContent))
-    }
-}
-
-fn new_scheme(input: &str) -> IResult<&str, (&str, &str), CustomError<&str>> {
+fn scheme_and_separator(input: &str) -> IResult<&str, (&str, &str), CustomError<&str>> {
     let _input = <&str>::clone(&input);
-
-    let (input, (_first, second)) = pair(take_while_m_n(1, 1, is_alpha), take_while(is_scheme))(input)?;
+    let (input, (_first, second)) =
+        pair(take_while_m_n(1, 1, is_alpha), take_while(is_scheme))(input)?;
+    // "1" is for the first, its length is always 1
     let len = 1usize.saturating_add(second.len());
-
     if let Some(scheme) = _input.get(0..len) {
+        // important that we test :// before we test for lone :
         let (input, separator) = alt((tag("://"), tag(":")))(input)?;
-
-        return Ok((input, (scheme, separator)))
+        return Ok((input, (scheme, separator)));
     }
-
     Err(nom::Err::Failure(CustomError::NoContent))
 }
 
 #[test]
-fn scheme_with_separator () {
-    let (rest, result) = opt(new_scheme)("scheme:host/path").unwrap();
+fn scheme_with_separator() {
+    let (rest, result) = opt(scheme_and_separator)("scheme:host/path").unwrap();
     assert_eq!(Some(("scheme", ":")), result);
     assert_eq!("host/path", rest);
 
-    let (rest, result) = opt(new_scheme)("scheme://host/path").unwrap();
+    let (rest, result) = opt(scheme_and_separator)("scheme://host/path").unwrap();
     assert_eq!(Some(("scheme", "://")), result);
     assert_eq!("host/path", rest);
 
-    let (rest, result) = opt(new_scheme)("no_scheme/host/path").unwrap();
+    let (rest, result) = opt(scheme_and_separator)("no_scheme/host/path").unwrap();
     assert_eq!(None, result);
     assert_eq!("no_scheme/host/path", rest);
 }
@@ -308,26 +286,23 @@ fn test_ipath_absolute() {
 // IRI links per RFC3987 and RFC3986
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
-    println!("input at start: '{}'", input);
-    // a link is <scheme> :// <iauthority> [ipath] [iquery] [ifragment]
-    let (input, scheme_parts) = opt(new_scheme)(input)?;
-    
-    let (scheme, separator) = match scheme_parts {
-        Some((scheme, separator)) => { ( scheme, separator)},
-        None => { ("", "")}
-    };
-    // let scheme = scheme.unwrap_or("");
-    println!("input after scheme check: '{}', scheme '{}'", input, scheme);
-    // ^ parse scheme
-    // let (input, period_double_slash) = opt(tag("://"))(input)?;
-    println!("input after :// check: '{}'", input);
-    // let separator = period_double_slash.unwrap_or("");
-    // ^ hey do I need to explain this, too?
-    println!("checking for host in remaining input: '{}'", input);
-    let (input, (authority, mut host, is_ipv6_or_future)) = iauthority(input)?;
-    println!("host: '{}'", host);
+
+    // a link is [scheme] ['://'] <iauthority> [ipath] [iquery] [ifragment]
+    let (input, scheme_parts) = opt(scheme_and_separator)(input)?;
+    let (scheme, separator) = scheme_parts.unwrap_or(("", ""));
+
     // host is actually part of authority but we need it separately
     // see iauthority function description for more information
+    let (input, (authority, mut host, is_ipv6_or_future)) = iauthority(input)?;
+
+    // now with host, if we dont have a scheme we need to check it for TLD
+    if scheme.is_empty() {
+        ALLOWED_TOP_LEVEL_DOMAINS
+            .iter()
+            .find(|&&tld| host.ends_with(tld))
+            .ok_or_else(|| nom::Err::Failure(CustomError::<&str>::InvalidLink))?;
+    }
+
     let (input, path) = opt(alt((
         parse_ipath_abempty,
         parse_ipath_absolute,
@@ -339,10 +314,12 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     // ^ parse one of ipath-absolute or ipath-rootless or none
     // which in the third case it's down to ipath-empty(see below)
     let path = path.unwrap_or(""); // it's ipath-empty
+
     let (input, query) = opt(recognize(tuple((char('?'), iquery))))(input)?;
+    let query = query.unwrap_or("");
+
     let (_, fragment) = opt(ifragment)(input)?;
-    let query = query.unwrap_or(""); // in the case of no iquery
-    let fragment = fragment.unwrap_or(""); // in the case of no ifragment
+    let fragment = fragment.unwrap_or("");
     let ihier_len = 0usize
         .saturating_add(authority.len())
         .saturating_add(host.len())
@@ -350,28 +327,26 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     if ihier_len == 0 {
         return Err(nom::Err::Error(CustomError::InvalidLink));
     }
-    println!("non-zero length ihier, continuing");
-    // compute length of authority + host + path
+    // compute final length of scheme + separator + ihier + path + query + fragment
     let mut len = scheme
         .len()
         .saturating_add(separator.len())
         .saturating_add(ihier_len)
         .saturating_add(query.len())
         .saturating_add(fragment.len());
-    // compute length of link which is scheme ihier_len + scheme + query + fragment
     if let Some(link) = input_.get(0..len) {
         if link.ends_with([':', ';', '.', ',', '!']) {
             len = len.saturating_sub(1);
             if path.is_empty() && query.is_empty() && fragment.is_empty() {
-                host = input_.slice(scheme.len().saturating_add(separator.len())..input_.len().saturating_sub(1));
+                host = input_.slice(
+                    scheme.len().saturating_add(separator.len())..input_.len().saturating_sub(1),
+                );
             }
         }
         len = count_chars_in_complete_parenthesis(link).unwrap_or(len);
         let link = input_.slice(0..len);
         let input = input_.slice(len..);
 
-
-        println!("s:'{}' pds:'{}' a:'{}' h:'{}' p:'{}' q:'{}' f:'{}'", scheme, separator, authority, host, path, query, fragment);
         return Ok((
             input,
             LinkDestination {
@@ -392,13 +367,14 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
 // White listed links in this format: scheme:some_char like tel:+989164364485
 fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let i = <&str>::clone(&input);
-    let (input, scheme) = scheme(input)?;
+    let (input, scheme_parts) = opt(scheme_and_separator)(input)?;
+    let (scheme, _separator) = scheme_parts.unwrap_or(("", ""));
     if !is_allowed_generic_scheme(scheme) {
         return Err(nom::Err::Error(CustomError::InvalidLink));
     }
-    let (input, _colon) = char(':')(input)?;
+
     let (input, rest) = take_while1(is_not_white_space)(input)?;
-    let len = scheme.len().saturating_add(rest.len()).saturating_add(1);
+    let len = scheme.len().saturating_add(1).saturating_add(rest.len());
     if let Some(target) = i.get(0..len) {
         return Ok((
             input,
@@ -415,15 +391,4 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
 
 pub(super) fn parse_link(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     alt((parse_generic, parse_iri))(input)
-}
-
-
-#[test]
-fn optional_scheme() {
-    let (input, scheme) = opt(new_scheme)("scheme:host/blah").unwrap();
-    let (scheme, separator) = scheme.unwrap_or(("", ""));
-
-    println!("'{}' '{}' '{}'", scheme, separator, input);
-    assert_eq!(scheme, "scheme");
-    assert_eq!(input, "host/blah");
 }
