@@ -44,6 +44,7 @@ fn not_email_address_part_char(c: char) -> bool {
             | '}'
             | '['
             | ']'
+            | '"'
     )
 }
 
@@ -67,17 +68,15 @@ pub(crate) fn email_address(input: &str) -> IResult<&str, Element, CustomError<&
     let i2 = <&str>::clone(&input);
     let i3 = <&str>::clone(&input);
     let (input, content) = match email_intern(i) {
-        Ok((remaining, _)) => {
+        Ok((mut remaining, _)) => {
             let index = i2.offset(remaining);
-            let consumed = i2.slice(..index);
-            if let Some('.') = consumed.chars().last() {
+            let mut consumed = i2.slice(..index);
+            while let Some('.') = consumed.chars().last() {
                 let index = input.offset(remaining).saturating_sub(1);
-                let consumed = i3.slice(..index);
-                let remaining = input.slice(index..);
-                Ok((remaining, consumed))
-            } else {
-                Ok((remaining, consumed))
+                consumed = i3.slice(..index);
+                remaining = input.slice(index..);
             }
+            Ok((remaining, consumed))
         }
         Err(e) => Err(e),
     }?;
