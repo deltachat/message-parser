@@ -207,6 +207,32 @@ fn email_address_standalone() {
         vec![EmailAddress("mr.cow@moo.com"), Text("}")]
     );
 }
+#[test]
+fn email_address_excludes_quotes() {
+    // disallow " around email
+    assert_eq!(
+        parse_only_text("\"mr.cow@moo.com\""),
+        vec![Text("\""), EmailAddress("mr.cow@moo.com"), Text("\"")]
+    );
+}
+
+#[test]
+fn email_address_excludes_trailing_dots() {
+    // grab all trailing dots so they dont get confused with domain name
+    assert_eq!(
+        parse_only_text("reach me at example@example.com... or not!"),
+        vec![
+            Text("reach me at "),
+            EmailAddress("example@example.com"),
+            Text("... or not!")
+        ]
+    );
+    // prove domains with many dots inside still work ok
+    assert_eq!(
+        parse_only_text("my email is user@sub.domain.co.uk"),
+        vec![Text("my email is "), EmailAddress("user@sub.domain.co.uk")]
+    );
+}
 
 #[test]
 fn email_address_example() {
