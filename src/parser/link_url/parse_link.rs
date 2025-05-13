@@ -300,7 +300,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
         ALLOWED_TOP_LEVEL_DOMAINS
             .iter()
             .find(|&&tld| host.ends_with(tld))
-            .ok_or_else(|| nom::Err::Failure(CustomError::<&str>::InvalidLink))?;
+            .ok_or(nom::Err::Failure(CustomError::<&str>::InvalidLink))?;
     }
 
     let (input, path) = opt(alt((
@@ -357,7 +357,7 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                 } else {
                     get_puny_code_warning(link, host)
                 },
-                scheme,
+                scheme: if scheme.len() > 0 { Some(scheme) } else { None },
             },
         ));
     }
@@ -379,7 +379,7 @@ fn parse_generic(input: &str) -> IResult<&str, LinkDestination, CustomError<&str
         return Ok((
             input,
             LinkDestination {
-                scheme,
+                scheme: Some(scheme),
                 target,
                 hostname: None,
                 punycode: None,

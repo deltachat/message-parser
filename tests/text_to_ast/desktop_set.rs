@@ -463,7 +463,7 @@ fn labeled_link_with_special_char_in_domain() {
                     ascii_hostname: "xn--mnchen-3ya.de".to_string(),
                     punycode_encoded_url: "https://xn--mnchen-3ya.de".to_string()
                 }),
-                scheme: "https"
+                scheme: Some("https")
             },
         }]
     );

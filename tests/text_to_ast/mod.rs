@@ -5,7 +5,7 @@ pub(crate) fn gopher_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> Lin
     LinkDestination {
         target,
         hostname: Some(hostname),
-        scheme: "gopher",
+        scheme: Some("gopher"),
         punycode: None,
     }
 }
@@ -14,7 +14,7 @@ pub(crate) fn http_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkD
     LinkDestination {
         target,
         hostname: Some(hostname),
-        scheme: "http",
+        scheme: Some("http"),
         punycode: None,
     }
 }
@@ -23,7 +23,7 @@ pub(crate) fn ftp_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> LinkDe
     LinkDestination {
         target,
         hostname: Some(hostname),
-        scheme: "ftp",
+        scheme: Some("ftp"),
         punycode: None,
     }
 }
@@ -32,7 +32,7 @@ pub(crate) fn https_link_no_puny<'a>(target: &'a str, hostname: &'a str) -> Link
     LinkDestination {
         target,
         hostname: Some(hostname),
-        scheme: "https",
+        scheme: Some("https"),
         punycode: None,
     }
 }
@@ -41,7 +41,7 @@ pub(crate) fn mailto_link_no_puny(target: &str) -> LinkDestination<'_> {
     LinkDestination {
         target,
         hostname: None,
-        scheme: "mailto",
+        scheme: Some("mailto"),
         punycode: None,
     }
 }
