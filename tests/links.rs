@@ -25,7 +25,6 @@ fn basic_parsing() {
         "ftp://test-test",
         "https://www.openmandriva.org/en/news/article/openmandriva-rome-24-07-released",
         "https://www.openmandriva.org///en/news/article/openmandriva-rome-24-07-released",
-        "https://matrix.to/#/#deltachat:matrix.org"
     ];
 
     let test_cases_with_puny = vec!["https://ü.app#help", "http://münchen.de"];
@@ -48,6 +47,21 @@ fn basic_parsing() {
         assert_eq!(rest.len(), 0);
         assert_eq!(input, &link_destination.target);
     }
+}
+
+#[test]
+fn multiple_hashes() {
+    assert_eq!(
+        LinkDestination::parse("https://matrix.to/#/#deltachat:matrix.org")
+            .unwrap()
+            .1,
+        LinkDestination {
+            hostname: Some("matrix.to"),
+            target: "https://matrix.to/#/#deltachat:matrix.org",
+            scheme: "https",
+            punycode: None,
+        }
+    );
 }
 
 #[test]
