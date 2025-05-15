@@ -232,17 +232,14 @@ fn scheme_and_separator(input: &str) -> IResult<&str, (&str, &str), CustomError<
 
 #[test]
 fn scheme_with_separator() {
-    let (rest, result) = opt(scheme_and_separator)("scheme:host/path").unwrap();
-    assert_eq!(Some(("scheme", ":")), result);
-    assert_eq!("host/path", rest);
+    let result = opt(scheme_and_separator)("scheme:host/path");
+    assert_eq!(Ok(("host/path", Some(("scheme", ":")))), result);
 
-    let (rest, result) = opt(scheme_and_separator)("scheme://host/path").unwrap();
-    assert_eq!(Some(("scheme", "://")), result);
-    assert_eq!("host/path", rest);
+    let result = opt(scheme_and_separator)("scheme://host/path");
+    assert_eq!(Ok(("host/path", Some(("scheme", "://")))), result);
 
-    let (rest, result) = opt(scheme_and_separator)("no_scheme/host/path").unwrap();
-    assert_eq!(None, result);
-    assert_eq!("no_scheme/host/path", rest);
+    let result = opt(scheme_and_separator)("no_scheme/host/path");
+    assert_eq!(Ok(("no_scheme/host/path", None)), result);
 }
 
 /// Take as many pct encoded blocks as there are. a block is %XX where X is a hex digit
@@ -357,7 +354,11 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                 } else {
                     get_puny_code_warning(link, host)
                 },
-                scheme: if !scheme.is_empty() { Some(scheme) } else { None },
+                scheme: if !scheme.is_empty() {
+                    Some(scheme)
+                } else {
+                    None
+                },
             },
         ));
     }

@@ -91,7 +91,7 @@ fn punycode_detection() {
         LinkDestination {
             hostname: Some("muenchen.de"),
             target: "http://muenchen.de",
-            scheme:  Some("http"),
+            scheme: Some("http"),
             punycode: None,
         }
     );
@@ -106,7 +106,7 @@ fn common_schemes() {
             LinkDestination {
                 hostname: Some("delta.chat"),
                 target: "http://delta.chat",
-                scheme:  Some("http"),
+                scheme: Some("http"),
                 punycode: None,
             }
         )
@@ -118,7 +118,7 @@ fn common_schemes() {
             LinkDestination {
                 hostname: Some("far.chickenkiller.com"),
                 target: "https://far.chickenkiller.com",
-                scheme:  Some("https"),
+                scheme: Some("https"),
                 punycode: None,
             }
         )
@@ -132,7 +132,7 @@ fn generic_schemes() {
             "",
             LinkDestination {
                 hostname: None,
-                scheme:  Some("mailto"),
+                scheme: Some("mailto"),
                 punycode: None,
                 target: "mailto:someone@example.com"
             }
@@ -144,7 +144,7 @@ fn generic_schemes() {
             .1,
         LinkDestination {
             hostname: None,
-            scheme:  Some("bitcoin"),
+            scheme: Some("bitcoin"),
             target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
             punycode: None,
         }
@@ -154,7 +154,7 @@ fn generic_schemes() {
             .unwrap()
             .1,
         LinkDestination {
-            scheme:  Some("geo"),
+            scheme: Some("geo"),
             punycode: None,
             target: "geo:37.786971,-122.399677",
             hostname: None
