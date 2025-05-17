@@ -284,7 +284,7 @@ fn test_ipath_absolute() {
 fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
     let input_ = <&str>::clone(&input);
 
-    // a link is [scheme] ['://'] <iauthority> [ipath] [iquery] [ifragment]
+    // A link is [scheme] ['://'] <iauthority> [ipath] [iquery] [ifragment]
     let (input, scheme_parts) = opt(scheme_and_separator)(input)?;
     let (scheme, separator) = scheme_parts.unwrap_or(("", ""));
 
@@ -317,8 +317,8 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
 
     let (_, fragment) = opt(ifragment)(input)?;
     let fragment = fragment.unwrap_or("");
-    let ihier_len = 0usize
-        .saturating_add(authority.len())
+    let ihier_len = authority
+        .len()
         .saturating_add(host.len())
         .saturating_add(path.len());
     if ihier_len == 0 {
