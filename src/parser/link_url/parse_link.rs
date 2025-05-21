@@ -354,10 +354,10 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
                 } else {
                     get_puny_code_warning(link, host)
                 },
-                scheme: if !scheme.is_empty() {
-                    Some(scheme)
-                } else {
+                scheme: if scheme.is_empty() {
                     None
+                } else {
+                    Some(scheme)
                 },
             },
         ));
