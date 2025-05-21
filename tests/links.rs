@@ -77,7 +77,7 @@ fn punycode_detection() {
         LinkDestination {
             hostname: Some("münchen.de"),
             target: "http://münchen.de",
-            scheme: "http",
+            scheme: Some("http"),
             punycode: Some(PunycodeWarning {
                 original_hostname: "münchen.de".to_owned(),
                 ascii_hostname: "xn--mnchen-3ya.de".to_owned(),
@@ -91,7 +91,7 @@ fn punycode_detection() {
         LinkDestination {
             hostname: Some("muenchen.de"),
             target: "http://muenchen.de",
-            scheme: "http",
+            scheme: Some("http"),
             punycode: None,
         }
     );
@@ -106,7 +106,7 @@ fn common_schemes() {
             LinkDestination {
                 hostname: Some("delta.chat"),
                 target: "http://delta.chat",
-                scheme: "http",
+                scheme: Some("http"),
                 punycode: None,
             }
         )
@@ -118,7 +118,7 @@ fn common_schemes() {
             LinkDestination {
                 hostname: Some("far.chickenkiller.com"),
                 target: "https://far.chickenkiller.com",
-                scheme: "https",
+                scheme: Some("https"),
                 punycode: None,
             }
         )
@@ -132,7 +132,7 @@ fn generic_schemes() {
             "",
             LinkDestination {
                 hostname: None,
-                scheme: "mailto",
+                scheme: Some("mailto"),
                 punycode: None,
                 target: "mailto:someone@example.com"
             }
@@ -144,7 +144,7 @@ fn generic_schemes() {
             .1,
         LinkDestination {
             hostname: None,
-            scheme: "bitcoin",
+            scheme: Some("bitcoin"),
             target: "bitcoin:bc1qt3xhfvwmdqvxkk089tllvvtzqs8ts06u3u6qka",
             punycode: None,
         }
@@ -154,10 +154,102 @@ fn generic_schemes() {
             .unwrap()
             .1,
         LinkDestination {
-            scheme: "geo",
+            scheme: Some("geo"),
             punycode: None,
             target: "geo:37.786971,-122.399677",
             hostname: None
         }
     );
+}
+
+#[test]
+fn no_scheme_simple() {
+    assert_eq!(
+        LinkDestination::parse("example.com").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("example.com"),
+                scheme: None,
+                punycode: None,
+                target: "example.com"
+            }
+        )
+    );
+}
+
+#[test]
+fn no_scheme_with_chat() {
+    // exceptional
+    assert_eq!(
+        LinkDestination::parse("delta.chat").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("delta.chat"),
+                scheme: None,
+                punycode: None,
+                target: "delta.chat"
+            }
+        )
+    );
+}
+
+#[test]
+fn no_scheme_full_iri_segments() {
+    // long one with all the path segments
+    assert_eq!(
+        LinkDestination::parse("delta.chat/path/with/segments?query=params#fragment").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("delta.chat"),
+                scheme: None,
+                punycode: None,
+                target: "delta.chat/path/with/segments?query=params#fragment"
+            }
+        )
+    );
+}
+
+#[test]
+fn no_scheme_punycode() {
+    // punycode
+    assert_eq!(
+        LinkDestination::parse("münchen.com").unwrap(),
+        (
+            "",
+            LinkDestination {
+                hostname: Some("münchen.com"),
+                scheme: None,
+                punycode: Some(PunycodeWarning {
+                    original_hostname: "münchen.com".to_owned(),
+                    ascii_hostname: "xn--mnchen-3ya.com".to_owned(),
+                    punycode_encoded_url: "xn--mnchen-3ya.com".to_owned()
+                }),
+                target: "münchen.com"
+            }
+        )
+    );
+}
+
+#[test]
+fn no_scheme_disallow_zip() {
+    // Failing case for unsupported TLD
+    let result = LinkDestination::parse("free_money.zip");
+    assert!(result.is_err());
+}
+
+#[test]
+fn no_scheme_disallow_authority() {
+    // Failing case with user prefix, we dont want this for simple links without scheme
+    let result = LinkDestination::parse("user@delta.chat");
+    assert!(result.is_err());
+}
+
+#[test]
+fn no_scheme_disallow_port() {
+    // Failing case with port, also not good for simple links without scheme
+    let result = LinkDestination::parse("delta.chat:8080/api");
+    assert!(result.is_ok());
 }

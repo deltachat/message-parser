@@ -33,7 +33,7 @@ pub struct LinkDestination<'a> {
     /// (the host part contains non ascii unicode characters)
     pub punycode: Option<PunycodeWarning>,
     /// scheme
-    pub scheme: &'a str,
+    pub scheme: Option<&'a str>,
 }
 
 impl LinkDestination<'_> {
