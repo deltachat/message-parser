@@ -58,7 +58,7 @@ fn multiple_hashes() {
         LinkDestination {
             hostname: Some("matrix.to"),
             target: "https://matrix.to/#/#deltachat:matrix.org",
-            scheme: "https",
+            scheme: Some("https"),
             punycode: None,
         }
     );
