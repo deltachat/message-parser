@@ -50,6 +50,21 @@ fn basic_parsing() {
 }
 
 #[test]
+fn multiple_hashes() {
+    assert_eq!(
+        LinkDestination::parse("https://matrix.to/#/#deltachat:matrix.org")
+            .unwrap()
+            .1,
+        LinkDestination {
+            hostname: Some("matrix.to"),
+            target: "https://matrix.to/#/#deltachat:matrix.org",
+            scheme: Some("https"),
+            punycode: None,
+        }
+    );
+}
+
+#[test]
 fn bare_scheme_no_parse() {
     // bare scheme shouldn't be linkified
     let bare = vec!["tel", "tel:", "bitcoin:", "mailto", "https://", "http://"];

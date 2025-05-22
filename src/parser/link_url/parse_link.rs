@@ -251,7 +251,7 @@ fn take_while_pct_encoded(input: &str) -> IResult<&str, &str, CustomError<&str>>
 }
 
 fn ifragment(input: &str) -> IResult<&str, &str, CustomError<&str>> {
-    recognize(tuple((char('#'), take_while_ifragment)))(input)
+    recognize(many0(tuple((char('#'), take_while_ifragment))))(input)
 }
 
 fn parse_ipath_abempty(input: &str) -> IResult<&str, &str, CustomError<&str>> {
