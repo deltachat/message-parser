@@ -42,8 +42,12 @@ Make URLs clickable.
 
 - detect all valid hyperlink URLs that have the `://` (protocol://host).
   - according to [RFC3987](https://www.rfc-editor.org/rfc/rfc3987) and [RFC3988](https://www.rfc-editor.org/rfc/rfc3988)
+  - In addition to the spec, explicitly allow multiple `#` characters in the ifragment, leaving it up to the destination to handle correctly.
 
 - other links like `mailto:` (note there is just a single `:`, no `://`) will get separate parsing that includes a whitelisted protocol name, otherwise there will likely be unexpected behavior if user types `hello:world` - will be recognized as link.
+
+- allow simple links without protocol scheme so long as they match the original world wide TLDs or `chat`.
+  - see [RFC1591](https://www.rfc-editor.org/rfc/rfc1591) for world wide domains
 
 - `.`,`,`,`;`,`:` should not be parsed as an ending char of an inline-link(this rule is only for standalone/inline links)
 
