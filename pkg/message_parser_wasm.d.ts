@@ -53,6 +53,7 @@ export type LinkDestination = {
   target: string;
   hostname: null | string;
   punycode: null | PunycodeWarning;
+  scheme: null | string;
 };
 export type ParsedElement =
   | { t: "Text"; c: string }
