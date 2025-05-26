@@ -7,9 +7,11 @@ const ALLOWED_TOP_LEVEL_DOMAINS: &[&str] = &[
 ];
 
 pub fn check_if_tld_is_allowed(tld: &str) -> bool {
-    if ALLOWED_TOP_LEVEL_DOMAINS.iter().any(|item|*item == tld) {
+    if ALLOWED_TOP_LEVEL_DOMAINS.iter().any(|item| *item == tld) {
         true
-    } else { country_tlds::COUNTRY_TLDS.binary_search(&tld).is_ok() }
+    } else {
+        country_tlds::COUNTRY_TLDS.binary_search(&tld).is_ok()
+    }
 }
 
 #[cfg(test)]

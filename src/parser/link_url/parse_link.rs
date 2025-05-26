@@ -23,7 +23,9 @@ use crate::parser::{
 };
 
 use super::{
-    allowed_tlds::check_if_tld_is_allowed, parenthesis_counter::count_chars_in_complete_parenthesis, punycode_warning::get_puny_code_warning
+    allowed_tlds::check_if_tld_is_allowed,
+    parenthesis_counter::count_chars_in_complete_parenthesis,
+    punycode_warning::get_puny_code_warning,
 };
 
 /// determines which generic schemes (without '://') get linkifyed
@@ -44,8 +46,6 @@ fn is_allowed_generic_scheme(scheme: &str) -> bool {
             | "magnet"
     )
 }
-
-
 
 // These ranges have been extracted from RFC3987, Page 8.
 const UCSCHAR_RANGES: [RangeInclusive<u32>; 17] = [
@@ -291,9 +291,11 @@ fn parse_iri(input: &str) -> IResult<&str, LinkDestination, CustomError<&str>> {
             return Err(nom::Err::Failure(CustomError::<&str>::InvalidLink));
         }
 
-        let tld = host.split('.').last()
-        .ok_or(nom::Err::Failure(CustomError::<&str>::InvalidLinkNoTLD))?;
-    
+        let tld = host
+            .split('.')
+            .last()
+            .ok_or(nom::Err::Failure(CustomError::<&str>::InvalidLinkNoTLD))?;
+
         if !check_if_tld_is_allowed(tld) {
             return Err(nom::Err::Failure(CustomError::<&str>::InvalidLink));
         }
