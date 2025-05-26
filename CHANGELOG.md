@@ -2,7 +2,10 @@
 
 ## Unreleased
 
+## 0.14.1 - Allow country TLDs in scheme-less links
+
 - allow country TLDs in scheme-less links
+- fix ts type for LinkDestination
 
 ## 0.14.0 - Bug fixes and scheme-less links
 
