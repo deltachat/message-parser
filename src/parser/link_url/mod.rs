@@ -1,3 +1,4 @@
+mod allowed_tlds;
 mod ip;
 mod parenthesis_counter;
 mod parse_link;

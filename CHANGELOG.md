@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- allow country TLDs in scheme-less links
+
 ## 0.14.0 - Bug fixes and scheme-less links
 
 - Parse scheme-less links for some TLDs

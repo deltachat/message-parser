@@ -18,6 +18,7 @@ pub enum CustomError<I> {
     Nom(I, ErrorKind),
     InvalidEmail,
     InvalidLink,
+    InvalidLinkNoTLD,
     UnexpectedContent,
     PrecedingWhitespaceMissing,
     OptionIsUnexpectedNone,
