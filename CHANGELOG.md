@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## 0.14.0 - Bug fixes and scheme-less links
+
+- Parse scheme-less links for some TLDs
+- Change `LinkDestination` field `scheme` to an `Option` type
+- Disallow double quotes in email address, remove repeated trailing '.' at end of email address
+- Allow multiple `#` characters in links
+
 ## 0.13.0 - Bug fixes and punycode api
 
 - Add functions for punycode
