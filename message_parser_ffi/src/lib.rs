@@ -51,13 +51,13 @@ pub struct TextResultForQt {
 
 /// Pretty-prints a TextResultForQt using Rust's formatting logic.
 #[ffi_export]
-pub fn print_text_result_for_qt(result: &TextResultForQt) {
+pub fn mp_print_text_result_for_qt(result: &TextResultForQt) {
     println!("{:?}", result);
 }
 
 /// frees the TextResultForQt
 #[ffi_export]
-pub fn free_text_result_for_qt(result: TextResultForQt) {
+pub fn mp_free_text_result_for_qt(result: TextResultForQt) {
     drop(result);
 }
 
@@ -124,7 +124,7 @@ fn element_to_qt_html(input: &Element) -> String {
 
 /// Pretty-prints a TextResultForQt using Rust's formatting logic.
 #[ffi_export]
-pub fn parse_to_text_result_for_qt(text: char_p_ref<'_>, mode: ParsingMode) -> TextResultForQt {
+pub fn mp_parse_to_text_result_for_qt(text: char_p_ref<'_>, mode: ParsingMode) -> TextResultForQt {
     let input = text.to_str();
     let elements = match mode {
         ParsingMode::Text => deltachat_message_parser::parser::parse_only_text(input),
@@ -144,6 +144,31 @@ pub fn parse_to_text_result_for_qt(text: char_p_ref<'_>, mode: ParsingMode) -> T
         ),
         advanced,
     }
+}
+
+/// get_first_emoji of text, result needs to be freed with `mp_free_rust_string`
+#[ffi_export]
+pub fn mp_get_first_emoji(text: char_p_ref<'_>) -> char_p_boxed {
+    let input = text.to_str();
+
+    match deltachat_message_parser::parser::is_emoji::get_first_emoji(input) {
+        Some(emoji) => char_p_boxed::from(CString::new(emoji).unwrap()),
+        None => char_p_boxed::from(CString::new("").unwrap()),
+    }
+}
+
+/// Count emojis in a message, if there are only emojis.
+/// 
+/// This is used to display messages with only emojis in a larger font size. 
+#[ffi_export]
+pub fn mp_count_emojis_if_only_contains_emoji(text: char_p_ref<'_>) -> u32 {
+    deltachat_message_parser::parser::is_emoji::count_emojis_if_only_contains_emoji(text.to_str()).unwrap_or(0)
+}
+
+/// frees a string managed by rust
+#[ffi_export]
+pub fn mp_free_rust_string(string: char_p_boxed) {
+    drop(string);
 }
 
 // The following function is only necessary for the header generation.

@@ -14,6 +14,26 @@ extern "C" {
 #endif
 
 
+#include <stddef.h>
+#include <stdint.h>
+
+/** \brief
+ *  Count emojis in a message, if there are only emojis.
+ *
+ *  This is used to display messages with only emojis in a larger font size.
+ */
+uint32_t
+mp_count_emojis_if_only_contains_emoji (
+    char const * text);
+
+/** \brief
+ *  frees a string managed by rust
+ */
+void
+mp_free_rust_string (
+    char * string);
+
+
 #include <stdbool.h>
 
 /** <No documentation available> */
@@ -40,12 +60,15 @@ typedef struct TextResultForQt {
  *  frees the TextResultForQt
  */
 void
-free_text_result_for_qt (
+mp_free_text_result_for_qt (
     TextResultForQt_t result);
 
-
-#include <stddef.h>
-#include <stdint.h>
+/** \brief
+ *  get_first_emoji of text, result needs to be freed with `mp_free_rust_string`
+ */
+char *
+mp_get_first_emoji (
+    char const * text);
 
 /** \brief
  *  Modes of the parser, which element set to parse
@@ -84,7 +107,7 @@ ParsingMode_t;
  *  Pretty-prints a TextResultForQt using Rust's formatting logic.
  */
 TextResultForQt_t
-parse_to_text_result_for_qt (
+mp_parse_to_text_result_for_qt (
     char const * text,
     ParsingMode_t mode);
 
@@ -92,7 +115,7 @@ parse_to_text_result_for_qt (
  *  Pretty-prints a TextResultForQt using Rust's formatting logic.
  */
 void
-print_text_result_for_qt (
+mp_print_text_result_for_qt (
     TextResultForQt_t const * result);
 
 
