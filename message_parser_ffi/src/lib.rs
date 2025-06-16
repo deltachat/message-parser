@@ -62,7 +62,8 @@ pub fn mp_free_text_result_for_qt(result: TextResultForQt) {
 }
 
 fn encode_link_destination(destination: &LinkDestination) -> String {
-    let destination_data = serde_json::to_string(&destination).unwrap_or("serdejson-serialization-error".to_string());
+    let destination_data =
+        serde_json::to_string(&destination).unwrap_or("serdejson-serialization-error".to_string());
     // into username part as uri encoded
     format!("{}@link", urlencoding::encode(&destination_data))
 }
@@ -70,9 +71,12 @@ fn encode_link_destination(destination: &LinkDestination) -> String {
 fn element_to_qt_html(input: &Element) -> String {
     match input {
         Element::Text(text) => escape(*text).to_string(),
-        Element::Tag(tag) => {
-            format!(r#""<a href="hashtag:{}">{}</a>""#, escape(*tag), escape(*tag)).to_string()
-        }
+        Element::Tag(tag) => format!(
+            r#""<a href="hashtag:{}">{}</a>""#,
+            escape(*tag),
+            escape(*tag)
+        )
+        .to_string(),
         Element::Linebreak => "<br>".to_string(),
         Element::Link { destination } => format!(
             r#""<a href="link:{}">{}</a>""#,
@@ -158,11 +162,12 @@ pub fn mp_get_first_emoji(text: char_p_ref<'_>) -> char_p_boxed {
 }
 
 /// Count emojis in a message, if there are only emojis.
-/// 
-/// This is used to display messages with only emojis in a larger font size. 
+///
+/// This is used to display messages with only emojis in a larger font size.
 #[ffi_export]
 pub fn mp_count_emojis_if_only_contains_emoji(text: char_p_ref<'_>) -> u32 {
-    deltachat_message_parser::parser::is_emoji::count_emojis_if_only_contains_emoji(text.to_str()).unwrap_or(0)
+    deltachat_message_parser::parser::is_emoji::count_emojis_if_only_contains_emoji(text.to_str())
+        .unwrap_or(0)
 }
 
 /// frees a string managed by rust
