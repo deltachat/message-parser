@@ -1,5 +1,6 @@
-use super::*;
 use deltachat_message_parser::parser::parse_only_text;
+
+use super::*;
 
 #[test]
 fn do_not_parse_markdown_elements() {
