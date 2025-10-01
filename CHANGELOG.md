@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- update rust toolchain version to match MSRV of chatmail core: 1.85.0
+
 ## 0.14.1 - Allow country TLDs in scheme-less links
 
 - allow country TLDs in scheme-less links
@@ -62,7 +64,7 @@
 - upgraded nom to 7
 - The following generic schemes (schemes that don't end in `://`) get linkified now:
     `mailto:`, `news:`, `feed:`, `tel:`, `sms:`, `geo:`, `maps:`, `bitcoin:`, `bitcoincash:`, `eth:`, `ethereum:`, `magnet:`
-- added `scheme` property to `LinkDestination` 
+- added `scheme` property to `LinkDestination`
 
 ## 0.7.0 - All the Hashtags
 
