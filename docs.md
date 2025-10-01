@@ -47,3 +47,13 @@ The third priority is binary size, so be careful with huge extra libraries, mayb
 7. `cd message_parser_wasm/`
 8. `wasm-pack build --scope deltachat --target web`
 9. `wasm-pack publish --target web`
+
+
+### Reorder imports
+We use [`group_imports="StdExternalCrate"`](https://github.com/rust-lang/rustfmt/blob/master/Configurations.md#group_imports) to group imports,
+which requires the nightly version of the rust toolchain,
+so you need to run the following comand to fix the order of the imports:
+
+```
+cargo +nightly fmt -- --config=group_imports="StdExternalCrate"
+```
