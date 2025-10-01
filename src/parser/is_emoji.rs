@@ -243,20 +243,11 @@ mod emoji_test {
         #[test]
         fn test_string_contains_only_emojis_and_count() {
             assert_eq!(count_emojis_if_only_contains_emoji("#️⃣"), Some(1));
-            assert_eq!(
-                count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽Hashtag"),
-                None
-            );
+            assert_eq!(count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽Hashtag"), None);
             assert_eq!(count_emojis_if_only_contains_emoji("❤️‍🔥"), Some(1));
             assert_eq!(count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽"), Some(1));
-            assert_eq!(
-                count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽👩🏽‍❤️‍👨🏽"),
-                Some(2)
-            );
-            assert_eq!(
-                count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽❤️‍🔥👩🏽‍❤️‍👨🏽"),
-                Some(3)
-            );
+            assert_eq!(count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽👩🏽‍❤️‍👨🏽"), Some(2));
+            assert_eq!(count_emojis_if_only_contains_emoji("👩🏽‍❤️‍👨🏽❤️‍🔥👩🏽‍❤️‍👨🏽"), Some(3));
             // hair color
             assert_eq!(count_emojis_if_only_contains_emoji("👨‍🦰"), Some(1));
             assert_eq!(count_emojis_if_only_contains_emoji("👨‍🦳"), Some(1));
