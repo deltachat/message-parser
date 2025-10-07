@@ -7,12 +7,11 @@ use nom::{
     IResult,
 };
 
-use crate::parser::LinkDestination;
-
 use super::base_parsers::CustomError;
 use super::markdown_elements::{delimited_email_address, delimited_link};
 use super::text_elements::parse_text_element;
 use super::Element;
+use crate::parser::LinkDestination;
 
 // [labeled](https://link)
 pub(crate) fn labeled_link(input: &str) -> IResult<&str, Element, CustomError<&str>> {

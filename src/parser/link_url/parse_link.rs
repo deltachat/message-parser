@@ -10,6 +10,11 @@ use nom::{
     IResult, Slice,
 };
 
+use super::{
+    allowed_tlds::check_if_tld_is_allowed,
+    parenthesis_counter::count_chars_in_complete_parenthesis,
+    punycode_warning::get_puny_code_warning,
+};
 use crate::parser::{
     link_url::{
         ip::{ip_literal::ip_literal, ipv4::ipv4},
@@ -20,12 +25,6 @@ use crate::parser::{
         is_alpha, is_digit, is_hex_digit, is_in_one_of_ranges, is_not_white_space, is_sub_delim,
         is_unreserved,
     },
-};
-
-use super::{
-    allowed_tlds::check_if_tld_is_allowed,
-    parenthesis_counter::count_chars_in_complete_parenthesis,
-    punycode_warning::get_puny_code_warning,
 };
 
 /// determines which generic schemes (without '://') get linkifyed

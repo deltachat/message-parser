@@ -1,5 +1,6 @@
-use super::*;
 use deltachat_message_parser::parser::parse_markdown_text;
+
+use super::*;
 
 #[test]
 fn bold_capitalized_command_suggestion() {

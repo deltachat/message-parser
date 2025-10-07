@@ -8,9 +8,8 @@ use nom::{
     IResult,
 };
 
-use crate::parser::{parse_from_text::base_parsers::CustomError, utils::is_hex_digit};
-
 use super::ipv4::ipv4;
+use crate::parser::{parse_from_text::base_parsers::CustomError, utils::is_hex_digit};
 
 fn h16(input: &str) -> IResult<&str, &str, CustomError<&str>> {
     take_while_m_n(1, 4, is_hex_digit)(input)

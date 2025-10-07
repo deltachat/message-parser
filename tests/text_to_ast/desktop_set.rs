@@ -1,5 +1,6 @@
-use super::*;
 use deltachat_message_parser::parser::{link_url::PunycodeWarning, parse_desktop_set};
+
+use super::*;
 
 #[test]
 fn do_not_parse_markdown_elements() {
