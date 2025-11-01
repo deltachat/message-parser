@@ -1,0 +1,30 @@
+[package]
+name = "message_parser_ffi"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = [
+    "staticlib",  # Ensure it gets compiled as a (static) C library
+  # "cdylib",     # If you want a shared/dynamic C library (advanced)
+    "lib",        # For `generate-headers`, `examples/`, `tests/` etc.
+]
+
+[[bin]]
+name = "generate-headers"
+required-features = ["headers"]  # Do not build unless generating headers.
+
+[dependencies]
+deltachat_message_parser = { version = "0.14.1", path = ".." }
+quick-xml = "0.37.5"
+safer-ffi = "0.1.13"
+serde = "1.0.219"
+serde_json = "1.0.140"
+urlencoding = "2.1.3"
+
+[features]
+# If you want to generate the headers, use a feature-gate
+# to opt into doing so:
+headers = ["safer-ffi/headers"]
